@@ -1600,7 +1600,12 @@ public class SegmentationController {
     public void changeVolumeClipping(int minDelta, int maxDelta) {
         submit(()->meshFrame3D.changeVolumeClipping(minDelta, maxDelta));
     }
+    public void crop3DRegion(int x, int y, int z, int w, int h, int d){
+        ImagePlus plus = getMeshImageStack().getOriginalPlus();
+        ImagePlus next = plus.createImagePlus();
 
+
+    }
     public void showVolumeClippingDialog(){
         VolumeDataObject vdo = meshFrame3D.getVolumeDataObject();
         if(vdo!=null){

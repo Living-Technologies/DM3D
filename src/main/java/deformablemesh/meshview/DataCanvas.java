@@ -26,14 +26,14 @@
 package deformablemesh.meshview;
 
 import deformablemesh.util.Vector3DOps;
-import org.scijava.java3d.*;
-import org.scijava.java3d.utils.picking.PickCanvas;
-import org.scijava.java3d.utils.picking.PickResult;
-import org.scijava.java3d.utils.picking.PickTool;
-import org.scijava.java3d.utils.universe.SimpleUniverse;
-import org.scijava.java3d.utils.universe.Viewer;
-import org.scijava.java3d.utils.universe.ViewingPlatform;
-import org.scijava.vecmath.*;
+import org.jogamp.java3d.*;
+import org.jogamp.java3d.utils.picking.PickCanvas;
+import org.jogamp.java3d.utils.picking.PickResult;
+import org.jogamp.java3d.utils.picking.PickTool;
+import org.jogamp.java3d.utils.universe.SimpleUniverse;
+import org.jogamp.java3d.utils.universe.Viewer;
+import org.jogamp.java3d.utils.universe.ViewingPlatform;
+import org.jogamp.vecmath.*;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -132,6 +132,12 @@ public class DataCanvas extends Canvas3D {
         Rectangle r = getBounds();
         setBounds(0, 0, (int)r.getWidth()*2, (int)r.getHeight()*2);
     }
+
+    static Color3f getComponents(Color c){
+        float[] cs = c.getRGBComponents(new float[4]);
+        return new Color3f(cs[0], cs[1], cs[2]);
+    }
+
 
     public void setDefaultControllerEnabled(boolean enabled){
         controller.setEnabled(enabled);
@@ -474,7 +480,7 @@ public class DataCanvas extends Canvas3D {
 
     public void changeBackgroundColor(Color color){
 
-        backgroundColor = new Color3f(color);
+        backgroundColor = new Color3f(DataCanvas.getComponents(color));
         background.setColor(backgroundColor);
 
     }

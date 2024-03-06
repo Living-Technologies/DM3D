@@ -48,7 +48,7 @@ import java.util.stream.Collectors;
  *  Mark Meyer, Mathieu Desbrun, Peter Schroeder, and Alan H. Barr
  *
  */
-public class CurvatureCalculator {
+public class    CurvatureCalculator {
     DeformableMesh3D mesh;
     Map<Node3D, List<Triangle3D>> node_to_triangle = new HashMap<>();
     double min_curv = -1;

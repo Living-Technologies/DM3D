@@ -25,12 +25,12 @@
  */
 package deformablemesh.meshview;
 
-import org.scijava.java3d.*;
-import org.scijava.java3d.utils.geometry.Cone;
-import org.scijava.java3d.utils.geometry.Cylinder;
-import org.scijava.vecmath.AxisAngle4d;
-import org.scijava.vecmath.Color3f;
-import org.scijava.vecmath.Vector3d;
+import org.jogamp.java3d.*;
+import org.jogamp.java3d.utils.geometry.Cone;
+import org.jogamp.java3d.utils.geometry.Cylinder;
+import org.jogamp.vecmath.AxisAngle4d;
+import org.jogamp.vecmath.Color3f;
+import org.jogamp.vecmath.Vector3d;
 
 import java.awt.Color;
 import java.awt.event.KeyEvent;

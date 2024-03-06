@@ -30,10 +30,10 @@ import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Furrow3D;
 import deformablemesh.track.Track;
 import deformablemesh.util.Vector3DOps;
-import org.scijava.java3d.GeometryArray;
-import org.scijava.java3d.utils.picking.PickIntersection;
-import org.scijava.java3d.utils.picking.PickResult;
-import org.scijava.vecmath.Point3d;
+import org.jogamp.java3d.GeometryArray;
+import org.jogamp.java3d.utils.picking.PickIntersection;
+import org.jogamp.java3d.utils.picking.PickResult;
+import org.jogamp.vecmath.Point3d;
 
 import java.awt.EventQueue;
 import java.awt.event.MouseEvent;

@@ -30,7 +30,7 @@ import deformablemesh.MeshImageStack;
 import deformablemesh.meshview.*;
 import deformablemesh.ringdetection.FurrowTransformer;
 import deformablemesh.util.Vector3DOps;
-import org.scijava.java3d.Shape3D;
+import org.jogamp.java3d.Shape3D;
 
 import java.util.ArrayList;
 import java.util.Arrays;

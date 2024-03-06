@@ -29,7 +29,7 @@ import deformablemesh.externalenergies.ExternalEnergy;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Node3D;
 import deformablemesh.util.Vector3DOps;
-import org.scijava.java3d.BranchGroup;
+import org.jogamp.java3d.BranchGroup;
 
 import java.util.ArrayList;
 import java.util.List;

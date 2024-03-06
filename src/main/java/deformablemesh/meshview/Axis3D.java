@@ -26,10 +26,10 @@
 package deformablemesh.meshview;
 
 import deformablemesh.geometry.Node3D;
-import org.scijava.java3d.*;
-import org.scijava.java3d.utils.geometry.Sphere;
-import org.scijava.vecmath.Color3f;
-import org.scijava.vecmath.Vector3f;
+import org.jogamp.java3d.*;
+import org.jogamp.java3d.utils.geometry.Sphere;
+import org.jogamp.vecmath.Color3f;
+import org.jogamp.vecmath.Vector3f;
 
 import java.awt.Color;
 import java.util.ArrayList;

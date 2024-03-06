@@ -4,11 +4,11 @@ import ij.IJ;
 import ij.ImageJ;
 import ij.plugin.PlugIn;
 
-import org.scijava.java3d.*;
-import org.scijava.java3d.utils.geometry.Sphere;
-import org.scijava.java3d.utils.universe.SimpleUniverse;
-import org.scijava.vecmath.Color3f;
-import org.scijava.vecmath.Point3d;
+import org.jogamp.java3d.*;
+import org.jogamp.java3d.utils.geometry.Sphere;
+import org.jogamp.java3d.utils.universe.SimpleUniverse;
+import org.jogamp.vecmath.Color3f;
+import org.jogamp.vecmath.Point3d;
 
 import javax.swing.*;
 import java.awt.*;

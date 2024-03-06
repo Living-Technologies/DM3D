@@ -29,9 +29,9 @@ import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.io.MeshReader;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.track.Track;
-import org.scijava.java3d.Appearance;
-import org.scijava.java3d.Material;
-import org.scijava.vecmath.Color3f;
+import org.jogamp.java3d.Appearance;
+import org.jogamp.java3d.Material;
+import org.jogamp.vecmath.Color3f;
 
 import javax.swing.*;
 import java.awt.*;

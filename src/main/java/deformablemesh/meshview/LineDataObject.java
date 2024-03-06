@@ -26,8 +26,8 @@
 package deformablemesh.meshview;
 
 import deformablemesh.geometry.Node3D;
-import org.scijava.java3d.*;
-import org.scijava.vecmath.Vector3d;
+import org.jogamp.java3d.*;
+import org.jogamp.vecmath.Vector3d;
 
 import java.util.Arrays;
 import java.util.List;

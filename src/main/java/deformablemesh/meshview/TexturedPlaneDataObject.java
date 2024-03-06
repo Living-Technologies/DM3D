@@ -27,9 +27,9 @@ package deformablemesh.meshview;
 
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.DeformableMesh3D;
-import org.scijava.java3d.*;
-import org.scijava.vecmath.Color3f;
-import org.scijava.vecmath.Vector4f;
+import org.jogamp.java3d.*;
+import org.jogamp.vecmath.Color3f;
+import org.jogamp.vecmath.Vector4f;
 
 import java.awt.Color;
 
@@ -102,7 +102,7 @@ public class TexturedPlaneDataObject extends DeformableMeshDataObject {
 
 
     private Appearance createTexturedSurface(){
-        VolumeTexture texture = new VolumeTexture(texture_data, min, max, new Color3f(Color.WHITE));
+        VolumeTexture texture = new VolumeTexture(texture_data, min, max, DataCanvas.getComponents(Color.WHITE));
 
         TexCoordGeneration texCGen = new TexCoordGeneration();
         texCGen.setFormat(TexCoordGeneration.TEXTURE_COORDINATE_3);
@@ -156,7 +156,7 @@ public class TexturedPlaneDataObject extends DeformableMeshDataObject {
     }
 
     public void updateVolume(){
-        volume = new VolumeTexture(texture_data, min, max, new Color3f(volumeColor));
+        volume = new VolumeTexture(texture_data, min, max, DataCanvas.getComponents(volumeColor));
         texturedAppearance = createTexturedSurface();
         surface_object.setAppearance(texturedAppearance);
     }
