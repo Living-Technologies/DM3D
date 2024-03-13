@@ -220,23 +220,6 @@ public class VolumeContrastSetter{
         }
 
 
-        void showSubSample(MeshImageStack stack){
-            vdo = new VolumeDataObject(volumeColor);
-            double[] l = stack.scaleToNormalizedLength(new double[]{64, 0, 0});
-
-            vdo.setTextureData(
-
-                    stack.createSubStack(
-                            new Box3D(new double[]{0, 0, 0}, l[0], l[0], l[0] )
-                    )
-
-            );
-
-            mf3d.addDataObject(vdo);
-        }
-
-
-
         void setMinMaxClipping(double min, double max){
             previewVdo.setMinMaxRange(min, max);
         }

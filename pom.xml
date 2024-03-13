@@ -9,9 +9,9 @@
 		<relativePath />
 	</parent>
 
-	<groupId>paluchlab</groupId>
-	<artifactId>Deformable_Mesh</artifactId>
-	<version>1.0.0</version>
+	<groupId>org.livingtech</groupId>
+	<artifactId>dm3d</artifactId>
+	<version>1.1.0-SNAPSHOT</version>
 
 	<name>Deforming Mesh</name>
 	<description>Triangulated surface for deforming in 3D.</description>
@@ -107,18 +107,6 @@
 			<artifactId>jama</artifactId>
 		</dependency>
         <dependency>
-			<groupId>org.scijava</groupId>
-			<artifactId>j3dcore</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.scijava</groupId>
-			<artifactId>vecmath</artifactId>
-		</dependency>
-        <dependency>
-			<groupId>org.scijava</groupId>
-			<artifactId>j3dutils</artifactId>
-		</dependency>
-		<dependency>
 			<groupId>org.orangepalantir</groupId>
 			<artifactId>light-weight-graphing</artifactId>
 			<version>${light-weight-graphing.version}</version>
@@ -143,6 +131,26 @@
 			<version>2.5.0</version>
 			<classifier>${scijava.natives.classifier.jogl}</classifier>
 		</dependency>
+		<dependency>
+			<groupId>org.jogamp.java3d</groupId>
+			<artifactId>java3d-core</artifactId>
+			<version>1.7.2</version>
+		</dependency>
+		<dependency>
+			<groupId>org.jogamp.java3d</groupId>
+			<artifactId>java3d-utils</artifactId>
+			<version>1.7.2</version>
+		</dependency>
+		<dependency>
+			<groupId>org.jogamp.java3d</groupId>
+			<artifactId>vecmath</artifactId>
+			<version>1.7.2</version>
+		</dependency>
+		<dependency>
+			<groupId>org.openjdk.nashorn</groupId>
+			<artifactId>nashorn-core</artifactId>
+			<version>15.4</version>
+		</dependency>
 	</dependencies>
 
 	<repositories>
@@ -154,6 +162,10 @@
 		<repository>
 			<id>jogamp.org</id>
 			<url>https://jogamp.org/deployment/maven</url>
+		</repository>
+		<repository>
+			<id>jogamp.org</id>
+			<url>https://jogamp.org/deployment/maven-java3d/</url>
 		</repository>
 
 	</repositories>

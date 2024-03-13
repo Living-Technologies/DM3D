@@ -50,6 +50,7 @@ import deformablemesh.util.actions.UndoableActions;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.measure.Calibration;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
@@ -1601,10 +1602,52 @@ public class SegmentationController {
         submit(()->meshFrame3D.changeVolumeClipping(minDelta, maxDelta));
     }
     public void crop3DRegion(int x, int y, int z, int w, int h, int d){
-        ImagePlus plus = getMeshImageStack().getOriginalPlus();
-        ImagePlus next = plus.createImagePlus();
+        MeshImageStack stack = getMeshImageStack();
+        ImagePlus alt = stack.getCroppedRegion(x, y, z, w, h, d);
+        alt.show();
+        alt.setTitle(
+                getShortImageName() + "_"
+                        + x + ", " + y +", " +  z + ", "
+                        + w + ", " +  h +", " +  d );
+        setOriginalPlus(alt);
+        MeshImageStack next = getMeshImageStack();
+        List<Track> tracks = getAllTracks();
+        List<Track> dups = new ArrayList<>();
+        for(Track t: tracks){
+            Track t2 = new Track(t.getName(), t.getColor());
+            for(Integer key: t.getTrack().keySet()){
+                t2.addMesh(key, DeformableMesh3DTools.copyOf(t.getMesh(key)));
+            }
+            dups.add(t2);
+        }
+        BoundingBoxTransformer bbt = new BoundingBoxTransformer(stack, next);
+        dups.forEach(bbt::transformTrack);
+        setMeshTracks(dups);
+    }
 
+    public void testCropping(){
 
+    }
+
+    public void transformToImage(){
+        MeshImageStack current = getMeshImageStack();
+        ImagePlus plus = GuiTools.selectOpenImage(IJ.getInstance());
+        setOriginalPlus(plus);
+        MeshImageStack next = getMeshImageStack();
+        List<Track> tracks = getAllTracks();
+
+        List<Track> dups = new ArrayList<>();
+        for(Track t: tracks){
+            Track t2 = new Track(t.getName(), t.getColor());
+            for(Integer key: t.getTrack().keySet()){
+                t2.addMesh(key, DeformableMesh3DTools.copyOf(t.getMesh(key)));
+            }
+            dups.add(t2);
+        }
+
+        BoundingBoxTransformer bbt = new BoundingBoxTransformer(current, next);
+        dups.forEach(bbt::transformTrack);
+        setMeshTracks(dups);
     }
     public void showVolumeClippingDialog(){
         VolumeDataObject vdo = meshFrame3D.getVolumeDataObject();
@@ -1841,6 +1884,14 @@ public class SegmentationController {
         deformAllMeshes(-1);
     }
 
+    /**
+     *
+     * @param steps
+     * @param meshes
+     */
+    public void deformMeshes(int steps, List<DeformableMesh3D> meshes){
+
+    }
     /**
      * Deforms all meshes in the current frame for steps number of iterations, sequentially.
      * If steps is &lt; 0 then it will deform for Integer.MAX_VALUE iterations...which will probably

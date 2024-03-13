@@ -31,6 +31,7 @@ import deformablemesh.ringdetection.FurrowTransformer;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.io.FileInfo;
+import ij.measure.Calibration;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 
@@ -531,11 +532,6 @@ public class MeshImageStack {
         return  new MeshImageStack();
     }
 
-    public MeshImageSubStack createSubStack(Box3D box){
-        ImagePlus plus = samplePlus(box);
-        return new MeshImageSubStack(box, this, plus);
-    }
-
     public ImagePlus samplePlus(Box3D box){
         ImagePlus sample = original.createImagePlus();
         //ret[i] = (r[i] + offsets[i])*SCALE/pixel_dimensions[i];
@@ -565,6 +561,58 @@ public class MeshImageStack {
         return sample;
     }
 
+    /**
+     * Gets the corresponding processor
+     * @param frame time point
+     * @param channel channel number
+     * @param slice z location 0 based.
+     * @return a single 2D image representing a slice of a single channel at a time point.
+     */
+    ImageProcessor getProcessor(int frame, int channel, int slice){
+        int n = getProcessorIndex(frame, channel, slice);
+        return original.getStack().getProcessor(n);
+    }
+
+    /**
+     * gets the index of corresponding image processor for the provided frame
+     * channel slice in the original image data.
+     * @param frame 0 based
+     * @param channel 0 based
+     * @param slice 0 based.
+     * @return 1 based index in the original image stack.
+     */
+    int getProcessorIndex(int frame, int channel, int slice){
+        return slice * CHANNELS + frame*CHANNELS*SLICES + channel + 1;
+    }
+    ImagePlus getCroppedRegion(int x, int y, int z, int w, int h, int d){
+        ImagePlus next = original.createImagePlus();
+
+        ImageStack os = new ImageStack(w, h);
+        int ow = original.getWidth();
+        for(int frame = 0; frame < getNFrames(); frame++){
+            for(int slice = 0; slice < d; slice++){
+                int sz = slice + z;
+                for(int c = 0; c<getNChannels(); c++){
+                    ImageProcessor proc = getProcessor(frame, c, sz);
+                    ImageProcessor crop = proc.createProcessor(w, h);
+                    for(int i = 0; i<w; i++){
+                        for(int j = 0; j<h; j++){
+                            crop.setf(i + w * j, proc.getf(( i + x ) + ow*(j+y)));
+                        }
+                    }
+                    String label = original.getStack().getSliceLabel(getProcessorIndex(frame, c, slice));
+                    os.addSlice(label, crop);
+                }
+            }
+        }
+        next.setStack(os, getNChannels(), d, getNFrames());
+        Calibration cal = next.getCalibration();
+        cal.xOrigin = cal.xOrigin - x;
+        cal.yOrigin = cal.yOrigin - y;
+        cal.zOrigin = cal.zOrigin - z;
+        next.setCalibration(cal);
+        return next;
+    }
     /**
      * Returns a single channel image plus of the current frame.
      *
