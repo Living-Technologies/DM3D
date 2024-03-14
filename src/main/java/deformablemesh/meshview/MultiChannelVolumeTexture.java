@@ -165,6 +165,21 @@ public class MultiChannelVolumeTexture extends Texture3D{
 
     }
 
+    public void updateTextureData(int index, double[][][] double3d, double cl_min, double cl_max, Color3f c){
+
+        textures.set(index, double3d);
+
+        Calibration cal = new Calibration();
+        cal.color = c;
+        calibrations.set(index, cal);
+
+        findMinAndMaxValues(cal, double3d);
+        cal.setRange(cl_min, cl_max);
+
+        clamp();
+
+    }
+
     public void addChannel(double[][][] channelValues, double cl_min, double cl_max, Color3f c){
 
 

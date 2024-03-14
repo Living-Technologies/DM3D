@@ -215,10 +215,11 @@ public class VolumeDataObject implements DataObject {
      */
     public void updateVolume(){
         Color volumeColor = color;
-        //size of the texture backing data.
-
-         volume = new MultiChannelVolumeTexture(texture_data, min, max, DataCanvas.getComponents(volumeColor));
-
+        if(volume != null){
+            volume.updateTextureData(0, texture_data, min, max, DataCanvas.getComponents(volumeColor));
+        } else {
+            volume = new MultiChannelVolumeTexture(texture_data, min, max, DataCanvas.getComponents(volumeColor));
+        }
 
         if(surface==null){
             /*
@@ -242,8 +243,6 @@ public class VolumeDataObject implements DataObject {
             branchGroup.addChild(tg);
             branchGroup.setCapability(BranchGroup.ALLOW_DETACH);
 
-        } else{
-            surface.setTexture(volume);
         }
 
     }
