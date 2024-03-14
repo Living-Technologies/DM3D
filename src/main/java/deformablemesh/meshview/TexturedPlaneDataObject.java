@@ -102,7 +102,7 @@ public class TexturedPlaneDataObject extends DeformableMeshDataObject {
 
 
     private Appearance createTexturedSurface(){
-        VolumeTexture texture = new VolumeTexture(texture_data, min, max, DataCanvas.getComponents(Color.WHITE));
+        MultiChannelVolumeTexture texture = new MultiChannelVolumeTexture(texture_data, min, max, DataCanvas.getComponents(Color.WHITE));
 
         TexCoordGeneration texCGen = new TexCoordGeneration();
         texCGen.setFormat(TexCoordGeneration.TEXTURE_COORDINATE_3);
@@ -142,9 +142,6 @@ public class TexturedPlaneDataObject extends DeformableMeshDataObject {
         material.setLightingEnable(false);
         appear.setMaterial(material);
         appear.setPolygonAttributes(p);
-        //appear.setTransparencyAttributes(
-        //        new TransparencyAttributes(TransparencyAttributes.NICEST, 1.0f)
-        //);
 
         return appear;
     }
@@ -160,12 +157,6 @@ public class TexturedPlaneDataObject extends DeformableMeshDataObject {
         texturedAppearance = createTexturedSurface();
         surface_object.setAppearance(texturedAppearance);
     }
-
-    @Override
-    public BranchGroup getBranchGroup() {
-        return branch_group;
-    }
-
 
     public void setShowSurface(boolean showSurface) {
         if(showSurface){

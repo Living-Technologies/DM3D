@@ -160,11 +160,11 @@
 			<url>https://maven.imagej.net/content/groups/public</url>
 		</repository>
 		<repository>
-			<id>jogamp.org</id>
+			<id>jogl.jogamp.org</id>
 			<url>https://jogamp.org/deployment/maven</url>
 		</repository>
 		<repository>
-			<id>jogamp.org</id>
+			<id>java3d.jogamp.org</id>
 			<url>https://jogamp.org/deployment/maven-java3d/</url>
 		</repository>
 

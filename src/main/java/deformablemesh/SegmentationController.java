@@ -1885,25 +1885,14 @@ public class SegmentationController {
     }
 
     /**
+     * Deform the provided tracks as a group for step iterations.
      *
-     * @param steps
-     * @param meshes
+     * @param steps number of update steps performed
+     * @param tracks list of tracks, meshes will be grabbed from the tracks.
      */
-    public void deformMeshes(int steps, List<DeformableMesh3D> meshes){
-
-    }
-    /**
-     * Deforms all meshes in the current frame for steps number of iterations, sequentially.
-     * If steps is &lt; 0 then it will deform for Integer.MAX_VALUE iterations...which will probably
-     * take forever.
-     *
-     * @param steps
-     */
-    public void deformAllMeshes(int steps){
-
-
+    public void deformMeshes(int steps, List<Track> tracks){
         final List<DeformableMesh3D> meshes = new ArrayList<>();
-        List<Track> tracks = model.getAllTracks();
+
         Integer frame = model.getCurrentFrame();
         for(Track t: tracks){
             if(t.containsKey(frame)){
@@ -1955,6 +1944,18 @@ public class SegmentationController {
                 }
             });
         }
+    }
+    /**
+     * Deforms all meshes in the current frame for steps number of iterations, sequentially.
+     * If steps is &lt; 0 then it will deform for Integer.MAX_VALUE iterations...which will probably
+     * take forever.
+     *
+     * @param steps
+     */
+    public void deformAllMeshes(int steps){
+
+        List<Track> tracks = model.getAllTracks();
+        deformMeshes(steps, tracks);
     }
 
     /**
@@ -2125,53 +2126,55 @@ public class SegmentationController {
         }
 
     }
+    public void trackMeshBackWards(Track track, int frame){
+         if(frame <= 0) return;
+        actionStack.postAction(new UndoableActions() {
+            final int frame = model.getCurrentFrame();
+            final int previous = frame - 1;
+            final DeformableMesh3D old = track.getMesh(previous);
+            final DeformableMesh3D newer = copyMesh(track.getMesh(frame));
 
+            @Override
+            public void perform() {
+                submit(() -> {
+                    model.addMeshToTrack(previous, newer, track);
+                });
+            }
+
+            @Override
+            public void undo() {
+                submit(()->{
+                    if(old==null){
+                        model.removeMeshFromTrack(previous, newer, track);
+                    } else{
+                        model.addMeshToTrack(previous, old, track);
+                    }
+                });
+
+            }
+
+            @Override
+            public void redo() {
+                submit(() -> {
+                    model.addMeshToTrack(previous, newer, track);
+                });
+            }
+
+            @Override
+            public String getName(){
+                return "track mesh backwards";
+            }
+
+        });
+    }
     /**
      * Copies the current mesh, moves to the previous frame and adds the copy to the currently selected track.
      *
      */
     public void trackMeshBackwards(){
 
-        if(model.hasSelectedMesh() && model.getCurrentFrame()>0){
-            actionStack.postAction(new UndoableActions() {
-                final int frame = model.getCurrentFrame();
-                final int previous = frame - 1;
-                final DeformableMesh3D old = model.getSelectedMesh(previous);
-                final DeformableMesh3D newer = copyMesh(model.getSelectedMesh(frame));
-                Track track = model.getSelectedTrack();
-
-                @Override
-                public void perform() {
-                    submit(() -> {
-                        model.addMeshToTrack(previous, newer, track);
-                    });
-                }
-
-                @Override
-                public void undo() {
-                    submit(()->{
-                        if(old==null){
-                            model.removeMeshFromTrack(previous, newer, track);
-                        } else{
-                            model.addMeshToTrack(previous, old, track);
-                        }
-                    });
-
-                }
-
-                @Override
-                public void redo() {
-                    submit(() -> {
-                        model.addMeshToTrack(previous, newer, track);
-                    });
-                }
-
-                @Override
-                public String getName(){
-                    return "track mesh backwards";
-                }
-
-            });
+        if(model.hasSelectedMesh()){
+            trackMeshBackWards(model.getSelectedTrack(), model.getCurrentFrame());
             previousFrame();
         }
     }
