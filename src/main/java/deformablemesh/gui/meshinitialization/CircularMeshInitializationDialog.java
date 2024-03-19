@@ -161,6 +161,11 @@ public class CircularMeshInitializationDialog implements FrameListener {
             createSnapShots();
         });
 
+        JButton syncToFurrow = new JButton("sync position");
+        syncToFurrow.setToolTipText("Sets planes to be the same as the 3D canvas furrow.");
+        syncToFurrow.addActionListener(evt->{
+            syncToFurrow();
+        });
 
         // contains controls.
         JPanel row = new JPanel();
@@ -184,6 +189,7 @@ public class CircularMeshInitializationDialog implements FrameListener {
         row.add(close);
         row.add(binary);
         row.add(snapshots);
+        row.add(syncToFurrow);
 
         row.add(Box.createHorizontalStrut(tl.getWidth()));
         row.add(showCursor);
@@ -252,6 +258,20 @@ public class CircularMeshInitializationDialog implements FrameListener {
         afterClosing();
     }
 
+    public void syncToFurrow(){
+        Furrow3D f = segmentationController.getFurrow();
+        double[] pos = f.cm;
+        for( SlicePicker picker: initializer.pickers.values()){
+            double[] n = picker.getNormal();
+            double l = Vector3DOps.dot(pos, n);
+            int step = (int)((l + 0.5)*picker.graduations);
+            picker.setSliderValue(step);
+
+
+        }
+
+
+    }
 
     public DeformableMesh3D fillSpheresWithMesh(List<Sphere> spheres,DeformableMesh3D mesh, double min, double max){
 

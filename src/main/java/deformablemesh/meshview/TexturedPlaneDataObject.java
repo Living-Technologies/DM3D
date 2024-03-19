@@ -45,7 +45,7 @@ public class TexturedPlaneDataObject extends DeformableMeshDataObject {
     int[] sizes;
     double[] lengths;
     double[] offsets;
-    VolumeTexture volume;
+    MultiChannelVolumeTexture volume;
     float min = 0;
     float max = 1;
     public TexturedPlaneDataObject(DeformableMesh3D mesh, MeshImageStack stack){
@@ -153,7 +153,7 @@ public class TexturedPlaneDataObject extends DeformableMeshDataObject {
     }
 
     public void updateVolume(){
-        volume = new VolumeTexture(texture_data, min, max, DataCanvas.getComponents(volumeColor));
+        volume = new MultiChannelVolumeTexture(texture_data, min, max, DataCanvas.getComponents(volumeColor));
         texturedAppearance = createTexturedSurface();
         surface_object.setAppearance(texturedAppearance);
     }

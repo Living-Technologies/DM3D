@@ -49,7 +49,6 @@ import java.util.stream.Collectors;
  * User: msmith
  * Date: 7/2/13
  * Time: 7:57 AM
- * To change this template use File | Settings | File Templates.
  */
 public class DeformableMesh3D{
     public double GAMMA;

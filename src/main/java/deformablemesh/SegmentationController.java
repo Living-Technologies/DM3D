@@ -2010,19 +2010,21 @@ public class SegmentationController {
     }
 
     /**
-     * Deforms mesh for a set number of iterations.
+     * Deforms the provided mesh by updating the mesh steps number of times.
      *
-     * @param count number of iterations, if less than zero, it continues to deform until stopped.
+     *
+     * @param mesh mesh that gets updated.
+     * @param steps number of times the mesh will be updated, the connectivity does not change.
      */
-    public void deformMesh(final int count){
+    public void deformMesh(final DeformableMesh3D mesh, int steps){
         actionStack.postAction(new UndoableActions(){
-            final DeformableMesh3D mesh = model.getSelectedMesh(model.getCurrentFrame());
+
             final double[] positions = Arrays.copyOf(mesh.positions, mesh.positions.length);
             double[] newPositions;
             @Override
             public void perform() {
                 main.submit(() -> {
-                    model.deformMesh(count);
+                    model.deformMesh(steps);
                     newPositions = Arrays.copyOf(mesh.positions, mesh.positions.length);
                 });
 
@@ -2048,6 +2050,27 @@ public class SegmentationController {
             }
 
         });
+    }
+    /**
+     * Deforms mesh for a set number of iterations.
+     *
+     * @param count number of iterations, if less than zero, it continues to deform until stopped.
+     */
+    public void deformMesh(final int count){
+        if(getSelectedMesh() == null){
+            return;
+        }
+        deformMesh(getSelectedMesh(), count);
+
+    }
+
+    /**
+     * Convenience method for interfacting with javascript.
+     *
+     * @return
+     */
+    public List<Track> getEmptyTrackList(){
+        return new ArrayList<>();
     }
 
     /**
@@ -3276,6 +3299,10 @@ public class SegmentationController {
         current.copyValues(stack);
     }
 
+    public Furrow3D getFurrow() {
+        return getRingController().getFurrow();
+    }
+
     /**
      * Tasks for the exception throwing service.
      */
@@ -3481,6 +3508,17 @@ public class SegmentationController {
 
     public void shutdown(){
         main.submit(main::shutdown);
+    }
+
+    Runnable sc5 = null;
+
+    public void setHotKey5(Runnable r){
+        sc5 = r;
+    }
+    public void hotKey5(){
+        if(sc5 != null){
+            sc5.run();
+        }
     }
 }
 

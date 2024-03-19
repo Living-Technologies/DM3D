@@ -58,7 +58,7 @@ public class NewtonMesh3D extends DeformableMesh3D {
 
     @Override
     public void update(){
-        if(decomp==null){
+        if(noder==null || conner==null){
             reshape();
         }
 

@@ -350,6 +350,12 @@ public class HotKeyDelegate {
                 "Center view on selected mesh.",
                 controller::centerSelectedMesh
         );
+        createActionMapKey(
+                KeyStroke.getKeyStroke(KeyEvent.VK_5, 0, true),
+                "CUSTOM",
+                "Set with controls.setHotKey5(Runnable r).",
+                controller::hotKey5
+        );
 
 
     }
@@ -402,42 +408,5 @@ public class HotKeyDelegate {
         actions.add(key);
         return key;
     }
-
-    /**
-     *  addKeyListener(new KeyListener(){
-
-    @Override
-    public void keyTyped(KeyEvent e) {
-    char c = e.getKeyChar();
-    switch(c){
-    case ' ':
-    toggleAxis();
-    break;
-    case 's':
-    segmentationController.takeSnapShot();
-    break;
-    case 'n':
-    segmentationController.selectNextMeshTrack();
-    break;
-    case 'o':
-    segmentationController.toggleSurface();
-    break;
-    default:
-    break;
-    }
-    }
-
-    @Override
-    public void keyPressed(KeyEvent e) {
-
-    }
-
-    @Override
-    public void keyReleased(KeyEvent e) {
-
-    }
-    });
-     */
-
 
 }
