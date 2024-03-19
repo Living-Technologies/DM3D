@@ -23,8 +23,10 @@
  * THE SOFTWARE.
  * #L%
  */
-package deformablemesh.geometry;
+package deformablemesh.geometry.projectable;
 
+import deformablemesh.geometry.*;
+import deformablemesh.geometry.projectable.Projectable;
 import deformablemesh.ringdetection.FurrowTransformer;
 import deformablemesh.util.Vector3DOps;
 
@@ -36,7 +38,7 @@ import java.util.*;
 /**
  * Created by msmith on 6/23/16.
  */
-public class ProjectableMesh implements Projectable{
+public class ProjectableMesh implements Projectable {
     final DeformableMesh3D mesh;
     public ProjectableMesh(DeformableMesh3D mesh){
         this.mesh = mesh;

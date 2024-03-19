@@ -29,7 +29,7 @@ import deformablemesh.MeshImageStack;
 import deformablemesh.SegmentationController;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Furrow3D;
-import deformablemesh.geometry.ProjectableMesh;
+import deformablemesh.geometry.projectable.ProjectableMesh;
 import deformablemesh.geometry.modifier.MeshModifier;
 import deformablemesh.io.FurrowWriter;
 import deformablemesh.ringdetection.ContractileRingDetector;
@@ -42,7 +42,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
-import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Shape;
@@ -192,6 +191,11 @@ public class RingController implements FrameListener, ListDataListener {
     public void sculptClicked(ActionEvent evt){
         if(modifier==null ) return;
         modifier.setSculptMode();
+    }
+
+    public void translateClicked(ActionEvent evt){
+        if(modifier == null) return;
+        modifier.setTranslateMode();
     }
 
     public JPanel getHistControlsPanel(){

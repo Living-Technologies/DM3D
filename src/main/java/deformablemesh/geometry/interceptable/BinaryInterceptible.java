@@ -23,9 +23,11 @@
  * THE SOFTWARE.
  * #L%
  */
-package deformablemesh.geometry;
+package deformablemesh.geometry.interceptable;
 
 import deformablemesh.MeshImageStack;
+import deformablemesh.geometry.Interceptable;
+import deformablemesh.geometry.Intersection;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,7 +36,7 @@ import java.util.List;
 /**
  * class for using
  */
-public class BinaryInterceptible implements Interceptable{
+public class BinaryInterceptible implements Interceptable {
     double[] center;
     List<double[]> edge;
     int label;

@@ -31,7 +31,9 @@ import deformablemesh.SegmentationModel;
 import deformablemesh.externalenergies.PerpendicularGradientEnergy;
 import deformablemesh.externalenergies.PressureForce;
 import deformablemesh.geometry.*;
-import deformablemesh.gui.Drawable;
+import deformablemesh.geometry.interceptable.Box3DInterceptable;
+import deformablemesh.geometry.projectable.Projectable;
+import deformablemesh.geometry.projectable.ProjectableMesh;
 import deformablemesh.gui.FrameListener;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.util.Vector3DOps;
@@ -419,7 +421,7 @@ public class CircularMeshInitializationDialog implements FrameListener {
 
         List<Interceptable> system = new ArrayList<>(2);
         system.add(collectionOfSpheres);
-        system.add(bounds);
+        system.add(new Box3DInterceptable(bounds));
         DeformableMesh3D mesh = RayCastMesh.rayCastMesh(system, com, segmentationController.getDivisions());
         //mesh = fillSpheresWithMesh(spheres, mesh, 0.01, 0.025);
         //mesh.create3DObject();

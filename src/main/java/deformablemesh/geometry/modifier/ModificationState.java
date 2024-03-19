@@ -25,8 +25,7 @@
  */
 package deformablemesh.geometry.modifier;
 
-import deformablemesh.geometry.Projectable;
-import deformablemesh.gui.Drawable;
+import deformablemesh.geometry.projectable.Projectable;
 
 import java.awt.event.MouseEvent;
 

@@ -25,6 +25,7 @@
  */
 package deformablemesh.geometry;
 
+import deformablemesh.geometry.interceptable.Box3DInterceptable;
 import deformablemesh.meshview.DeformableMeshDataObject;
 import deformablemesh.meshview.MeshFrame3D;
 
@@ -655,7 +656,7 @@ public class ConnectionRemesher {
         ConnectionRemesher rem = new ConnectionRemesher();
         rem.buildDisplay();
 
-        Box3D box = new Box3D(new double[]{0, 0, 0}, 1.0, 0.5, 0.6);
+        Box3DInterceptable box = new Box3D(new double[]{0, 0, 0}, 1.0, 0.5, 0.6).interceptable();
         DeformableMesh3D mesh = RayCastMesh.rayCastMesh(box, new double[]{ 0, 0, 0 }, 2);
         mesh.create3DObject();
         mesh.setShowSurface(false);

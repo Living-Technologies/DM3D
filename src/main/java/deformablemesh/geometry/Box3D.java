@@ -25,11 +25,14 @@
  */
 package deformablemesh.geometry;
 
+import deformablemesh.geometry.interceptable.AxisPlane;
+import deformablemesh.geometry.interceptable.Box3DInterceptable;
+import deformablemesh.ringdetection.FurrowTransformer;
 import deformablemesh.util.Vector3DOps;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
+import java.awt.*;
+import java.awt.geom.Path2D;
+import java.util.*;
 import java.util.List;
 
 import static deformablemesh.util.Vector3DOps.TOL;
@@ -39,11 +42,11 @@ import static deformablemesh.util.Vector3DOps.TOL;
  *
  * Created by msmith on 5/28/14.
  */
-public class Box3D implements Interceptable{
+public class Box3D{
     public double[] low;
     public double[] high;
-    List<AxisPlane> planes = new ArrayList<>();
     final static Box3D empty = new Box3D(0, 0, 0, 0, 0, 0);
+
     public Box3D(double[] center, double width, double length, double height){
         low = new double[]{
                 center[0] - 0.5*width,
@@ -56,66 +59,20 @@ public class Box3D implements Interceptable{
                 center[1] + 0.5*length,
                 center[2] + 0.5*height
         };
-        createPlanes();
     }
 
     public Box3D(double minx, double miny, double minz, double maxx, double maxy, double maxz) {
         low = new double[]{minx, miny, minz};
         high = new double[]{maxx, maxy, maxz};
-        createPlanes();
     }
 
-    void createPlanes(){
-        AxisPlane plusX = new AxisPlane(
-            new double[]{high[0] - TOL, low[1] + high[1], low[2] + high[2]},
-            Vector3DOps.xhat
-        );
-        planes.add(plusX);
-
-        AxisPlane minusX = new AxisPlane(
-            new double[]{low[0] + TOL, low[1] + high[1], low[2] + high[2]},
-            Vector3DOps.nxhat
-        );
-        planes.add(minusX);
-
-        AxisPlane plusY = new AxisPlane(
-            new double[]{low[0] + high[1], high[1] - TOL, low[2] + high[2]},
-            Vector3DOps.yhat
-        );
-        planes.add(plusY);
-
-        AxisPlane minusY = new AxisPlane(
-                new double[]{high[0] + low[0], low[1] + TOL, low[2] + high[2]},
-                Vector3DOps.nyhat
-        );
-        planes.add(minusY);
-
-        AxisPlane plusZ = new AxisPlane(
-                new double[]{high[0] + low[0], low[1] + high[1], high[2]- TOL},
-                Vector3DOps.zhat
-        );
-        planes.add(plusZ);
-
-        AxisPlane minusZ = new AxisPlane(
-                new double[]{high[0] + low[0], low[1] + high[1], low[2]+ TOL},
-                Vector3DOps.nzhat
-        );
-        planes.add(minusZ);
-   }
-
-    @Override
-    public List<Intersection> getIntersections(double[] origin, double[] direction) {
-        List<Intersection> intersections = new ArrayList<>();
-        for(AxisPlane plane: planes){
-            for(Intersection section: plane.getIntersections(origin, direction)){
-                if(contains(section.location)){
-                    intersections.add(section);
-                }
-            }
-        }
-        return intersections;
+    public Box3D(Box3D box){
+        this(box.low[0], box.low[1], box.low[2], box.high[0], box.high[1], box.high[2]);
     }
 
+    public Box3DInterceptable interceptable(){
+        return new Box3DInterceptable(this);
+    }
     public boolean contains(double[] point){
 
         return point[0]>=low[0] && point[0]<=high[0]
@@ -191,40 +148,14 @@ public class Box3D implements Interceptable{
     public String toString(){
         return "Box3D: " + Arrays.toString(low) + " :: " + Arrays.toString(high);
     }
-}
 
-class AxisPlane implements Interceptable{
-    double[] position;
-    double[] normal;
-
-    List<Intersection> sections = new ArrayList<>(1);
-
-    public AxisPlane(double[] pos, double[] norm){
-        position = pos;
-        normal = norm;
-    }
-
-    @Override
-    public List<Intersection> getIntersections(double[] origin, double[] direction) {
-        sections.clear();
-
-        double[] r = Vector3DOps.difference(position, origin);
-        double dot = Vector3DOps.dot(r, normal);
-        double cosTheta = Vector3DOps.dot(direction, normal);
-        if(cosTheta!=0){
-            //dot is the distance along the normal.
-            double m = dot/cosTheta;
-
-            sections.add(new Intersection(
-                    Vector3DOps.add(origin, direction, m),
-                    normal
-            ));
-        } else{
-            //parallel
-            sections.add(Intersection.inf(normal));
+    public void translate(double[] delta){
+        for(int i = 0; i<low.length; i++){
+            low[i] += delta[i];
+            high[i] += delta[i];
         }
-
-        return Collections.unmodifiableList(sections);
     }
 
+
 }
+

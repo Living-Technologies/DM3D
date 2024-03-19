@@ -28,11 +28,11 @@ package deformablemesh.geometry.modifier;
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.*;
+import deformablemesh.geometry.projectable.Projectable;
+import deformablemesh.geometry.projectable.ProjectableMesh;
 import deformablemesh.gui.Drawable;
 import deformablemesh.gui.FurrowInput;
-import deformablemesh.gui.Slice3DView;
 import deformablemesh.io.MeshReader;
-import deformablemesh.io.MeshWriter;
 import deformablemesh.meshview.CanvasView;
 import deformablemesh.meshview.DataObject;
 import deformablemesh.meshview.MeshFrame3D;
@@ -78,6 +78,7 @@ public class MeshModifier implements Drawable {
     double SELECTED_NODE_RADIUS = 0.005;
     Sculptor sculptor = new Sculptor(this);
     Selector selector = new Selector(this);
+    Translator translator = new Translator(this);
     ModificationState state;
     TexturedPlaneDataObject slice;
     List<Sphere> markers = new ArrayList<>();
@@ -152,6 +153,10 @@ public class MeshModifier implements Drawable {
         manager.setSculptMode();
     }
 
+    public void setTranslateMode(){
+        manager.setTranslateMode();
+    }
+
     public DeformableMesh3D getOriginalMesh() {
         return original;
     }
@@ -202,6 +207,10 @@ public class MeshModifier implements Drawable {
 
         public void setSculptMode(){
             registerState(sculptor);
+        }
+
+        public void setTranslateMode(){
+            registerState(translator);
         }
 
         public void setSelectMode(){

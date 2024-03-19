@@ -26,11 +26,10 @@
 package deformablemesh.simulations;
 
 import deformablemesh.MeshImageStack;
-import deformablemesh.geometry.BinaryInterceptible;
+import deformablemesh.geometry.interceptable.BinaryInterceptible;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.RayCastMesh;
 import deformablemesh.io.MeshReader;
-import deformablemesh.io.MeshWriter;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.track.Track;
 import ij.ImagePlus;

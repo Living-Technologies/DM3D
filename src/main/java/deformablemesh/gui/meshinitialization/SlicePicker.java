@@ -27,8 +27,8 @@ package deformablemesh.gui.meshinitialization;
 
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.DeformableMesh3D;
-import deformablemesh.geometry.Projectable;
-import deformablemesh.geometry.ProjectableMesh;
+import deformablemesh.geometry.projectable.Projectable;
+import deformablemesh.geometry.projectable.ProjectableMesh;
 import deformablemesh.gui.Drawable;
 import deformablemesh.gui.GuiTools;
 import deformablemesh.gui.Slice3DView;

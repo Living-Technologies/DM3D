@@ -23,7 +23,7 @@
  * THE SOFTWARE.
  * #L%
  */
-package deformablemesh.geometry;
+package deformablemesh.geometry.projectable;
 
 import deformablemesh.ringdetection.FurrowTransformer;
 

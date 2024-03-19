@@ -25,6 +25,7 @@
  */
 package deformablemesh.geometry;
 
+import deformablemesh.geometry.projectable.Projectable;
 import deformablemesh.meshview.SphereDataObject;
 import deformablemesh.ringdetection.FurrowTransformer;
 import deformablemesh.util.Vector3DOps;

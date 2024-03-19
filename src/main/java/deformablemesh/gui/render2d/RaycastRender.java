@@ -26,6 +26,7 @@
 package deformablemesh.gui.render2d;
 
 import deformablemesh.geometry.*;
+import deformablemesh.geometry.interceptable.Box3DInterceptable;
 import deformablemesh.io.MeshReader;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.track.Track;
@@ -56,10 +57,12 @@ public class RaycastRender implements Runnable {
     JPanel panel;
     List<InterceptingMesh3D> meshes = new ArrayList<>();
     List<Color> colors = new ArrayList<>();
-    Box3D bottom;
-    Box3D chip;
+    Box3DInterceptable bottom;
+    Box3DInterceptable chip;
     public RaycastRender(){
-        chip = new Box3D(new double[]{0, -1 - 0.25, 0}, 0.25, 0.5, 0.25);
+        chip = new Box3DInterceptable(
+                new Box3D(new double[]{0, -1 - 0.25, 0}, 0.25, 0.5, 0.25)
+        );
         Graphics g = img.createGraphics();
         g.setColor(Color.BLACK);
         g.fillRect(0, 0, width, height);
@@ -96,7 +99,9 @@ public class RaycastRender implements Runnable {
             System.out.println(mesh.getColor());
         }
         System.out.println("lowest: " + lowest);
-        bottom = new Box3D( new double[]{0., 0., lowest-CUTOFF/2}, 2, 2, CUTOFF);
+        bottom = new Box3DInterceptable(
+                        new Box3D( new double[]{0., 0., lowest-CUTOFF/2}, 2, 2, CUTOFF)
+                    );
 
     }
     static class Ray{

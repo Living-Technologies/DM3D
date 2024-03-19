@@ -317,6 +317,8 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         JButton finish = new JButton("finish");
         JButton cancel = new JButton("cancel");
         JButton sculpt = new JButton("sculpt");
+        JButton translate = new JButton("translate");
+
         nodeSelect.addActionListener(evt->{
             ringController.selectNodes(evt);
             if(ringController.modifyingMesh()){
@@ -324,6 +326,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
 
                 //buttons.forEach(b->b.setEnabled(false));
                 EventQueue.invokeLater(() -> {
+                    translate.setEnabled(true);
                     sculpt.setEnabled(true);
                     finish.setEnabled(true);
                     cancel.setEnabled(true);
@@ -336,11 +339,21 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         buttons.add(sculpt);
         buttons.add(cancel);
         buttons.add(finish);
+        buttons.add(translate);
         sculpt.addActionListener( evt -> {
             if(ringController.modifyingMesh()) {
                 ringController.sculptClicked(evt);
                 nodeSelect.setEnabled(true);
                 sculpt.setEnabled(false);
+            }
+        });
+
+        translate.addActionListener( evt->{
+            if(ringController.modifyingMesh()){
+                ringController.translateClicked(evt);
+                nodeSelect.setEnabled(true);
+                sculpt.setEnabled(true);
+                translate.setEnabled(false);
             }
         });
         finish.addActionListener(evt->{
@@ -369,11 +382,12 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         gbc.gridheight = 3;
         components.add( ringController.createFurrowInput(), gbc);
 
-        JPanel keys = new JPanel(new GridLayout(3, 2));
+        JPanel keys = new JPanel(new GridLayout(3, 3));
         keys.add(center);
         keys.add(initialize);
         keys.add(nodeSelect);
         keys.add(sculpt);
+        keys.add(translate);
         keys.add(cancel);
         keys.add(finish);
         gbc.gridx = 1;

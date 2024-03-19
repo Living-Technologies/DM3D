@@ -27,9 +27,8 @@ package deformablemesh.geometry.modifier;
 
 import deformablemesh.geometry.Furrow3D;
 import deformablemesh.geometry.Node3D;
-import deformablemesh.geometry.Projectable;
+import deformablemesh.geometry.projectable.Projectable;
 import deformablemesh.geometry.Sphere;
-import deformablemesh.gui.Drawable;
 import deformablemesh.meshview.DataObject;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.util.Vector3DOps;
@@ -59,15 +58,7 @@ class Sculptor implements ModificationState {
     }
 
     double[] shifted(double[] point){
-        //  double[] normal  = modifier.furrow.normal;
-        //return Vector3DOps.add(point, normal, 0.0*sphere.getRadius());
         return point;
-    }
-
-    public void cursorMoved(double[] planePosition) {
-        if(planePosition != null) {
-            sphere.moveTo(planePosition);
-        }
     }
 
     /**
@@ -85,10 +76,9 @@ class Sculptor implements ModificationState {
     @Override
     public void deregister() {
         if(meshFrame3D != null){
-
             meshFrame3D.removeDataObject(getCursor());
             for(Sphere sphere: markers.values()){
-                meshFrame3D.removeDataObject(getCursor());
+                meshFrame3D.removeDataObject(sphere.createDataObject());
             }
             meshFrame3D.setCanvasControllerEnabled(true);
         }
