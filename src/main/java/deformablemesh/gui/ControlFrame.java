@@ -99,6 +99,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             terminal = new SwingJSTerm(model);
         } catch (Throwable e){
             System.out.println("Javascript not configured properly");
+            e.printStackTrace();
             //can be a couple errors.
         }
 
@@ -1461,6 +1462,20 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         }
     }
 
+    public void trackMeshForwardActionChoose(){
+        if(ready){
+            setReady(false);
+            segmentationController.chooseTrackForward();
+            finished();
+        }
+    }
+    public void trackMeshBackwardActionChoose(){
+        if(ready){
+            setReady(false);
+            segmentationController.chooseTrackBackward();
+            finished();
+        }
+    }
     public void trackMeshBackwardsAction(){
         if(ready) {
             setReady(false);
