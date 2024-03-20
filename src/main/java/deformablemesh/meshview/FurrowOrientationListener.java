@@ -72,7 +72,6 @@ public class FurrowOrientationListener implements CanvasView{
         Furrow3D furrow = controller.getRingController().getFurrow();
         if(furrow == null) return; //probably not true.
         double[] center = furrow.cm;
-        int possible = 0;
         for(PickResult result: results){
             if(selected.data_object!=null){
                 GeometryArray array = result.getGeometryArray();
@@ -82,11 +81,11 @@ public class FurrowOrientationListener implements CanvasView{
                     double[] apt = { pt.x, pt.y, pt.z};
                     double[] diff = Vector3DOps.difference(apt, center);
                     double mag = Vector3DOps.normalize(diff);
-                    if(mag > 0 && possible == 0){
-                        possible++;
+                    if(mag > 0){
                         controller.setFurrowForCurrentFrame(center, diff);
                     }
                 }
+                break;
             }
         }
     }

@@ -1047,11 +1047,6 @@ public class SegmentationModel {
         return stack.getNChannels();
     }
 
-    public void flipFurrow() {
-        Furrow3D furrow = ringController.getFurrow();
-
-        furrow.flip();
-    }
 }
 
 

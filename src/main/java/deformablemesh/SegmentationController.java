@@ -1457,21 +1457,23 @@ public class SegmentationController {
 
 
     public void flipFurrow(){
-        model.flipFurrow();
+        Furrow3D furrow = getFurrow();
+        double[] normal = {-furrow.normal[0], -furrow.normal[1], -furrow.normal[2]};
+        setFurrowForCurrentFrame(furrow.cm, normal);
     }
 
     public void furrowForward(){
         Furrow3D f = getRingController().getFurrow();
         double velocity = 0.0125;
         double[] ucm = Vector3DOps.add(f.cm, f.normal, velocity);
-        f.setGeometry(ucm, f.normal);
+        setFurrowForCurrentFrame(ucm, f.normal);
     }
 
     public void furrowBackward(){
         Furrow3D f = getRingController().getFurrow();
         double velocity = -0.0125;
         double[] ucm = Vector3DOps.add(f.cm, f.normal, velocity);
-        f.setGeometry(ucm, f.normal);
+        setFurrowForCurrentFrame(ucm, f.normal);
     }
 
     public void centerFurrowOnSelectedMesh(){
@@ -1484,7 +1486,7 @@ public class SegmentationController {
         }
 
         Furrow3D f = getRingController().getFurrow();
-        f.setGeometry(center, f.normal);
+        setFurrowForCurrentFrame(center, f.normal);
     }
     /**
      * Creates an image based on a furrow transformer built using the provided position and normal.
