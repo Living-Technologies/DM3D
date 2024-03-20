@@ -25,6 +25,8 @@
  */
 package deformablemesh.geometry;
 
+import deformablemesh.geometry.interceptable.Interceptable;
+import deformablemesh.geometry.interceptable.InterceptingMesh3D;
 import deformablemesh.util.Vector3DOps;
 import org.junit.Assert;
 import org.junit.Test;

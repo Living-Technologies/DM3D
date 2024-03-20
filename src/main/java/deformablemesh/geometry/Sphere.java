@@ -25,6 +25,7 @@
  */
 package deformablemesh.geometry;
 
+import deformablemesh.geometry.interceptable.Interceptable;
 import deformablemesh.geometry.projectable.Projectable;
 import deformablemesh.meshview.SphereDataObject;
 import deformablemesh.ringdetection.FurrowTransformer;
@@ -40,7 +41,7 @@ import java.util.List;
  *
  * Created by msmith on 2/8/16.
  */
-public class Sphere implements Projectable, Interceptable{
+public class Sphere implements Projectable, Interceptable {
     double[] center;
     double radius;
 

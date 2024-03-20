@@ -23,8 +23,9 @@
  * THE SOFTWARE.
  * #L%
  */
-package deformablemesh.geometry;
+package deformablemesh.geometry.interceptable;
 
+import deformablemesh.geometry.*;
 import deformablemesh.util.Vector3DOps;
 
 import java.util.ArrayList;
@@ -36,7 +37,7 @@ import java.util.stream.Collectors;
  *
  * Created by msmith on 2/9/16.
  */
-public class InterceptingMesh3D implements Interceptable{
+public class InterceptingMesh3D implements Interceptable {
 
     final DeformableMesh3D mesh;
     List<InterceptingTriangle3D> triangles;

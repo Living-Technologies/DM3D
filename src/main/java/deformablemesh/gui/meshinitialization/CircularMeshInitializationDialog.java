@@ -32,6 +32,8 @@ import deformablemesh.externalenergies.PerpendicularGradientEnergy;
 import deformablemesh.externalenergies.PressureForce;
 import deformablemesh.geometry.*;
 import deformablemesh.geometry.interceptable.Box3DInterceptable;
+import deformablemesh.geometry.interceptable.CompositeInterceptables;
+import deformablemesh.geometry.interceptable.Interceptable;
 import deformablemesh.geometry.projectable.Projectable;
 import deformablemesh.geometry.projectable.ProjectableMesh;
 import deformablemesh.gui.FrameListener;

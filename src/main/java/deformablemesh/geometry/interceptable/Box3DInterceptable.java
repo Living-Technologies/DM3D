@@ -1,7 +1,6 @@
 package deformablemesh.geometry.interceptable;
 
 import deformablemesh.geometry.Box3D;
-import deformablemesh.geometry.Interceptable;
 import deformablemesh.geometry.Intersection;
 import deformablemesh.util.Vector3DOps;
 

@@ -25,8 +25,8 @@
  */
 package deformablemesh.geometry;
 
-import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
+import deformablemesh.geometry.interceptable.Interceptable;
 import deformablemesh.meshview.*;
 import deformablemesh.ringdetection.FurrowTransformer;
 import deformablemesh.util.Vector3DOps;
@@ -47,7 +47,7 @@ import java.util.stream.Collectors;
  * Time: 11:42 AM
  * To change this template use File | Settings | File Templates.
  */
-public class Furrow3D implements Interceptable{
+public class Furrow3D implements Interceptable {
     public double[] cm;
     public double[] normal;
     public double[] up;

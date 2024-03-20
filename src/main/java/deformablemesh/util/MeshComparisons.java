@@ -27,9 +27,8 @@ package deformablemesh.util;
 
 import deformablemesh.geometry.Box3D;
 import deformablemesh.geometry.DeformableMesh3D;
-import deformablemesh.geometry.InterceptingMesh3D;
+import deformablemesh.geometry.interceptable.InterceptingMesh3D;
 import deformablemesh.io.MeshReader;
-import deformablemesh.io.MeshWriter;
 import deformablemesh.track.Track;
 import lightgraph.Graph;
 

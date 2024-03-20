@@ -26,8 +26,8 @@
 package deformablemesh;
 
 import deformablemesh.geometry.*;
+import deformablemesh.geometry.interceptable.InterceptingMesh3D;
 import deformablemesh.io.MeshReader;
-import deformablemesh.io.MeshWriter;
 import deformablemesh.track.Track;
 import deformablemesh.util.Vector3DOps;
 import deformablemesh.util.astar.*;

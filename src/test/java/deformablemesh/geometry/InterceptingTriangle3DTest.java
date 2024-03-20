@@ -27,6 +27,7 @@ package deformablemesh.geometry;
 
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
+import deformablemesh.geometry.interceptable.InterceptingTriangle3D;
 import deformablemesh.io.MeshReader;
 import deformablemesh.track.Track;
 import deformablemesh.util.Vector3DOps;
@@ -37,7 +38,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 
 public class InterceptingTriangle3DTest {
     public static void brokenMeshes() throws IOException {

@@ -26,7 +26,7 @@
 package deformablemesh.externalenergies;
 
 import deformablemesh.geometry.DeformableMesh3D;
-import deformablemesh.geometry.InterceptingMesh3D;
+import deformablemesh.geometry.interceptable.InterceptingMesh3D;
 import deformablemesh.geometry.Triangle3D;
 import deformablemesh.util.Vector3DOps;
 

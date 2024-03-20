@@ -38,7 +38,7 @@ package deformablemesh.geometry;
  * To change this template use File | Settings | File Templates.
  */
 public class Triangle3D {
-    final Node3D A,B,C;
+    final public Node3D A,B,C;
 
     public double area;
     public double[] normal;

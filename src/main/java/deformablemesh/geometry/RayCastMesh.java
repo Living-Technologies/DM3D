@@ -26,6 +26,7 @@
 package deformablemesh.geometry;
 
 import deformablemesh.MeshImageStack;
+import deformablemesh.geometry.interceptable.Interceptable;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.util.Vector3DOps;
 

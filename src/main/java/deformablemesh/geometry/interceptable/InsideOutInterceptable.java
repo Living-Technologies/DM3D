@@ -23,7 +23,9 @@
  * THE SOFTWARE.
  * #L%
  */
-package deformablemesh.geometry;
+package deformablemesh.geometry.interceptable;
+
+import deformablemesh.geometry.Intersection;
 
 import java.util.List;
 import java.util.stream.Collectors;

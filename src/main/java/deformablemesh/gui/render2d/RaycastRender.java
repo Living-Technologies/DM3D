@@ -27,13 +27,12 @@ package deformablemesh.gui.render2d;
 
 import deformablemesh.geometry.*;
 import deformablemesh.geometry.interceptable.Box3DInterceptable;
+import deformablemesh.geometry.interceptable.InterceptingMesh3D;
 import deformablemesh.io.MeshReader;
-import deformablemesh.io.MeshWriter;
 import deformablemesh.track.Track;
 import deformablemesh.util.Vector3DOps;
 import ij.IJ;
 import ij.ImageJ;
-import org.jfree.chart.plot.dial.DialPointer;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;

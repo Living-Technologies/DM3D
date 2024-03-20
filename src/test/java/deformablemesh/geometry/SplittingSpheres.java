@@ -1,5 +1,7 @@
 package deformablemesh.geometry;
 
+import deformablemesh.geometry.interceptable.Interceptable;
+import deformablemesh.geometry.interceptable.InterceptingMesh3D;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.util.Vector3DOps;
 

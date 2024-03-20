@@ -30,22 +30,17 @@ import deformablemesh.MeshImageStack;
 import deformablemesh.SegmentationController;
 import deformablemesh.geometry.Box3D;
 import deformablemesh.geometry.DeformableMesh3D;
-import deformablemesh.geometry.InterceptingMesh3D;
+import deformablemesh.geometry.interceptable.InterceptingMesh3D;
 import deformablemesh.io.MeshReader;
-import deformablemesh.io.MeshWriter;
-import deformablemesh.util.ColorSuggestions;
 import deformablemesh.util.Vector3DOps;
 import deformablemesh.util.actions.UndoableActions;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ColorProcessor;
-import lightgraph.Graph;
 
 import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 

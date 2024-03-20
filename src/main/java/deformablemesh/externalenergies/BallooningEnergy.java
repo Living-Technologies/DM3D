@@ -28,6 +28,8 @@ package deformablemesh.externalenergies;
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.*;
+import deformablemesh.geometry.interceptable.CompositeInterceptables;
+import deformablemesh.geometry.interceptable.Interceptable;
 import deformablemesh.meshview.MeshFrame3D;
 
 import javax.imageio.ImageIO;
