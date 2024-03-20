@@ -66,8 +66,11 @@ public class Box3D{
         high = new double[]{maxx, maxy, maxz};
     }
 
+    public Box3D(double[] low, double[] high){
+        this(low[0], low[1], low[2], high[0], high[1], high[2]);
+    }
     public Box3D(Box3D box){
-        this(box.low[0], box.low[1], box.low[2], box.high[0], box.high[1], box.high[2]);
+        this(box.low, box.high);
     }
 
     public Box3DInterceptable interceptable(){

@@ -193,15 +193,15 @@ public class ConnectedComponents3D {
                             next.add(map);
                         }
                     }
-                    //there are no more conjoined instance of current labels.
+                        //there are no more conjoined instance of current labels.
                     checked.addAll(current);
                     current.clear();
 
-                    //More labels were added to be conjoined for mapping.
+                        //More labels were added to be conjoined for mapping.
                     current.addAll(toMap);
                     toMap.clear();
 
-                    //reduce the stack to only labels that haven't been checked.
+                        //reduce the stack to only labels that haven't been checked.
                     stack.clear();
                     stack.addAll(next);
                     next.clear();
@@ -214,38 +214,36 @@ public class ConnectedComponents3D {
                 }
                 checked.clear();
             }
-
+    
             //shift old pixels that
-            for(Integer i: mapped.keySet()){
-                Integer target = mapped.get(i);
-                List<int[]> source = log.get(i);
-                List<int[]> dest = log.get(target);
-                for(int[] px: source){
-                    dest.add(px);
-                    set(px, target);
+                for(Integer i: mapped.keySet()){
+                    Integer target = mapped.get(i);
+                    List<int[]> source = log.get(i);
+                    List<int[]> dest = log.get(target);
+                    for(int[] px: source){
+                        dest.add(px);
+                        set(px, target);
+                    }
+                    log.remove(i);
                 }
-                log.remove(i);
-            }
-            pixels.add(cc2d);
+                pixels.add(cc2d);
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        for(Mapping m : finishing){
-            Integer label;
-            if(mapped.containsKey(m.B)){
-                label = mapped.get(m.B);
-            } else{
-                label = m.B;
-            }
+                Integer label;
+                if(mapped.containsKey(m.B)){
+                    label = mapped.get(m.B);
+                } else{
+                    label = m.B;
+                }
 
-            List<int[]> px = regions2D.get(m.A);
-            List<int[]> destination = log.computeIfAbsent(label, ArrayList::new);
+                List<int[]> px = regions2D.get(m.A);
+                List<int[]> destination = log.computeIfAbsent(label, ArrayList::new);
 
-            for(int[] p: px){
-                destination.add(new int[]{p[0], p[1], slice});
-                //regions no longer match labels!
-                cc2d.set(p[0], p[1], label);
-            }
-            }
-
-
+                for(int[] p: px){
+                    destination.add(new int[]{p[0], p[1], slice});
+                    //regions no longer match labels!
+                    cc2d.set(p[0], p[1], label);
+                }
+            } //TODO how is this indentation broken.
         } else{
             pixels.add(cc2d);
             Map<Integer, List<int[]>> regions2D = cc2d.getRegions();

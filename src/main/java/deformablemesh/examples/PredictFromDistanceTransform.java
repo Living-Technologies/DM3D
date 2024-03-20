@@ -71,7 +71,6 @@ public class PredictFromDistanceTransform {
                     toRemove.add(region);
                     for (int[] pt : points) {
                         pixels[pt[2] - 1][pt[0] + pt[1]*width] = 0;
-                        //threshed.getProcessor(pt[2]).set(pt[0], pt[1], 0);
                     }
                 } else {
                     double[] rmin = mis.getNormalizedCoordinate(region.getLowCorner());

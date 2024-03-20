@@ -37,6 +37,7 @@ import ij.process.ImageProcessor;
 
 import java.awt.Image;
 import java.awt.image.BufferedImage;
+import java.nio.FloatBuffer;
 import java.nio.file.Path;
 
 import static deformablemesh.geometry.DeformableMesh3D.ORIGIN;
@@ -391,7 +392,7 @@ public class MeshImageStack {
      *
      * @param x pixel loc
      * @param y pixel loc
-     * @param z slice
+     * @param z slice (0 based!)
      * @return the backing double
      */
     public double getValue(int x, int y, int z){
@@ -584,6 +585,19 @@ public class MeshImageStack {
     int getProcessorIndex(int frame, int channel, int slice){
         return slice * CHANNELS + frame*CHANNELS*SLICES + channel + 1;
     }
+
+    /**
+     * Creates a crop version of the original multi-channel movie with appropriately set
+     * origin.
+     *
+     * @param x origin in pixels
+     * @param y origin in pixels
+     * @param z origin in slices 0 based
+     * @param w width in pixels
+     * @param h height in pixels
+     * @param d depth in pixels.
+     * @return
+     */
     ImagePlus getCroppedRegion(int x, int y, int z, int w, int h, int d){
         ImagePlus next = original.createImagePlus();
 
@@ -612,6 +626,60 @@ public class MeshImageStack {
         cal.zOrigin = cal.zOrigin - z;
         next.setCalibration(cal);
         return next;
+    }
+
+    /**
+     * Gets the volume crop of the current frame/channel. The resulting volume
+     * will be shaped to the original image pixel/slice dimensions.
+     *
+     * The bounds of the region will be confined to within the bounds of the
+     * image. Fractional values will be inclusive when possible.
+     *
+     * @param region geometry in normalized coordinates.
+     *
+     * @return single channel, single time point volume of the sub region.
+     */
+    public MeshImageStack getCrop(Box3D region){
+        double[] ilow = getImageCoordinates(region.low);
+        double[] ihigh = getImageCoordinates(region.high);
+        int lowX = (int)ilow[0];
+        lowX = lowX < 0 ? 0 : lowX;
+        int lowY = (int)ilow[1];
+        lowY = lowY < 0 ? 0 : lowY;
+        int lowZ = (int)ilow[2];
+        lowZ = lowZ < 0 ? 0 : lowZ;
+
+        int highX = (int)ihigh[0];
+        highX = ihigh[0] > highX ? highX + 1 : highX;
+        highX = highX >= getWidthPx() ? getWidthPx() - 1 : highX;
+        int highY = (int)ihigh[1];
+        highY = ihigh[1] > highY ? highY + 1 : highY;
+        highY = highY >= getHeightPx() ? getHeightPx() - 1 : highY;
+        int highZ = (int)ihigh[2];
+        highZ = ihigh[2] > highZ ? highZ + 1 : highZ;
+        highZ = highZ >= getNSlices() ? getNSlices() - 1 : highZ;
+        int w = highX - lowX + 1;
+        int h = highY - lowY + 1;
+        int d = highZ - lowZ + 1;
+        ImageStack stack = new ImageStack(w, h);
+        for(int z = lowZ; z <= highZ; z++){
+            FloatProcessor proc = new FloatProcessor(w, h);
+            for(int x = lowX; x <= highX; x++){
+                for(int y = lowY; y <= highY; y++){
+                    proc.setf(x - lowX, y - lowY, (float)getValue(x, y, z));
+                }
+            }
+            stack.addSlice(proc);
+        }
+        ImagePlus plus = original.createImagePlus();
+        plus.setStack(stack, 1, d, 1);
+        Calibration c = plus.getCalibration();
+        Calibration oc = original.getCalibration();
+        c.zOrigin = oc.zOrigin - lowZ;
+        c.yOrigin = oc.yOrigin - lowY;
+        c.xOrigin = oc.xOrigin - lowX;
+        plus.setCalibration(c);
+        return new MeshImageStack(plus);
     }
     /**
      * Returns a single channel image plus of the current frame.
