@@ -35,10 +35,7 @@ import deformablemesh.util.Vector3DOps;
 
 import java.awt.Color;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 /**
@@ -67,6 +64,7 @@ public class DeformableMesh3D{
 
     public DeformableMeshDataObject data_object;
     private final static ExecutorService pool = Executors.newFixedThreadPool(3);
+
     public static final double[] ORIGIN = {0,0,0};
 
     private boolean showSurface;

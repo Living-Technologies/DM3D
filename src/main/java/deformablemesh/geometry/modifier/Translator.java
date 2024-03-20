@@ -50,6 +50,11 @@ public class Translator implements ModificationState {
         if(point==null){
             return;
         }
+
+        offset[0] = 0;
+        offset[1] = 0;
+        offset[2] = 0;
+
         if(meshFrame3D != null){
             meshFrame3D.setCanvasControllerEnabled(false);
         }
@@ -65,6 +70,9 @@ public class Translator implements ModificationState {
                 deltas.add(offset);
             }
             modifier.postAction(new DisplaceNodesAction(modifier.mesh, nodes, deltas));
+            center[0] = center[0] + offset[0];
+            center[1] = center[1] + offset[1];
+            center[2] = center[2] + offset[2];
         }
     }
 
@@ -86,11 +94,11 @@ public class Translator implements ModificationState {
         double sx = point[0] - start[0];
         double sy = point[1] - start[1];
         double sz = point[2] - start[2];
-        double[] deltas = {sx - offset[0], sy - offset[1], sz - offset[2]};
         offset = new double[]{sx, sy, sz};
-        starting.translate(offset);
         double[] shifted = { center[0] + sx, center[1] + sy, center[2] + sz};
         cursor.setCenter(shifted);
+        starting.setCenter(shifted);
+
     }
 
     @Override

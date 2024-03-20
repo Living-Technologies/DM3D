@@ -98,16 +98,9 @@ public class InterceptingMesh3D implements Interceptable {
     public List<Intersection> getIntersections(double[] origin, double[] direction) {
         List<Intersection> sections = new ArrayList<>();
         for(InterceptingTriangle3D triangle: triangles){
-            List<Intersection> old = new ArrayList(sections);
+
             triangle.getIntersection(origin, direction, sections);
-            /*for(int j = 0; j<old.size(); j++) {
-                for (int i = old.size(); i < sections.size(); i++) {
-                    double m = Vector3DOps.mag(Vector3DOps.difference(sections.get(i).location, sections.get(j).location));
-                    if (m <= 0) {
-                        System.out.println("borked " + m);
-                    }
-                }
-            }*/
+
         }
         return sections;
     }

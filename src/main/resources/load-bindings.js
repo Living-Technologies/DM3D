@@ -23,8 +23,8 @@
  * THE SOFTWARE.
  * #L%
  */
-var CompositeInterceptables = Java.type("deformablemesh.geometry.CompositeInterceptables");
-var InterceptingMesh3D = Java.type("deformablemesh.geometry.InterceptingMesh3D");
+var CompositeInterceptables = Java.type("deformablemesh.geometry.interceptable.CompositeInterceptables");
+var InterceptingMesh3D = Java.type("deformablemesh.geometry.interceptable.InterceptingMesh3D");
 var DoubleArray = Java.type("double[]");
 var DeformableMesh3D = Java.type("deformablemesh.geometry.DeformableMesh3D");
 var RayCastMesh = Java.type("deformablemesh.geometry.RayCastMesh");

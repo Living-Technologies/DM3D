@@ -156,6 +156,14 @@ public class Box3D{
         }
     }
 
+    public void setCenter(double[] center){
+        double[] old = getCenter();
+        old[0] = center[0] - old[0];
+        old[1] = center[1] - old[1];
+        old[2] = center[2] - old[2];
+        translate(old);
+    }
+
 
 }
 
