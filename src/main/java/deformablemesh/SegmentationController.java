@@ -2800,8 +2800,7 @@ public class SegmentationController {
 
     }
     /**
-     * For creating a new mesh, if there is a currently selected mesh in the current frame,
-     * this starts a new mesh track. If there isn't then addMesh is used.
+     * For creating a new mesh, this starts a new mesh track.
      *
      * @see SegmentationController#addMesh(int, DeformableMesh3D)
      *
@@ -2810,11 +2809,8 @@ public class SegmentationController {
     public void initializeMesh(DeformableMesh3D mesh) {
 
         int f = model.getCurrentFrame();
-        if(model.getSelectedMesh(f)==null){
-            addMesh(f, mesh);
-        } else{
-            startNewMeshTrack(f, mesh);
-        }
+        startNewMeshTrack(f, mesh);
+
     }
 
     /**
