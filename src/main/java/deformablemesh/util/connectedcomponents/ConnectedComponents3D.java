@@ -227,25 +227,23 @@ public class ConnectedComponents3D {
                 log.remove(i);
             }
             pixels.add(cc2d);
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       for(Mapping m : finishing){
-            Integer label;
-            if(mapped.containsKey(m.B)){
-                label = mapped.get(m.B);
-            } else{
-                label = m.B;
+            for(Mapping m : finishing){
+                Integer label;
+                if(mapped.containsKey(m.B)){
+                    label = mapped.get(m.B);
+                } else{
+                    label = m.B;
+                }
+
+                List<int[]> px = regions2D.get(m.A);
+                List<int[]> destination = log.computeIfAbsent(label, ArrayList::new);
+
+                for(int[] p: px){
+                    destination.add(new int[]{p[0], p[1], slice});
+                    //regions no longer match labels!
+                    cc2d.set(p[0], p[1], label);
+                }
             }
-
-            List<int[]> px = regions2D.get(m.A);
-            List<int[]> destination = log.computeIfAbsent(label, ArrayList::new);
-
-            for(int[] p: px){
-                destination.add(new int[]{p[0], p[1], slice});
-                //regions no longer match labels!
-                cc2d.set(p[0], p[1], label);
-            }
-            } //TODO WHERE DOES THIS BRACKET OPEN
-
-
         } else{
             pixels.add(cc2d);
             Map<Integer, List<int[]>> regions2D = cc2d.getRegions();
