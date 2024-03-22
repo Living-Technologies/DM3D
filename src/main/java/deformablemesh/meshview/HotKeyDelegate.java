@@ -352,9 +352,33 @@ public class HotKeyDelegate {
         );
         createActionMapKey(
                 KeyStroke.getKeyStroke(KeyEvent.VK_5, 0, true),
-                "CUSTOM",
-                "Set with controls.setHotKey5(Runnable r).",
-                controller::hotKey5
+                "CUSTOM5",
+                "Hot keys 5-9, create with setHotKey(key, runnable).",
+                ()->controller.hotKey("5")
+        );
+        createActionMapKey(
+                KeyStroke.getKeyStroke(KeyEvent.VK_6, 0, true),
+                "CUSTOM6",
+                null,
+                ()->controller.hotKey("6")
+        );
+        createActionMapKey(
+                KeyStroke.getKeyStroke(KeyEvent.VK_7, 0, true),
+                "CUSTOM7",
+                null,
+                ()->controller.hotKey("7")
+        );
+        createActionMapKey(
+                KeyStroke.getKeyStroke(KeyEvent.VK_8, 0, true),
+                "CUSTOM8",
+                null,
+                ()->controller.hotKey("8")
+        );
+        createActionMapKey(
+                KeyStroke.getKeyStroke(KeyEvent.VK_9, 0, true),
+                "CUSTOM9",
+                null,
+                ()->controller.hotKey("9")
         );
 
 
@@ -392,6 +416,9 @@ public class HotKeyDelegate {
         int y = margin + actionHeight;
         graphics.setColor(Color.BLACK);
         for(ActionMapKey amk: actions){
+            if(amk.description==null){
+                continue;
+            }
             amk.draw(ox + x, oy + y, graphics);
             y += actionHeight;
         }

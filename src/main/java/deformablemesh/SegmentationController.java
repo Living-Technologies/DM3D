@@ -3523,17 +3523,39 @@ public class SegmentationController {
         main.submit(main::shutdown);
     }
 
-    Runnable sc5 = null;
-
-    public void setHotKey5(Runnable r){
-        sc5 = r;
+    Map<String, Runnable> hotKeys = new HashMap<>();
+    public void setHotKey(String key, Runnable r){
+        hotKeys.put(key, r);
     }
-    public void hotKey5(){
-        if(sc5 != null){
-            sc5.run();
+    public void hotKey(String key){
+        Runnable r = hotKeys.get(key);
+        if(r != null){
+            r.run();
         }
     }
+
+    public void startModifierTranslate(){
+        RingController rc = getRingController();
+        rc.translateClicked();
+    }
+
+    public void startModifierSculpt(){
+        RingController rc = getRingController();
+        rc.sculptClicked();
+    }
+
+    public void cancelModifier(){
+        RingController rc = getRingController();
+        rc.cancel();
+    }
+
+    public void acceptModifier(){
+        RingController rc = getRingController();
+        rc.finishedClicked();
+    }
+
 }
+
 
 /**
  * Historical class, that should be replaced, developed because of confusion regarding the way ExecutorServices

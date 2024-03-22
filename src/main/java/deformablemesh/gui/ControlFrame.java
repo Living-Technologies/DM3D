@@ -329,7 +329,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         JButton translate = new JButton("translate");
 
         nodeSelect.addActionListener(evt->{
-            ringController.selectNodes(evt);
+            ringController.selectNodes();
             if(ringController.modifyingMesh()){
                 setReady(false);
 
@@ -351,7 +351,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         buttons.add(translate);
         sculpt.addActionListener( evt -> {
             if(ringController.modifyingMesh()) {
-                ringController.sculptClicked(evt);
+                ringController.sculptClicked();
                 nodeSelect.setEnabled(true);
                 sculpt.setEnabled(false);
             }
@@ -359,14 +359,14 @@ public class ControlFrame implements ReadyObserver, FrameListener {
 
         translate.addActionListener( evt->{
             if(ringController.modifyingMesh()){
-                ringController.translateClicked(evt);
+                ringController.translateClicked();
                 nodeSelect.setEnabled(true);
                 sculpt.setEnabled(true);
                 translate.setEnabled(false);
             }
         });
         finish.addActionListener(evt->{
-            ringController.finishedClicked(evt);
+            ringController.finishedClicked();
             finished();
         });
 

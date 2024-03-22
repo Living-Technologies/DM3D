@@ -137,64 +137,72 @@ public class RingController implements FrameListener, ListDataListener {
      *
      * @param evt
      */
-    public void selectNodes(ActionEvent evt){
+    public void selectNodes(){
+        if(model.getSelectedMesh() == null){
+            return;
+        }
 
         if(modifier == null){
-            if(model.getSelectedMesh() == null){
-                return;
-            }
-            modifier = new MeshModifier();
-            modifier.setMeshFrame3D(model.getMeshFrame3D());
-            modifier.setFurrow(getFurrow());
-            modifier.setMeshImageStack(model.getMeshImageStack());
-            modifier.activate3DFramePicker();
-
-
-            sliceView.addDrawable( modifier );
-            setSliceListener(new MouseAdapter(){
-                @Override
-                public void mousePressed(MouseEvent evt){
-                    double[] pt = getNormalizedVolumeCoordiante(evt.getPoint());
-                    modifier.updatePressed(pt, evt);
-                    sliceView.repaint();
-                }
-                @Override
-                public void mouseReleased(MouseEvent evt){
-                    double[] pt = getNormalizedVolumeCoordiante(evt.getPoint());
-                    modifier.updateReleased(pt, evt);
-                    sliceView.repaint();
-                }
-                @Override
-                public void mouseClicked(MouseEvent evt){
-                    double[] pt = getNormalizedVolumeCoordiante(evt.getPoint());
-                    modifier.updateClicked(pt, evt);
-                    sliceView.repaint();
-                }
-                @Override
-                public void mouseMoved(MouseEvent evt){
-                    double[] pt = getNormalizedVolumeCoordiante(evt.getPoint());
-                    modifier.updateMoved(pt, evt);
-                    sliceView.repaint();
-                }
-                @Override
-                public void mouseDragged(MouseEvent evt){
-                    double[] pt = getNormalizedVolumeCoordiante(evt.getPoint());
-                    modifier.updateDragged(pt, evt);
-                    sliceView.repaint();
-                }
-            });
-            modifier.setMesh( model.getSelectedMesh() );
+            initializeModifier();
         }
         modifier.setSelectNodesMode();
     }
+    void initializeModifier(){
+        modifier = new MeshModifier();
+        modifier.setMeshFrame3D(model.getMeshFrame3D());
+        modifier.setFurrow(getFurrow());
+        modifier.setMeshImageStack(model.getMeshImageStack());
+        modifier.activate3DFramePicker();
 
-    public void sculptClicked(ActionEvent evt){
-        if(modifier==null ) return;
+
+        sliceView.addDrawable( modifier );
+        setSliceListener(new MouseAdapter(){
+            @Override
+            public void mousePressed(MouseEvent evt){
+                double[] pt = getNormalizedVolumeCoordiante(evt.getPoint());
+                modifier.updatePressed(pt, evt);
+                sliceView.repaint();
+            }
+            @Override
+            public void mouseReleased(MouseEvent evt){
+                double[] pt = getNormalizedVolumeCoordiante(evt.getPoint());
+                modifier.updateReleased(pt, evt);
+                sliceView.repaint();
+            }
+            @Override
+            public void mouseClicked(MouseEvent evt){
+                double[] pt = getNormalizedVolumeCoordiante(evt.getPoint());
+                modifier.updateClicked(pt, evt);
+                sliceView.repaint();
+            }
+            @Override
+            public void mouseMoved(MouseEvent evt){
+                double[] pt = getNormalizedVolumeCoordiante(evt.getPoint());
+                modifier.updateMoved(pt, evt);
+                sliceView.repaint();
+            }
+            @Override
+            public void mouseDragged(MouseEvent evt){
+                double[] pt = getNormalizedVolumeCoordiante(evt.getPoint());
+                modifier.updateDragged(pt, evt);
+                sliceView.repaint();
+            }
+        });
+        modifier.setMesh( model.getSelectedMesh() );
+    }
+    public void sculptClicked(){
+        if(model.getSelectedMesh() == null){
+            return;
+        }
+        if(modifier==null ) initializeModifier();
         modifier.setSculptMode();
     }
 
-    public void translateClicked(ActionEvent evt){
-        if(modifier == null) return;
+    public void translateClicked(){
+        if(model.getSelectedMesh() == null){
+            return;
+        }
+        if(modifier == null) initializeModifier();
         modifier.setTranslateMode();
     }
 
@@ -205,7 +213,7 @@ public class RingController implements FrameListener, ListDataListener {
         return histControls.panel;
     }
 
-    public void finishedClicked(ActionEvent evt){
+    public void finishedClicked(){
         if(modifier==null) return;
 
         modifier.deactivate();
