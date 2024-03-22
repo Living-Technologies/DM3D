@@ -1601,6 +1601,25 @@ public class SegmentationController {
     public void changeVolumeClipping(int minDelta, int maxDelta) {
         submit(()->meshFrame3D.changeVolumeClipping(minDelta, maxDelta));
     }
+
+    /**
+     * Overloaded for using normalized coordinates represented as a box3d
+     * @param region an axis aligned bounding box.
+     */
+    public void crop3DRegionNormalized(Box3D region){
+        MeshImageStack stack = getMeshImageStack();
+        MeshImageStack.ImageRegion3D r = stack.getImageCropValues(region);
+        int x = r.lx;
+        int y = r.ly;
+        int z = r.lz;
+        int w = r.hx - r.lx + 1;
+        int h = r.hy - r.ly + 1;
+        int d = r.hz - r.lz + 1;
+
+        crop3DRegion(x, y, z, w, h, d);
+
+    }
+
     public void crop3DRegion(int x, int y, int z, int w, int h, int d){
         MeshImageStack stack = getMeshImageStack();
         ImagePlus alt = stack.getCroppedRegion(x, y, z, w, h, d);
@@ -1625,13 +1644,11 @@ public class SegmentationController {
         setMeshTracks(dups);
     }
 
-    public void testCropping(){
-
-    }
 
     public void transformToImage(){
         MeshImageStack current = getMeshImageStack();
         ImagePlus plus = GuiTools.selectOpenImage(IJ.getInstance());
+        if(plus != null) return;
         setOriginalPlus(plus);
         MeshImageStack next = getMeshImageStack();
         List<Track> tracks = getAllTracks();

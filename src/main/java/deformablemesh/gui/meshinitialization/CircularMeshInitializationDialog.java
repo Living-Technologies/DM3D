@@ -171,6 +171,10 @@ public class CircularMeshInitializationDialog implements FrameListener {
             syncToFurrow();
         });
 
+        JButton refreshMeshes = new JButton("refresh");
+        refreshMeshes.setToolTipText("Re-displays the meshes in case they are out of sync.");
+        refreshMeshes.addActionListener(evt->showMeshes());
+
         // contains controls.
         JPanel row = new JPanel();
         row.setBorder(BorderFactory.createEtchedBorder(EtchedBorder.RAISED));
@@ -194,7 +198,7 @@ public class CircularMeshInitializationDialog implements FrameListener {
         row.add(binary);
         row.add(snapshots);
         row.add(syncToFurrow);
-
+        row.add(refreshMeshes);
         row.add(Box.createHorizontalStrut(tl.getWidth()));
         row.add(showCursor);
         row.add(showMeshes);
@@ -425,8 +429,6 @@ public class CircularMeshInitializationDialog implements FrameListener {
         system.add(collectionOfSpheres);
         system.add(new Box3DInterceptable(bounds));
         DeformableMesh3D mesh = RayCastMesh.rayCastMesh(system, com, segmentationController.getDivisions());
-        //mesh = fillSpheresWithMesh(spheres, mesh, 0.01, 0.025);
-        //mesh.create3DObject();
 
         segmentationController.initializeMesh(mesh);
         initializer.clear();
@@ -669,6 +671,7 @@ public class CircularMeshInitializationDialog implements FrameListener {
             }
             modifiers.clear();
             spheres.clear();
+            showMeshes();
         }
         Map<DeformableMesh3D, ProjectableMesh> meshMap = new HashMap<>();
 
@@ -709,7 +712,7 @@ public class CircularMeshInitializationDialog implements FrameListener {
 
 
     void showMeshes(){
-
+        initializer.clearProjectableMeshes();
         if(showMeshes.isSelected()) {
             segmentationController.submit(()->{
                 final List<DeformableMesh3D> meshes = segmentationController.getAllTracks().stream(
@@ -728,8 +731,6 @@ public class CircularMeshInitializationDialog implements FrameListener {
 
             });
 
-        } else{
-            initializer.clearProjectableMeshes();
         }
     }
 

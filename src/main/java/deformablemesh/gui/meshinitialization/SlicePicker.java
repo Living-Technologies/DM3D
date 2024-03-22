@@ -61,6 +61,7 @@ public class SlicePicker{
     ThreeDCursor cursor;
 
     JScrollPane scroll;
+    JSlider slider;
     int graduations = 10000;
     public SlicePicker(MeshImageStack s, double[] normal, double[] center){
 
@@ -98,12 +99,16 @@ public class SlicePicker{
 
     }
 
+    public void setSliderValue(int v){
+        System.out.println("setting!");
+        slider.setValue(v);
+    }
     /**
      * When the slider is adjusted this value sets the position.
      * @param v
      */
-    public void setSliderValue(int v){
-
+    public void sliderValueSet(int v){
+        System.out.println("set tpositions");
         double f = (v*1.0/graduations - 0.5)*length;
 
         pos[0] = f*normal[0];
@@ -144,15 +149,14 @@ public class SlicePicker{
         label.setMaximumSize(new Dimension(600, 30));
 
         container.add(label, BorderLayout.NORTH);
-        JSlider slider = new JSlider(0, graduations);
+        slider = new JSlider(0, graduations);
         slider.setValue(5000);
         slider.setOrientation(JSlider.VERTICAL);
         slider.addChangeListener(evt->{
-
             int v = slider.getValue();
-            setSliderValue(v);
-
+            sliderValueSet(v);
         });
+
         slider.setMaximumSize(new Dimension(30, 600));
         container.add(slider, BorderLayout.EAST);
         addDragListener();

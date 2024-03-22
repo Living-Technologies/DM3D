@@ -50,6 +50,18 @@ import static deformablemesh.geometry.DeformableMesh3D.ORIGIN;
  * Date: 7/3/13
  */
 public class MeshImageStack {
+    public static class ImageRegion3D{
+        final int lx, ly, lz, hx, hy, hz;
+        ImageRegion3D (int lx, int ly, int lz, int hx, int hy, int hz){
+            this.lx = lx;
+            this.ly = ly;
+            this.lz = lz;
+            this.hx = hx;
+            this.hy = hy;
+            this.hz = hz;
+        }
+    };
+
     public double[][][] data;
 
     public double SCALE;
@@ -629,17 +641,17 @@ public class MeshImageStack {
     }
 
     /**
-     * Gets the volume crop of the current frame/channel. The resulting volume
-     * will be shaped to the original image pixel/slice dimensions.
+     * Changes the normalized coordinate Box3D into  original image pixel/slice
+     * dimensions.
      *
      * The bounds of the region will be confined to within the bounds of the
      * image. Fractional values will be inclusive when possible.
      *
      * @param region geometry in normalized coordinates.
      *
-     * @return single channel, single time point volume of the sub region.
+     * @return {lx, ly, lz, hx, hy, hz}
      */
-    public MeshImageStack getCrop(Box3D region){
+    public ImageRegion3D getImageCropValues(Box3D region){
         double[] ilow = getImageCoordinates(region.low);
         double[] ihigh = getImageCoordinates(region.high);
         int lowX = (int)ilow[0];
@@ -658,15 +670,33 @@ public class MeshImageStack {
         int highZ = (int)ihigh[2];
         highZ = ihigh[2] > highZ ? highZ + 1 : highZ;
         highZ = highZ >= getNSlices() ? getNSlices() - 1 : highZ;
-        int w = highX - lowX + 1;
-        int h = highY - lowY + 1;
-        int d = highZ - lowZ + 1;
+
+        return new ImageRegion3D(lowX, lowY, lowZ, highX, highY, highZ);
+    }
+    /**
+     * Gets the volume crop of the current frame/channel. The resulting volume
+     * will be shaped to the original image pixel/slice dimensions.
+     *
+     * The bounds of the region will be confined to within the bounds of the
+     * image. Fractional values will be inclusive when possible.
+     *
+     * @param region geometry in normalized coordinates.
+     *
+     * @return single channel, single time point volume of the sub region.
+     */
+    public MeshImageStack getCrop(Box3D region){
+
+        ImageRegion3D r = getImageCropValues(region);
+
+        int w = r.hx - r.lx + 1;
+        int h = r.hy - r.ly + 1;
+        int d = r.hz - r.lz + 1;
         ImageStack stack = new ImageStack(w, h);
-        for(int z = lowZ; z <= highZ; z++){
+        for(int z = r.lz; z <= r.hz; z++){
             FloatProcessor proc = new FloatProcessor(w, h);
-            for(int x = lowX; x <= highX; x++){
-                for(int y = lowY; y <= highY; y++){
-                    proc.setf(x - lowX, y - lowY, (float)getValue(x, y, z));
+            for(int x = 0; x <= w; x++){
+                for(int y = 0; y <= h; y++){
+                    proc.setf(x, y, (float)getValue(x + r.lx, y + r.ly, z + r.lz));
                 }
             }
             stack.addSlice(proc);
@@ -675,9 +705,9 @@ public class MeshImageStack {
         plus.setStack(stack, 1, d, 1);
         Calibration c = plus.getCalibration();
         Calibration oc = original.getCalibration();
-        c.zOrigin = oc.zOrigin - lowZ;
-        c.yOrigin = oc.yOrigin - lowY;
-        c.xOrigin = oc.xOrigin - lowX;
+        c.zOrigin = oc.zOrigin - r.lx;
+        c.yOrigin = oc.yOrigin - r.ly;
+        c.xOrigin = oc.xOrigin - r.lz;
         plus.setCalibration(c);
         return new MeshImageStack(plus);
     }
