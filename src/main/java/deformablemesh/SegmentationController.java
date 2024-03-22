@@ -3585,6 +3585,7 @@ class ExceptionThrowingService{
 
     public void shutdown(){
         main.shutdown();
+        monitor.shutdown();
     }
 
 

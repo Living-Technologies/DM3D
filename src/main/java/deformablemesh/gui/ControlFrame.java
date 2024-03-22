@@ -128,6 +128,15 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         frame.setVisible(true);
         instance=frame;
         segmentationController.addFrameListener(this);
+
+    }
+    public void shutdownControllerOnClose(){
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosed(WindowEvent e) {
+                segmentationController.shutdown();
+            }
+        });
     }
     public JFrame getFrame(){
         return frame;

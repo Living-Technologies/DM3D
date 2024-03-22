@@ -67,7 +67,7 @@ public class DeformingMesh3DApp{
             //UIManager.setLookAndFeel("com.formdev.flatlaf.FlatDarkLaf");
         }
         catch (UnsupportedLookAndFeelException e) {
-            // handle exception
+            //then the look and feel doesn't get set!
         }
         catch (ClassNotFoundException e) {
             // handle exception
@@ -84,21 +84,22 @@ public class DeformingMesh3DApp{
         JAWTUtil.getJAWT(true);
         MeshFrame3D mf3d = new MeshFrame3D();
         SegmentationModel model = new SegmentationModel();
-        SegmentationController control = new SegmentationController(model);
+        SegmentationController segmentationController = new SegmentationController(model);
 
         try{
-            PropertySaver.loadProperties(control);
+            PropertySaver.loadProperties(segmentationController);
         } catch(Exception e){
             System.err.println("cannot load properties: " + e.getMessage());
         }
-        ControlFrame controller = new ControlFrame(control);
-        controller.showFrame();
+        ControlFrame controlFrame = new ControlFrame(segmentationController);
+        controlFrame.showFrame();
+        controlFrame.shutdownControllerOnClose();
         mf3d.showFrame(false);
         mf3d.addLights();
-        controller.addMeshFrame3D(mf3d);
-        control.setMeshFrame3D(mf3d);
-        PropertySaver.positionFrames(controller, mf3d);
-        return control;
+        controlFrame.addMeshFrame3D(mf3d);
+        segmentationController.setMeshFrame3D(mf3d);
+        PropertySaver.positionFrames(controlFrame, mf3d);
+        return segmentationController;
     }
 
 

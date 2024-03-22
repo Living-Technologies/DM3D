@@ -48,23 +48,25 @@ public class Deforming3DMesh_Plugin implements PlugInFilter {
 
         MeshFrame3D mf3d = new MeshFrame3D();
         SegmentationModel model = new SegmentationModel();
-        SegmentationController control = new SegmentationController(model);
+        SegmentationController segmentationController = new SegmentationController(model);
 
         try {
-            PropertySaver.loadProperties(control);
+            PropertySaver.loadProperties(segmentationController);
         } catch (IOException e) {
             System.err.println("cannot load properties: " + e.getMessage());
         }
-        ControlFrame controller = new ControlFrame(control);
-        controller.showFrame();
+        ControlFrame controlFrame = new ControlFrame(segmentationController);
+        controlFrame.showFrame();
+        controlFrame.shutdownControllerOnClose();
+
         mf3d.showFrame(false);
         mf3d.addLights();
 
-        controller.addMeshFrame3D(mf3d);
-        control.setMeshFrame3D(mf3d);
+        controlFrame.addMeshFrame3D(mf3d);
+        segmentationController.setMeshFrame3D(mf3d);
 
-        PropertySaver.positionFrames(controller, mf3d);
-        return control;
+        PropertySaver.positionFrames(controlFrame, mf3d);
+        return segmentationController;
     }
 
     @Override

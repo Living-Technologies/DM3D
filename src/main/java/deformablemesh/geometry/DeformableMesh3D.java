@@ -63,14 +63,14 @@ public class DeformableMesh3D{
     public int[] triangle_index;
 
     public DeformableMeshDataObject data_object;
-    private final static ExecutorService pool = Executors.newFixedThreadPool(3);
+    //private final static
 
     public static final double[] ORIGIN = {0,0,0};
 
     private boolean showSurface;
     private Color color = Color.BLUE;
     private boolean selected;
-
+    ExecutorService globalPool = ForkJoinPool.commonPool();
     /**
      * Creates a deformable mesh in 3d.
      *
@@ -172,7 +172,9 @@ public class DeformableMesh3D{
     static public DeformableMesh3D loadMesh(double[] positions, int[] connection_indices, int[] triangle_indices){
         return new DeformableMesh3D(positions, connection_indices, triangle_indices);
     }
-
+    public void setGlobalExecutor(ExecutorService s){
+        globalPool = s;
+    }
     public void syncConnectionIndices(){
         connection_index = connection_index.length!=2*connections.size()?new int[2*connections.size()]:connection_index;
         for(int i = 0; i<connections.size();i++){
@@ -354,6 +356,7 @@ public class DeformableMesh3D{
         for(ExternalEnergy external: energies) {
             external.updateForces(positions, fx, fy, fz);
         }
+        ExecutorService pool = globalPool;
 
         Future<double[]> xfuture = pool.submit(() -> {
             final Matrix FX = new Matrix(fx,nodes.size());
@@ -1158,4 +1161,5 @@ public class DeformableMesh3D{
             }
         };
     }
+
 }
