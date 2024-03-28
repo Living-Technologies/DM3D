@@ -31,6 +31,11 @@ public class Box3DInterceptable implements Interceptable {
         return intersections;
     }
 
+    @Override
+    public boolean contains(double[] point){
+        return box.contains(point);
+    }
+
     void createPlanes(){
         double[] low = box.low;
         double[] high = box.high;
