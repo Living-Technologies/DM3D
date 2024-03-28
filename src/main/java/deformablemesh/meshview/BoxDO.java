@@ -1,8 +1,8 @@
 package deformablemesh.meshview;
 
 import deformablemesh.geometry.Box3D;
-import org.jogamp.java3d.*;
-import org.jogamp.vecmath.Vector3f;
+import org.scijava.java3d.*;
+import org.scijava.vecmath.Vector3f;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;

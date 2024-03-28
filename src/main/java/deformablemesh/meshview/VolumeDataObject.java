@@ -26,11 +26,11 @@
 package deformablemesh.meshview;
 
 import deformablemesh.MeshImageStack;
-import org.jogamp.java3d.BranchGroup;
-import org.jogamp.java3d.Transform3D;
-import org.jogamp.java3d.TransformGroup;
-import org.jogamp.vecmath.Color3f;
-import org.jogamp.vecmath.Vector3d;
+import org.scijava.java3d.BranchGroup;
+import org.scijava.java3d.Transform3D;
+import org.scijava.java3d.TransformGroup;
+import org.scijava.vecmath.Color3f;
+import org.scijava.vecmath.Vector3d;
 
 import java.awt.Color;
 import java.util.IntSummaryStatistics;

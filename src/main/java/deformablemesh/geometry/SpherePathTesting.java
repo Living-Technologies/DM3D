@@ -34,9 +34,9 @@ import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.meshview.SphereDataObject;
 import deformablemesh.track.Track;
 import deformablemesh.util.Vector3DOps;
-import org.jogamp.java3d.utils.picking.PickIntersection;
-import org.jogamp.java3d.utils.picking.PickResult;
-import org.jogamp.vecmath.Point3d;
+import org.scijava.java3d.utils.picking.PickIntersection;
+import org.scijava.java3d.utils.picking.PickResult;
+import org.scijava.vecmath.Point3d;
 
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;

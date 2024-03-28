@@ -25,10 +25,10 @@
  */
 package deformablemesh.meshview;
 
-import org.jogamp.java3d.*;
-import org.jogamp.vecmath.Point3f;
-import org.jogamp.vecmath.Vector3f;
-import org.jogamp.vecmath.Vector4f;
+import org.scijava.java3d.*;
+import org.scijava.vecmath.Point3f;
+import org.scijava.vecmath.Vector3f;
+import org.scijava.vecmath.Vector4f;
 
 /**
  * Recreation of the 3D surface, such that the scale is set.

@@ -42,10 +42,10 @@ import deformablemesh.track.Track;
 import deformablemesh.util.Vector3DOps;
 import deformablemesh.util.actions.ActionStack;
 import ij.ImagePlus;
-import org.jogamp.java3d.Shape3D;
-import org.jogamp.java3d.utils.picking.PickIntersection;
-import org.jogamp.java3d.utils.picking.PickResult;
-import org.jogamp.vecmath.Point3d;
+import org.scijava.java3d.Shape3D;
+import org.scijava.java3d.utils.picking.PickIntersection;
+import org.scijava.java3d.utils.picking.PickResult;
+import org.scijava.vecmath.Point3d;
 
 import javax.swing.*;
 import java.awt.*;

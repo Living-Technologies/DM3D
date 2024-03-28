@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
-		<version>36.0.0</version>
+		<version>37.0.0</version>
 		<relativePath />
 	</parent>
 
@@ -132,24 +132,16 @@
 			<classifier>${scijava.natives.classifier.jogl}</classifier>
 		</dependency>
 		<dependency>
-			<groupId>org.jogamp.java3d</groupId>
-			<artifactId>java3d-core</artifactId>
-			<version>1.7.2</version>
+			<groupId>org.scijava</groupId>
+			<artifactId>j3dcore</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.jogamp.java3d</groupId>
-			<artifactId>java3d-utils</artifactId>
-			<version>1.7.2</version>
-		</dependency>
-		<dependency>
-			<groupId>org.jogamp.java3d</groupId>
+			<groupId>org.scijava</groupId>
 			<artifactId>vecmath</artifactId>
-			<version>1.7.2</version>
 		</dependency>
 		<dependency>
-			<groupId>org.openjdk.nashorn</groupId>
-			<artifactId>nashorn-core</artifactId>
-			<version>15.4</version>
+			<groupId>org.scijava</groupId>
+			<artifactId>j3dutils</artifactId>
 		</dependency>
 	</dependencies>
 
@@ -191,14 +183,7 @@
 					</execution>
 				</executions>
 			</plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>21</source>
-                    <target>21</target>
-                </configuration>
-            </plugin>
+
         </plugins>
 	</build>
 </project>

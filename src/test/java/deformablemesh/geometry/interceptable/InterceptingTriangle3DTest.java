@@ -23,11 +23,12 @@
  * THE SOFTWARE.
  * #L%
  */
-package deformablemesh.geometry;
+package deformablemesh.geometry.interceptable;
 
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
-import deformablemesh.geometry.interceptable.InterceptingTriangle3D;
+import deformablemesh.geometry.DeformableMesh3D;
+import deformablemesh.geometry.Intersection;
 import deformablemesh.io.MeshReader;
 import deformablemesh.track.Track;
 import deformablemesh.util.Vector3DOps;

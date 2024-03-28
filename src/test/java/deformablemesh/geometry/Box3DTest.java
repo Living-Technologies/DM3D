@@ -51,11 +51,11 @@ public class Box3DTest {
         for(double[] origin: origins) {
             Box3DInterceptable box = new Box3DInterceptable(new Box3D(origin, 2, 2, 2));
             for (Node3D node : mesh.nodes) {
-                List<Intersection> intersections = box.getIntersections(new double[]{0, 0, 0}, node.getCoordinates());
+                List<Intersection> intersections = box.getIntersections(origin, node.getCoordinates());
                 if(intersections.size()!=2){
-                    intersections = box.getIntersections(new double[]{0, 0, 0}, node.getCoordinates());
+                    intersections = box.getIntersections(origin, node.getCoordinates());
                 }
-                Assert.assertEquals(intersections.size(), 2);
+                Assert.assertEquals(2, intersections.size());
             }
         }
     }

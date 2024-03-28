@@ -29,8 +29,8 @@ import deformablemesh.geometry.Connection3D;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Node3D;
 import deformablemesh.geometry.Triangle3D;
-import org.jogamp.java3d.*;
-import org.jogamp.vecmath.Color3f;
+import org.scijava.java3d.*;
+import org.scijava.vecmath.Color3f;
 
 import java.awt.Color;
 import java.util.List;

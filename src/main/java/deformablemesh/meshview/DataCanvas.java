@@ -26,14 +26,14 @@
 package deformablemesh.meshview;
 
 import deformablemesh.util.Vector3DOps;
-import org.jogamp.java3d.*;
-import org.jogamp.java3d.utils.picking.PickCanvas;
-import org.jogamp.java3d.utils.picking.PickResult;
-import org.jogamp.java3d.utils.picking.PickTool;
-import org.jogamp.java3d.utils.universe.SimpleUniverse;
-import org.jogamp.java3d.utils.universe.Viewer;
-import org.jogamp.java3d.utils.universe.ViewingPlatform;
-import org.jogamp.vecmath.*;
+import org.scijava.java3d.*;
+import org.scijava.java3d.utils.picking.PickCanvas;
+import org.scijava.java3d.utils.picking.PickResult;
+import org.scijava.java3d.utils.picking.PickTool;
+import org.scijava.java3d.utils.universe.SimpleUniverse;
+import org.scijava.java3d.utils.universe.Viewer;
+import org.scijava.java3d.utils.universe.ViewingPlatform;
+import org.scijava.vecmath.*;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;

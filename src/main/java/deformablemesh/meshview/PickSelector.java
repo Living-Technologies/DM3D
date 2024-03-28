@@ -28,8 +28,8 @@ package deformablemesh.meshview;
 import deformablemesh.SegmentationController;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.track.Track;
-import org.jogamp.java3d.GeometryArray;
-import org.jogamp.java3d.utils.picking.PickResult;
+import org.scijava.java3d.GeometryArray;
+import org.scijava.java3d.utils.picking.PickResult;
 
 import java.awt.event.MouseEvent;
 
