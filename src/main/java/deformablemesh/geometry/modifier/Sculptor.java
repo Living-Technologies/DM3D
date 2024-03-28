@@ -136,6 +136,7 @@ class Sculptor implements ModificationState {
         }
         sphere.moveTo(shifted(pt));
     }
+
     void moveContained(){
         List<Node3D> contained = containedNodes();
         //FurrowTransformer ft = modifier.getFurrowTransformer();
