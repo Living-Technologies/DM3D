@@ -272,8 +272,7 @@ public class CircularMeshInitializationDialog implements FrameListener {
         for( SlicePicker picker: initializer.pickers.values()){
             double[] n = picker.getNormal();
             double l = Vector3DOps.dot(pos, n);
-            int step = (int)((l + 0.5)*picker.graduations);
-            picker.setSliderValue(step);
+            picker.setPositionAlongNormal(l);
 
 
         }

@@ -662,13 +662,13 @@ public class MeshImageStack {
         lowZ = lowZ < 0 ? 0 : lowZ;
 
         int highX = (int)ihigh[0];
-        highX = ihigh[0] > highX ? highX + 1 : highX;
+        highX = ihigh[0] > highX ? highX : highX - 1;
         highX = highX >= getWidthPx() ? getWidthPx() - 1 : highX;
         int highY = (int)ihigh[1];
-        highY = ihigh[1] > highY ? highY + 1 : highY;
+        highY = ihigh[1] > highY ? highY : highY - 1;
         highY = highY >= getHeightPx() ? getHeightPx() - 1 : highY;
         int highZ = (int)ihigh[2];
-        highZ = ihigh[2] > highZ ? highZ + 1 : highZ;
+        highZ = ihigh[2] > highZ ? highZ : highZ - 1;
         highZ = highZ >= getNSlices() ? getNSlices() - 1 : highZ;
 
         return new ImageRegion3D(lowX, lowY, lowZ, highX, highY, highZ);
@@ -694,9 +694,9 @@ public class MeshImageStack {
         ImageStack stack = new ImageStack(w, h);
         for(int z = r.lz; z <= r.hz; z++){
             FloatProcessor proc = new FloatProcessor(w, h);
-            for(int x = 0; x <= w; x++){
-                for(int y = 0; y <= h; y++){
-                    proc.setf(x, y, (float)getValue(x + r.lx, y + r.ly, z + r.lz));
+            for(int x = 0; x < w; x++){
+                for(int y = 0; y < h; y++){
+                    proc.setf(x, y, (float)getValue(x + r.lx, y + r.ly, z));
                 }
             }
             stack.addSlice(proc);
@@ -705,9 +705,10 @@ public class MeshImageStack {
         plus.setStack(stack, 1, d, 1);
         Calibration c = plus.getCalibration();
         Calibration oc = original.getCalibration();
-        c.zOrigin = oc.zOrigin - r.lx;
+
+        c.zOrigin = oc.zOrigin - r.lz;
         c.yOrigin = oc.yOrigin - r.ly;
-        c.xOrigin = oc.xOrigin - r.lz;
+        c.xOrigin = oc.xOrigin - r.lx;
         plus.setCalibration(c);
         return new MeshImageStack(plus);
     }

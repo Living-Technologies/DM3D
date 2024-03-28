@@ -25,6 +25,7 @@
  */
 package deformablemesh.geometry;
 
+import deformablemesh.geometry.interceptable.Box3DInterceptable;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -48,7 +49,7 @@ public class Box3DTest {
         DeformableMesh3D mesh = RayCastMesh.sphereRayCastMesh(5);
 
         for(double[] origin: origins) {
-            Box3D box = new Box3D(origin, 2, 2, 2);
+            Box3DInterceptable box = new Box3DInterceptable(new Box3D(origin, 2, 2, 2));
             for (Node3D node : mesh.nodes) {
                 List<Intersection> intersections = box.getIntersections(new double[]{0, 0, 0}, node.getCoordinates());
                 if(intersections.size()!=2){

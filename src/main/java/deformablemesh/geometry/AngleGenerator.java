@@ -69,7 +69,7 @@ public class AngleGenerator implements Iterator<double[]> {
 
         return new double[]{Math.cos(theta)*Math.sin(phi), Math.sin(theta)*Math.sin(phi), Math.cos(phi)};
     }
-    static Iterable<double[]> generator(int thetaDivisions, int phiDivisions){
+    public static Iterable<double[]> generator(int thetaDivisions, int phiDivisions){
         return () -> new AngleGenerator(thetaDivisions, phiDivisions);
     }
 }

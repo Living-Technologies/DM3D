@@ -90,6 +90,7 @@ public class SegmentationController {
     ExceptionThrowingService main = new ExceptionThrowingService();
     private double minConnectionLength = 0.01;
     private double maxConnectionLength = 0.02;
+    private ExecutorService globalExecutor;
 
     /**
      * Creates a controller for the supplied model.
@@ -3316,6 +3317,12 @@ public class SegmentationController {
         return getRingController().getFurrow();
     }
 
+    public void setGlobalExecutor(ExecutorService executorService) {
+        this.globalExecutor = executorService;
+        DeformableMesh3D.setGlobalExecutor(executorService);
+
+    }
+
     /**
      * Tasks for the exception throwing service.
      */
@@ -3520,6 +3527,9 @@ public class SegmentationController {
     }
 
     public void shutdown(){
+        if(globalExecutor != null){
+            main.submit(globalExecutor::shutdown);
+        }
         main.submit(main::shutdown);
     }
 

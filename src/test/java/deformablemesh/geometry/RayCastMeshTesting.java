@@ -25,6 +25,7 @@
  */
 package deformablemesh.geometry;
 
+import deformablemesh.geometry.interceptable.Box3DInterceptable;
 import deformablemesh.geometry.interceptable.Interceptable;
 import deformablemesh.geometry.interceptable.InterceptingMesh3D;
 import deformablemesh.util.Vector3DOps;
@@ -73,7 +74,7 @@ public class RayCastMeshTesting {
 
         //sphere is always better
         for(double[] origin: origins) {
-            Box3D box = new Box3D(origin, 1, 1, 0.5);
+            Box3DInterceptable box = new Box3DInterceptable(new Box3D(origin, 1, 1, 0.5));
             Sphere sphere = new Sphere(origin, 0.2);
 
             for (Node3D node : start.nodes) {
@@ -91,7 +92,7 @@ public class RayCastMeshTesting {
         //sphere is always worse.
         for(double[] origin: origins) {
             System.out.println(Arrays.toString(origin));
-            Box3D box = new Box3D(origin, 1, 1, 0.5);
+            Box3DInterceptable box = new Box3D(origin, 1, 1, 0.5).interceptable();
             Sphere sphere = new Sphere(origin, 3);
 
             for (Node3D node : start.nodes) {
@@ -117,7 +118,7 @@ public class RayCastMeshTesting {
         Box3D box = new Box3D(bO, 1, 1, 0.5);
         Sphere sphere = new Sphere(sO, 2);
         List<Interceptable> interceptables = new ArrayList<>();
-        interceptables.add(box);
+        interceptables.add(box.interceptable());
         interceptables.add(sphere);
 
         DeformableMesh3D mesh = RayCastMesh.rayCastMesh(interceptables, new double[]{0, 0, box.low[2] + 20*Vector3DOps.TOL}, 3);

@@ -28,6 +28,7 @@ import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.FlatLightLaf;
 import deformablemesh.SegmentationController;
 import deformablemesh.SegmentationModel;
+import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.gui.ControlFrame;
 import deformablemesh.gui.PropertySaver;
 import deformablemesh.gui.RingController;
@@ -43,6 +44,7 @@ import java.awt.EventQueue;
 import java.awt.GraphicsEnvironment;
 import java.io.File;
 import java.util.Arrays;
+import java.util.concurrent.Executors;
 
 /**
  *
@@ -85,7 +87,7 @@ public class DeformingMesh3DApp{
         MeshFrame3D mf3d = new MeshFrame3D();
         SegmentationModel model = new SegmentationModel();
         SegmentationController segmentationController = new SegmentationController(model);
-
+        segmentationController.setGlobalExecutor(Executors.newFixedThreadPool(3));
         try{
             PropertySaver.loadProperties(segmentationController);
         } catch(Exception e){

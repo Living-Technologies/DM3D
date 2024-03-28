@@ -16,8 +16,9 @@ import java.util.stream.Collectors;
 public class DTTrackPredictor implements BoundingBoxGenerator {
     MeshImageStack stack;
     Box3D region;
-    int level = 3;
-    int minSize = 20;
+    public int level = 3;
+    public int minSize = 20;
+    public double factor = 3;
     public DTTrackPredictor(MeshImageStack distanceTransform){
         stack = distanceTransform;
         region = stack.getLimits();
@@ -28,7 +29,7 @@ public class DTTrackPredictor implements BoundingBoxGenerator {
         double lx = b.high[0] - b.low[0];
         double ly = b.high[1] - b.low[1];
         double lz = b.high[2] - b.low[2];
-        region = new Box3D( b.getCenter(), 2*lx, 2*ly, 2*lz);
+        region = new Box3D( b.getCenter(), factor*lx, factor*ly, factor*lz);
     }
 
     @Override

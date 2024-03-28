@@ -38,7 +38,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-class InterceptingTriangle3D {
+public class InterceptingTriangle3D {
     double[] u, v;
     double[] normal;
     double[] nhat;
@@ -110,7 +110,7 @@ class InterceptingTriangle3D {
      * @param direction direction of intercepting ray
      * @param result where any intersections will be placed.
      */
-    void getIntersection(double[] origin, double[] direction, List<Intersection> result) {
+    public void getIntersection(double[] origin, double[] direction, List<Intersection> result) {
         //project of direction along normal.
         double rn = Vector3DOps.dot(direction, nhat);
         if (rn == 0) {

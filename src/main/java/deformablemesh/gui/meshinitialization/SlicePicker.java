@@ -99,8 +99,19 @@ public class SlicePicker{
 
     }
 
+    /**
+     * Sets the slider value to the coresponding graduation where
+     * p = -length/2 is 0 and p = length/2 is graduations.
+     * @param p
+     */
+    public void setPositionAlongNormal(double p){
+        double v = (p + length/2)/length*graduations;
+        int i = (int)v;
+        if(i < 0) i = 0;
+        if(i > graduations) i = graduations;
+        setSliderValue(i);
+    }
     public void setSliderValue(int v){
-        System.out.println("setting!");
         slider.setValue(v);
     }
     /**
@@ -108,7 +119,6 @@ public class SlicePicker{
      * @param v
      */
     public void sliderValueSet(int v){
-        System.out.println("set tpositions");
         double f = (v*1.0/graduations - 0.5)*length;
 
         pos[0] = f*normal[0];

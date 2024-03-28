@@ -71,9 +71,10 @@ public class BoundingBoxTransformer {
     }
 
     /**
-     * Transforms a point from the source coordinates to a point in the destination coordiantes.
+     * Transforms a point from the source normalized coordinates to a point in the
+     * destination normalized coordinates.
      *
-     * @param pt3 the location of a point in the source MeshImageStack
+     * @param pt3 the location of a point in the source MeshImageStack Normalized coordinates
      * @return location of the same point in the destination MeshImageStack
      */
     public double[] transform(double[] pt3){
@@ -124,45 +125,5 @@ public class BoundingBoxTransformer {
         }
     }
 
-    public static void main(String[] args) throws IOException {
-        System.out.println(Paths.get(".").toRealPath());
-
-        ImagePlus plus = FileInfoVirtualStack.openVirtual("");
-        ImagePlus plus2 = FileInfoVirtualStack.openVirtual( "");
-
-        MeshImageStack one = new MeshImageStack(plus);
-        MeshImageStack two = new MeshImageStack(plus2);
-
-        BoundingBoxTransformer bbt = new BoundingBoxTransformer(one, two);
-        double[] x1 = Arrays.copyOf(one.offsets, 3);
-        double[] x2 = {-x1[0], -x1[1], -x1[2]};
-
-        double[] x1p = bbt.transform(x1);
-        double[] x2p = bbt.transform(x2);
-        double[] x3p = bbt.transform(new double[]{0, 0, 0});
-
-        //BoundingBoxTransformer inv = new BoundingBoxTransformer(two, one);
-        //double[] x1pp = inv.transform(x1p);
-
-        System.out.println(Arrays.toString( x2p ));
-        System.out.println(Arrays.toString( x3p ));
-        System.out.println(Arrays.toString( x1p ));
-        //after transforming the real width should not have changed.
-        double realWidth = (x1p[0] - x2p[0]) * two.SCALE;
-        System.out.println("real world with of one transformed to two: " + realWidth );
-        //System.out.println(Arrays.toString( x1pp ));
-        bbt = new BoundingBoxTransformer(two, one);
-        double[] x1pp = bbt.transform(x1p);
-        double[] x2pp = bbt.transform(x2p);
-        double[] x3pp = bbt.transform(x3p);
-
-        //BoundingBoxTransformer inv = new BoundingBoxTransformer(two, one);
-        //double[] x1pp = inv.transform(x1p);
-
-        System.out.println(Arrays.toString( x2pp ));
-        System.out.println(Arrays.toString( x3pp ));
-        System.out.println(Arrays.toString( x1pp ));
-
-    }
 
 }

@@ -70,7 +70,7 @@ public class DeformableMesh3D{
     private boolean showSurface;
     private Color color = Color.BLUE;
     private boolean selected;
-    ExecutorService globalPool = ForkJoinPool.commonPool();
+    static ExecutorService globalPool = ForkJoinPool.commonPool();
     /**
      * Creates a deformable mesh in 3d.
      *
@@ -172,7 +172,7 @@ public class DeformableMesh3D{
     static public DeformableMesh3D loadMesh(double[] positions, int[] connection_indices, int[] triangle_indices){
         return new DeformableMesh3D(positions, connection_indices, triangle_indices);
     }
-    public void setGlobalExecutor(ExecutorService s){
+    public static void setGlobalExecutor(ExecutorService s){
         globalPool = s;
     }
     public void syncConnectionIndices(){
