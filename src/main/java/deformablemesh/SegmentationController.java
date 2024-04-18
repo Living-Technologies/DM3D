@@ -418,7 +418,7 @@ public class SegmentationController {
      * Would not print until everything submitted before has finished.
      * @param runnable item the gets run on the main thread.
      */
-    public void submit(Executable runnable) {
+    public void submit(ETExecutable runnable) {
         main.submit(runnable);
     }
 
@@ -3324,13 +3324,6 @@ public class SegmentationController {
     }
 
     /**
-     * Tasks for the exception throwing service.
-     */
-    public interface Executable{
-        void execute() throws Exception;
-    }
-
-    /**
      * Sets the position and normal of the furrow.
      *
      * @see RingController
@@ -3567,59 +3560,3 @@ public class SegmentationController {
 }
 
 
-/**
- * Historical class, that should be replaced, developed because of confusion regarding the way ExecutorServices
- * handle exceptions
- *
- * Executables are submitted and if they're already running on the main thread, then they're short circuited otherwise
- * they're submitted to the main executor service, which puts them in the queue for execution.
- */
-class ExceptionThrowingService{
-    ExecutorService main, monitor;
-    Thread main_thread;
-    Queue<Exception> exceptions = new LinkedBlockingDeque<>();
-    ExceptionThrowingService(){
-        main = Executors.newSingleThreadExecutor();
-        monitor = Executors.newSingleThreadExecutor();
-        main.submit(() -> {
-            main_thread = Thread.currentThread();
-            main_thread.setName("My Main Thread");
-        });
-    }
-
-    private void execute(SegmentationController.Executable e){
-        try{
-            e.execute();
-        } catch (Exception exc) {
-            throw new RuntimeException(exc);
-        }
-    }
-
-
-    public void submit(final SegmentationController.Executable r){
-
-        if(Thread.currentThread()==main_thread){
-            execute(r);
-            return;
-        }
-
-        final Future<?> f = main.submit(()->execute(r));
-
-        monitor.submit(() -> {
-            try {
-                f.get();
-            } catch (InterruptedException | ExecutionException e) {
-                GuiTools.errorMessage(e.toString() + ": " + e.getMessage());
-                e.printStackTrace();
-            }
-        });
-    }
-
-    public void shutdown(){
-        main.shutdown();
-        monitor.shutdown();
-    }
-
-
-
-}

@@ -25,6 +25,7 @@
  */
 package deformablemesh.gui;
 
+import deformablemesh.ETExecutor;
 import deformablemesh.SegmentationController;
 import deformablemesh.SegmentationModel;
 import ij.IJ;
@@ -46,7 +47,6 @@ import java.awt.event.KeyEvent;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.lang.reflect.Field;
@@ -71,30 +71,57 @@ public class SwingJSTerm {
     List<String> commandHistory = new ArrayList<>();
     List<ReadyObserver> observers = new ArrayList<>();
     JFrame frame;
-    SegmentationController controls;
+    SegmentationController segmentationController;
     int commandIndex;
     String[] historyTemp = new String[1];
     JButton previous;
     JButton next;
     JTextField scriptFile;
     JButton runScriptFile;
-
-    public SwingJSTerm(SegmentationController controls){
+    ETExecutor executor;
+    public SwingJSTerm(){
         ScriptEngineManager manager = new ScriptEngineManager();
-
         engine = manager.getEngineByName("nashorn");
         Bindings bindings = engine.createBindings();
-
         engine.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
-        engine.put("controls", controls);
         engine.put("terminal", this);
+        executor = exe -> {
+            try{
+                exe.execute();
+            } catch( Exception e){
+                throw new RuntimeException(e);
+            }
+        };
+    }
+    public SwingJSTerm(SegmentationController controls){
+        this();
+        this.segmentationController = controls;
+        engine.put("controls", controls);
         try {
             addClasses();
         } catch (Exception e) {
             //do without.
             e.printStackTrace();
         }
-        this.controls = controls;
+        executor = controls::submit;
+    }
+
+    /**
+     * This is the executor that the javascript will be evaluated
+     * by the engine on. The default causes javascript to be evaluated
+     * on the calling thread.
+     *
+     * If a controller is provided during construction, then the controller
+     * will be the default executor.
+     *
+     * @param e evaluates the javascript.
+     */
+    public void setExecutor(ETExecutor e){
+        executor = e;
+    }
+
+    public void addToScriptEngine(String name, Object obj){
+        engine.put(name, obj);
     }
 
     public void runFile(Path path){
@@ -153,9 +180,7 @@ public class SwingJSTerm {
         }
     }
 
-    public void appendToDisplay(String text){
-        int pos = display.getCaretPosition();
-
+    public void initializeDefaultClasses(String text){
         display.append(text);
         display.setCaretPosition(display.getDocument().getLength());
     }
@@ -313,7 +338,7 @@ public class SwingJSTerm {
             echoed = o.toString() + "\n";
         }
         EventQueue.invokeLater(()->{
-            appendToDisplay(echoed);
+            initializeDefaultClasses(echoed);
         });
     }
 
@@ -352,20 +377,20 @@ public class SwingJSTerm {
 
         EventQueue.invokeLater(()->{
             for(String line: lines){
-                appendToDisplay(line + '\n');
+                initializeDefaultClasses(line + '\n');
             }
         });
 
-            controls.submit(()->{
+            executor.submit(()->{
                 observers.forEach(o->o.setReady(false));
                 try{
                     engine.eval(s);
                 } catch (ScriptException e) {
                     EventQueue.invokeLater(()->{
                         StackTraceElement[] elements = e.getStackTrace();
-                        appendToDisplay(e.getMessage() + '\n');
+                        initializeDefaultClasses(e.getMessage() + '\n');
                         if(elements.length>0){
-                            appendToDisplay(elements[0].toString() + '\n');
+                            initializeDefaultClasses(elements[0].toString() + '\n');
                         }
                     });
                 } finally{
