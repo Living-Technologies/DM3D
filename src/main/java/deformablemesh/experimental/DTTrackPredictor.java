@@ -6,6 +6,7 @@ import deformablemesh.geometry.Box3D;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.util.connectedcomponents.ConnectedComponents3D;
 import deformablemesh.util.connectedcomponents.Region;
+import deformablemesh.util.connectedcomponents.RegionGrowing;
 import ij.ImageStack;
 import ij.process.ImageProcessor;
 
@@ -37,10 +38,12 @@ public class DTTrackPredictor implements BoundingBoxGenerator {
         MeshImageStack roi = stack.getCrop(region);
         ImageStack currentFrame = roi.getCurrentFrame().getStack();
         ImageStack threshed = new ImageStack(currentFrame.getWidth(), currentFrame.getHeight());
+
         for(int i = 1; i<= currentFrame.size(); i++){
             ImageProcessor proc = currentFrame.getProcessor(i).convertToShort(false);
             proc.threshold(level);
             threshed.addSlice(proc);
+
         }
 
         BoundingBoxTransformer bbt = new BoundingBoxTransformer(roi, stack);

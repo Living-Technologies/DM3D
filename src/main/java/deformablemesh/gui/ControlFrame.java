@@ -151,11 +151,24 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         JPanel colorStatusRow = new JPanel();
         colorStatusRow.add(new JLabel("selected mesh: " ));
         JLabel selectedColorLabel = new JLabel("");
+        JLabel first = new JLabel("first: ");
+        JLabel last = new JLabel("last: ");
         colorStatusRow.add(selectedColorLabel);
+        colorStatusRow.add(first);
+        colorStatusRow.add(last);
         status.add(colorStatusRow);
         status.add(message);
         segmentationController.addMeshListener(i->{
-            selectedColorLabel.setText(segmentationController.getSelectedMeshName());
+            Track track = segmentationController.getSelectedMeshTrack();
+            if(track != null){
+                selectedColorLabel.setText(track.getName());
+                first.setText("first: " + track.getFirstFrame());
+                last.setText("last: " + track.getLastFrame());
+            } else{
+                selectedColorLabel.setText("");
+                first.setText("first: ");
+                last.setText("last: ");
+            }
         });
         return status;
     }

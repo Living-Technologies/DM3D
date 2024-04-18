@@ -36,13 +36,14 @@ var ArrayList = Java.type("java.util.ArrayList");
 var Track = Java.type("deformablemesh.track.Track");
 var File = Java.type("java.io.File");
 var ImageEnergyType = Java.type("deformablemesh.externalenergies.ImageEnergyType");
-    var Graph = Java.type("lightgraph.Graph");
+var Graph = Java.type("lightgraph.Graph");
 var ImageStack = Java.type("ij.ImageStack");
 var ColorProcessor = Java.type("ij.process.ColorProcessor");
 var ImageStack = Java.type("ij.ImageStack");
 var MeshAnalysis = Java.type("deformablemesh.util.MeshAnalysis");
 var GroupDynamics = Java.type("deformablemesh.util.GroupDynamics");
 GuiTools = Java.type("deformablemesh.gui.GuiTools");
+Vector3DOps = Java.type("deformablemesh.util.Vector3DOps");
 
 function echo(obj){
     terminal.echo(obj);

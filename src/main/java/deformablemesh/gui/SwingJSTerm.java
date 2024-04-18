@@ -82,8 +82,6 @@ public class SwingJSTerm {
     public SwingJSTerm(SegmentationController controls){
         ScriptEngineManager manager = new ScriptEngineManager();
 
-        //NashornScriptEngineFactory factory = new NashornScriptEngineFactory();
-        //engine = factory.getScriptEngine();
         engine = manager.getEngineByName("nashorn");
         Bindings bindings = engine.createBindings();
 
@@ -159,9 +157,7 @@ public class SwingJSTerm {
         int pos = display.getCaretPosition();
 
         display.append(text);
-        //System.out.println("old: " + pos + " new: " + display.getCaretPosition());
-        //display.setCaretPosition(display.getDocument().getLength());
-
+        display.setCaretPosition(display.getDocument().getLength());
     }
 
     public void addClasses() throws ScriptException {

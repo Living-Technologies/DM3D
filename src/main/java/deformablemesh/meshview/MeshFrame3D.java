@@ -453,6 +453,15 @@ public class    MeshFrame3D {
 
     }
 
+    /**
+     * In case something goes wronge. this is a bit extreme though.
+     */
+    public void purgeCanvas(){
+        clearTransients();
+        observedObjects.clear();
+        canvas.removeAll();
+    }
+
     public void observeObject(Object key, DataObject obj){
         if(observedObjects.containsKey(key)){
             removeDataObject(observedObjects.get(key));

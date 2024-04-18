@@ -30,6 +30,8 @@ import org.jogamp.vecmath.Point3d;
 import org.jogamp.vecmath.Quat4d;
 import org.jogamp.vecmath.Vector3d;
 
+import java.awt.*;
+
 
 /**
  * Date: 8/5/13
@@ -157,6 +159,24 @@ public class FurrowPlaneDataObject implements DataObject {
         }
     }
 
+    public void setFrontColor(Color c){
+        setColor(front_shape, c);
+
+    }
+
+    private void setColor(Shape3D s, Color c){
+        float[] comps = c.getColorComponents(new float[4]);
+        ColoringAttributes ca = new ColoringAttributes(comps[0], comps[1], comps[2], ColoringAttributes.NICEST);
+
+        s.getAppearance().setColoringAttributes(ca);
+        TransparencyAttributes ta = new TransparencyAttributes(TransparencyAttributes.NICEST, 1f - comps[3]);
+        s.getAppearance().setTransparencyAttributes(ta);
+    }
+
+    public void setBackColor(Color c){
+        setColor(back_shape, c);
+    }
+
     public Shape3D getFrontShape(){
         return front_shape;
     }
@@ -165,6 +185,8 @@ public class FurrowPlaneDataObject implements DataObject {
         Appearance a = new Appearance();
         ColoringAttributes c_at = new ColoringAttributes(1f, 0f, 0f, ColoringAttributes.NICEST);
         a.setColoringAttributes(c_at);
+        a.setCapability(Appearance.ALLOW_COLORING_ATTRIBUTES_WRITE);
+        a.setCapability(Appearance.ALLOW_TRANSPARENCY_ATTRIBUTES_WRITE);
         return a;
 
     }
@@ -173,6 +195,8 @@ public class FurrowPlaneDataObject implements DataObject {
         Appearance a = new Appearance();
         ColoringAttributes c_at = new ColoringAttributes(0f, 0f, 1f, ColoringAttributes.NICEST);
         a.setColoringAttributes(c_at);
+        a.setCapability(Appearance.ALLOW_COLORING_ATTRIBUTES_WRITE);
+        a.setCapability(Appearance.ALLOW_TRANSPARENCY_ATTRIBUTES_WRITE);
         return a;
 
     }
