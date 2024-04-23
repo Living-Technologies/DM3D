@@ -76,8 +76,9 @@ public class SphereDataObject implements DataObject {
         Color3f objColor  = new Color3f(0.6f, 0.6f, 0.6f);
 
         Material m = new Material(objColor, eColor, objColor, sColor, 100.0f);
+        m.setCapability(Material.ALLOW_COMPONENT_WRITE);
         Appearance a = new Appearance();
-
+        a.setCapability(Appearance.ALLOW_TRANSPARENCY_ATTRIBUTES_WRITE);
 
         m.setLightingEnable(true);
         a.setMaterial(m);
@@ -180,10 +181,19 @@ public class SphereDataObject implements DataObject {
             }
         });
     }
-
+    public void setAlpha(float a){
+        if(a < 1){
+            appearance.setTransparencyAttributes(new TransparencyAttributes(TransparencyAttributes.NICEST, 1 - a));
+        } else{
+            appearance.setTransparencyAttributes(new TransparencyAttributes(TransparencyAttributes.NONE, 0));
+        }
+    }
     public void setColor(float r, float g, float b) {
+
         Material material = appearance.getMaterial();
         material.setEmissiveColor(r, g, b);
+        material.setAmbientColor(r, g, b);
+        material.setDiffuseColor(r, g, b);
         //appearance.setColoringAttributes();
     }
 }

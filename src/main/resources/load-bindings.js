@@ -23,6 +23,14 @@
  * THE SOFTWARE.
  * #L%
  */
+
+ function importer( fullName ){
+ 	tokens = fullName.split(".");
+ 	className = tokens[ tokens.length - 1];
+ 	eval(className + " = Java.type('" + fullName + "');");
+ 	echo(className + " imported");
+ }
+
 var CompositeInterceptables = Java.type("deformablemesh.geometry.interceptable.CompositeInterceptables");
 var InterceptingMesh3D = Java.type("deformablemesh.geometry.interceptable.InterceptingMesh3D");
 var DoubleArray = Java.type("double[]");

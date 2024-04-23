@@ -661,10 +661,22 @@ class TextBoxSelections{
         hidePopUp();
     }
     List<String> getAvailableFields( Object obj){
-        return Arrays.stream(obj.getClass().getFields()).map(Field::getName).collect(Collectors.toList());
+        Class<?> c;
+        if(obj instanceof Class<?>){
+            c = (Class<?>)obj;
+        } else{
+            c = obj.getClass();
+        }
+        return Arrays.stream(c.getFields()).map(Field::getName).collect(Collectors.toList());
     }
     List<String> getAvailableMethodNames(Object obj){
-        return Arrays.stream(obj.getClass().getMethods()).map(Method::getName).collect(Collectors.toList());
+        Class<?> c;
+        if(obj instanceof Class<?>){
+            c = (Class<?>)obj;
+        } else{
+            c = obj.getClass();
+        }
+        return Arrays.stream(c.getMethods()).map(Method::getName).collect(Collectors.toList());
     }
     void hidePopUp(){
         if(lastPopUp!=null){

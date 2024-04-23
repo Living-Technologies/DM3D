@@ -4,6 +4,7 @@ add = function(){
     if(!selectedTracks.contains(track)){
         selectedTracks.add(track);
     }
+    echo(selectedTracks.size() + " meshes selected");
 }
 controls.setHotKey("5", add);
 
@@ -126,7 +127,7 @@ function copyTrackMeshTracks(tracks, steps){
                 delta = v1 - v0;
                 if(delta < 0) delta = -delta;
                 if( delta/v0 > maxChange ){
-                    echo("stopping " + delta + " ... " + (v0*1000) + " // " + (v1*1000) );
+                    echo(track.getName() + " stopping " + delta + " ... " + (v0*1000) + " // " + (v1*1000) );
                     stop = true;
                 }
             }
