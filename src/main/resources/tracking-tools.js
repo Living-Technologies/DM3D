@@ -71,7 +71,7 @@ function copyTrackMeshTracksBackwards(tracks, steps){
                 delta = v1 - v0;
                 if(delta < 0) delta = -delta;
                 if( delta/v0 > maxChange ){
-                    echo("stopping " + (delta*1000) + " ... " + (v0*1000) + " // " + (v1*1000) );
+                    echo(track.getName() + " stopping " + (delta*1000) + " ... " + (v0*1000) + " // " + (v1*1000) );
                     stop = true;
                 }
             }

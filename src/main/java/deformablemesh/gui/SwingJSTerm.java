@@ -51,6 +51,7 @@ import java.io.PrintWriter;
 import java.io.Writer;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -180,7 +181,7 @@ public class SwingJSTerm {
         }
     }
 
-    public void initializeDefaultClasses(String text){
+    public void displayText(String text){
         display.append(text);
         display.setCaretPosition(display.getDocument().getLength());
     }
@@ -322,7 +323,9 @@ public class SwingJSTerm {
 
     public void echo(Object o){
         String echoed;
-        if(o.getClass().isArray()){
+        if(o == null){
+            echoed = "null";
+        }else if(o.getClass().isArray()){
             if(o instanceof double[]){
                 echoed = Arrays.toString((double[])o);
             } else if(o instanceof int[]){
@@ -338,7 +341,7 @@ public class SwingJSTerm {
             echoed = o.toString() + "\n";
         }
         EventQueue.invokeLater(()->{
-            initializeDefaultClasses(echoed);
+            displayText(echoed);
         });
     }
 
@@ -377,7 +380,7 @@ public class SwingJSTerm {
 
         EventQueue.invokeLater(()->{
             for(String line: lines){
-                initializeDefaultClasses(line + '\n');
+                displayText(line + '\n');
             }
         });
 
@@ -388,9 +391,9 @@ public class SwingJSTerm {
                 } catch (ScriptException e) {
                     EventQueue.invokeLater(()->{
                         StackTraceElement[] elements = e.getStackTrace();
-                        initializeDefaultClasses(e.getMessage() + '\n');
+                        displayText(e.getMessage() + '\n');
                         if(elements.length>0){
-                            initializeDefaultClasses(elements[0].toString() + '\n');
+                            displayText(elements[0].toString() + '\n');
                         }
                     });
                 } finally{
@@ -402,7 +405,7 @@ public class SwingJSTerm {
     }
 
     public static void main(String[] args){
-        SwingJSTerm term = new SwingJSTerm(new SegmentationController(new SegmentationModel()));
+        SwingJSTerm term = new SwingJSTerm();
         term.showTerminal();
         term.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
@@ -414,6 +417,8 @@ public class SwingJSTerm {
 
 
 class TextBoxSelections{
+    final static String staticClassName = "jdk.dynalink.beans.StaticClass";
+
     Popup lastPopUp;
     JScrollPane view;
     JList<String> listView;
@@ -661,22 +666,38 @@ class TextBoxSelections{
         hidePopUp();
     }
     List<String> getAvailableFields( Object obj){
-        Class<?> c;
-        if(obj instanceof Class<?>){
-            c = (Class<?>)obj;
-        } else{
-            c = obj.getClass();
+        Class<?> c = obj.getClass();
+        if(staticClassName.equals(c.getName())){
+            try{
+                Method m = c.getMethod("getRepresentedClass");
+                c = (Class<?>)m.invoke(obj);
+                return Arrays.stream(c.getFields()).filter(
+                        field->Modifier.isStatic(field.getModifiers())
+                    ).map(Field::getName).collect(Collectors.toList());
+            } catch(Exception e){
+                //silently fail.
+                //just display the obj.getClass variables.
+            }
         }
-        return Arrays.stream(c.getFields()).map(Field::getName).collect(Collectors.toList());
+        return Arrays.stream(c.getFields()).filter(
+                field->!Modifier.isStatic(field.getModifiers())
+            ).map(Field::getName).collect(Collectors.toList());
     }
     List<String> getAvailableMethodNames(Object obj){
         Class<?> c;
-        if(obj instanceof Class<?>){
-            c = (Class<?>)obj;
-        } else{
-            c = obj.getClass();
+        c = obj.getClass();
+        //for finding static methods.
+        if(staticClassName.equals(c.getName())){
+            try{
+                Method m = c.getMethod("getRepresentedClass");
+                c = (Class<?>)m.invoke(obj);
+                return Arrays.stream(c.getMethods()).filter(meth->Modifier.isStatic(meth.getModifiers())).map(Method::getName).collect(Collectors.toList());
+            } catch(Exception e){
+                //just display the obj.getClass variables.
+            }
         }
-        return Arrays.stream(c.getMethods()).map(Method::getName).collect(Collectors.toList());
+        //don't show static methods since they won't work.
+        return Arrays.stream(c.getMethods()).filter(meth->!Modifier.isStatic(meth.getModifiers())).map(Method::getName).collect(Collectors.toList());
     }
     void hidePopUp(){
         if(lastPopUp!=null){
