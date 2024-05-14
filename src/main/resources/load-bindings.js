@@ -161,22 +161,3 @@ function showPreviousMeshes(){
 
 }
 
-function loadFolderOfVolumes( name ){
-    images = Files.list(Paths.get(name)).filter( function(p){
-            return p.toString().contains(".tif");
-        }).toList();
-    count = images.size();
-    one = FileInfoVirtualStack.openVirtual(images.get(0).toAbsolutePath().toString());
-    slices = one.getNSlices();
-    channels = one.getNChannels();
-
-    plus = FolderOpener.open(name , "virtual");
-    total = plus.getStack().size();
-
-    if(channels*slices*count != total){
-        echo("inconsistencies!")
-    }
-    plus.setDimensions(channels, slices, count);
-    plus.setOpenAsHyperStack(true);
-    plus.show();
-}

@@ -35,10 +35,12 @@ import ij.measure.Calibration;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 
+import javax.swing.*;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.nio.FloatBuffer;
 import java.nio.file.Path;
+import java.util.Arrays;
 
 import static deformablemesh.geometry.DeformableMesh3D.ORIGIN;
 
@@ -148,7 +150,6 @@ public class MeshImageStack {
         for(int i = 0; i<3; i++){
             offsets[i] = 0.5*dim3d[i]/SCALE;
         }
-
         //px should be the smallest pixel in normalized coordinates.
         double[] nPx = scaleToNormalizedLength(new double[]{1,1,1});
         PX = nPx[0] < nPx[1] ?
@@ -232,6 +233,29 @@ public class MeshImageStack {
         }
 
         return ret;
+    }
+
+    /**
+     * Checks if the normalized coordinate is found within the bounds of
+     * the volume represented by this image.
+     *
+     * @param xyz
+     * @return
+     */
+    public boolean contains(double[] xyz){
+
+        return xyz[0] > -offsets[0] && xyz[0] < offsets[0] &&
+                xyz[1] > -offsets[1] && xyz[1] < offsets[1] &&
+                xyz[2] > -offsets[2] && xyz[2] < offsets[2];
+
+    }
+
+    /**
+     * Gests a bounding box
+     * @return
+     */
+    public Box3D getBounds(){
+        return new Box3D(-offsets[0], -offsets[1], -offsets[2], offsets[0], offsets[1], offsets[2]);
     }
 
     public void nextFrame(){

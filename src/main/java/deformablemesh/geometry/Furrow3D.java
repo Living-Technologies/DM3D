@@ -52,8 +52,7 @@ public class Furrow3D implements Interceptable {
     public double[] normal;
     public double[] up;
 
-    //double[] line;
-    TexturedPlaneDataObject texturedPlaneDataObject;
+    TexturedPlane texturedPlaneDataObject;
     FurrowPlaneDataObject furrowPlaneDataObject;
     boolean texturedPlane = false;
     /**
@@ -80,12 +79,8 @@ public class Furrow3D implements Interceptable {
     }
 
     public void createTexturedPlane3DObject(MeshImageStack mis){
-        DeformableMesh3D texturedPlaneGeometry = BinaryMeshGenerator.getQuad(
-                new double[]{0,0,0},
-                new double[]{1, 0, 0},
-                new double[]{0, 1, 0}
-        );
-        texturedPlaneDataObject = new TexturedPlaneDataObject(texturedPlaneGeometry, mis);
+        texturedPlaneDataObject = new TexturedPlane(cm, normal, 1);
+        texturedPlaneDataObject.setStack(mis);
         updateTexturedSliceGeometry();
     }
 
@@ -398,22 +393,8 @@ public class Furrow3D implements Interceptable {
             return;
         }
 
-        MeshImageStack mis = texturedPlaneDataObject.getMeshImageStack();
 
-        int w = mis.getWidthPx();
-        int h = mis.getHeightPx();
-        FurrowTransformer ft = new FurrowTransformer(this, mis);
-        double[] p0 = ft.getVolumeCoordinates(new double[]{0, 0});
-        double[] p1 = ft.getVolumeCoordinates(new double[]{0, h});
-        double[] p2 = ft.getVolumeCoordinates(new double[]{w, h});
-        double[] p3 = ft.getVolumeCoordinates(new double[]{w, 0});
-        double[] res = {
-                p0[0], p0[1], p0[2],
-                p1[0], p1[1], p1[2],
-                p2[0], p2[1], p2[2],
-                p3[0], p3[1], p3[2]
-        };
-        texturedPlaneDataObject.updateGeometry(res);
+        texturedPlaneDataObject.updatePosition(cm, normal);
     }
 
 
@@ -526,7 +507,6 @@ public class Furrow3D implements Interceptable {
     }
 
     public void removeDataObject() {
-
         texturedPlaneDataObject = null;
         furrowPlaneDataObject = null;
     }

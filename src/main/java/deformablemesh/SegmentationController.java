@@ -3007,7 +3007,7 @@ public class SegmentationController {
         mis.setFrame(f);
         GuiTools.createTextOuputPane(builder.toString());
     }
-    public void plotVolumeAveragedIntensityVsTime(){
+    public Graph plotVolumeAveragedIntensityVsTime(){
         List<Track> tracks = getAllTracks();
         Graph plot = new Graph();
         MeshImageStack stack = getMeshImageStack();
@@ -3061,7 +3061,8 @@ public class SegmentationController {
         }
 
         stack.setFrame(start);
-        plot.show(false, "Intensity vs Time");
+        plot.show(false, getMeshImageStack().getOriginalPlus().getTitle() + " Intensity Plot");
+        return plot;
 
     }
 
