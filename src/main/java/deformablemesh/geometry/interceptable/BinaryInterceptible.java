@@ -27,6 +27,7 @@ package deformablemesh.geometry.interceptable;
 
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.Intersection;
+import deformablemesh.geometry.PixelBlob;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,16 +42,26 @@ public class BinaryInterceptible implements Interceptable {
     int label;
     double[] mins = {Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE};
     double[] maxs = {-mins[0], -mins[1], -mins[2]};
+    PixelBlob blob;
+    MeshImageStack stack;
 
+    /**
+     * //TODO 0-based image coordinates.
+     * @param pixels slice based image coordinates.
+     * @param stack
+     * @param label
+     */
     public BinaryInterceptible(List<int[]> pixels, MeshImageStack stack, int label){
+        this.stack = stack;
         double[] img = new double[3];
         center = new double[3];
         edge = new ArrayList<>();
         this.label = label;
         for(int[] px: pixels){
+
             img[0] = px[0];
             img[1] = px[1];
-            img[2] = px[2];
+            img[2] = px[2] - 0.5;
 
             double[] nspace = stack.getNormalizedCoordinate(img);
             center[0] += nspace[0];
@@ -62,7 +73,7 @@ public class BinaryInterceptible implements Interceptable {
                 maxs[j] = Double.max(maxs[j], nspace[j]);
             }
 
-            if(isEdge(stack, px)){
+            if(isEdge(px)){
                 edge.add(nspace);
             }
 
@@ -81,7 +92,7 @@ public class BinaryInterceptible implements Interceptable {
 
 
 
-
+        blob = new PixelBlob(pixels);
 
 
         center[0] = center[0]/pixels.size();
@@ -94,11 +105,10 @@ public class BinaryInterceptible implements Interceptable {
      * Image to be check. int[] pt is in px,px, slice coordinates. px are 0 based indexes
      * and slice is 1 based.
      *
-     * @param stack reference values.
      * @param pt px, py, slice z points that represent the pixels in the stack.
      * @return
      */
-    boolean isEdge(MeshImageStack stack, int[] pt){
+    boolean isEdge(int[] pt){
         if(
                 pt[0] == 0 || pt[0] == stack.getWidthPx() - 1
                 || pt[1] == 0 || pt[1] == stack.getHeightPx() - 1
@@ -110,6 +120,7 @@ public class BinaryInterceptible implements Interceptable {
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
                 for (int k = 0; k < 3; k++) {
+                    //TODO 0-index z value
                     if (stack.getValue(pt[0] + i - 1, pt[1] + j - 1, pt[2] + k - 2) != label) {
                         return true;
                     }
@@ -121,10 +132,10 @@ public class BinaryInterceptible implements Interceptable {
 
     /**
      * Assuming the origin is contained within the shape, and and the pixels are points.
-     * Should be updated to think of pixels as voxels.
-     * @param origin
-     * @param direction
-     * @return
+     * //TODO update calculation of pixels as voxels.
+     * @param origin normalized coordinates
+     * @param direction normalized coordinates
+     * @return closest edge pixel the array passes.
      */
     @Override
     public List<Intersection> getIntersections(double[] origin, double[] direction) {
@@ -155,6 +166,16 @@ public class BinaryInterceptible implements Interceptable {
 
         return Arrays.asList(new Intersection(best, direction));
     }
+
+    @Override
+    public boolean contains(double[] pt){
+        double[] img = stack.getImageCoordinates(pt);
+        int x = (int)img[0];
+        int y = (int)img[1];
+        int z = (int)img[2] + 1;
+        return blob.contains(x, y, z);
+    }
+
 
     public double[] getCenter() {
         return center;

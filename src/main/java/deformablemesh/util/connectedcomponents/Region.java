@@ -53,7 +53,7 @@ public class Region {
     VolumeDataObject dataObject;
     boolean selected = false;
     int label;
-    Region(int label, List<int[]> pts) {
+    public Region(int label, List<int[]> pts) {
         this.label= label;
         c = ColorSuggestions.getSuggestion();
         for(int[] pt: pts){

@@ -1028,8 +1028,9 @@ public class SegmentationController {
         ).collect(Collectors.toList());
 
         detector.addRegionsToAvoid(current);
-
-        List<DeformableMesh3D> guessed = detector.guessMeshes(level);
+        detector.thresholdLevel = level;
+        detector.nextLevel = 0;
+        List<DeformableMesh3D> guessed = detector.guessMeshes();
 
         startNewMeshTracks(guessed);
     }

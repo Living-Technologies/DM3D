@@ -87,7 +87,6 @@ function setSelectedMeshColor(color){
   if( color instanceof Color){
       GuiTools.SELECTED_MESH_COLOR = color;
   }
-
 }
 
 function snapshotsThreeSixty(steps){

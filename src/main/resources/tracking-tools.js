@@ -150,3 +150,35 @@ function turnOffWires(){
       }
     });
 }
+
+function findStrangeOccurances(){
+    tracks = controls.getAllTracks();
+    for(i = controls.getCurrentFrame(); i<controls.getNFrames() - 1; i++){
+        for(k in tracks){
+          track = tracks[k];
+          if( track.containsKey(i)){
+            mesh = track.getMesh( i );
+            bb = mesh.getBoundingBox();
+            v1 = bb.getVolume();
+            best = -1;
+            val = 0;
+
+            for( ok in tracks ){
+
+                ot = tracks[ok];
+                if( ot.containsKey( i + 1 ) ){
+                    bb2 = ot.getMesh( i+1).getBoundingBox();
+                    overlap = bb2.getIntersectingBox(bb).getVolume()/v1;
+                    if(overlap > val){
+                        val = overlap
+                        best = ok
+                     }
+                }
+            }
+            if( best != k  && track.containsKey(i + 1) ){
+              echo( track.getName() + " overlaps " + tracks[best].getName() + " on frame " + (i+1) )
+            }
+          }
+        }
+    }
+}

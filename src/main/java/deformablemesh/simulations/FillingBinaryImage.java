@@ -25,18 +25,33 @@
  */
 package deformablemesh.simulations;
 
+import deformablemesh.MeshDetector;
 import deformablemesh.MeshImageStack;
+import deformablemesh.externalenergies.*;
+import deformablemesh.geometry.ConnectionRemesher;
 import deformablemesh.geometry.interceptable.BinaryInterceptible;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.RayCastMesh;
 import deformablemesh.io.MeshReader;
+import deformablemesh.meshview.CanvasView;
 import deformablemesh.meshview.MeshFrame3D;
+import deformablemesh.meshview.VolumeDataObject;
 import deformablemesh.track.Track;
+import deformablemesh.util.ColorSuggestions;
+import deformablemesh.util.connectedcomponents.Region;
 import ij.ImagePlus;
+import ij.ImageStack;
+import ij.process.ByteProcessor;
+import ij.process.ImageProcessor;
+import org.jogamp.java3d.utils.picking.PickResult;
 
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -74,31 +89,119 @@ public class FillingBinaryImage {
     }
 
     public static void main(String[] args) throws IOException {
-        /*new ImageJ();
-        ImagePlus plus = new ImagePlus(Paths.get(args[0]).toAbsolutePath().toString());
-        DistanceTransformMosaicImage dtmi = new DistanceTransformMosaicImage(plus);
-        dtmi.findBlobs();
-
-        dtmi.createCascades();
-        ImagePlus p2 = dtmi.createLabeledImage();
-        p2.show();*/
-        ImagePlus plus = new ImagePlus(Paths.get(args[0]).toAbsolutePath().toString());
+        ImagePlus plus = new ImagePlus(Paths.get("sample-mosaic.tif").toAbsolutePath().toString());
         MeshImageStack mis = new MeshImageStack(plus);
-        List<Track> tracks = MeshReader.loadMeshes(Paths.get(args[1]).toFile());
-        for(int i = 0; i<mis.getNFrames(); i++){
-            final int fi = i;
-            List<DeformableMesh3D> meshes = tracks.stream().filter(
-                    t -> t.containsKey(fi)
-            ).map(
-                    t->t.getMesh(fi)
-            ).collect(Collectors.toList());
-            FillingBinaryImage fbi = new FillingBinaryImage(mis, meshes);
-            fbi.setFrame(fi);
-            fbi.showDeformation();
+        MeshDetector detector = new MeshDetector(mis);
+        List<Region> regions = detector.getRegionsFromLabelledImage();
+
+        System.out.println("meshing " + regions.size() + "regions.");
+
+        MeshFrame3D frame = new MeshFrame3D();
+        frame.showFrame(true);
+
+        frame.setBackgroundColor(Color.BLACK);
+
+        ImageStack blobs = new ImageStack(plus.getWidth(), plus.getHeight());
+
+        for(int i = 1; i<=plus.getNSlices(); i++){
+            blobs.addSlice(new ByteProcessor(blobs.getWidth(), blobs.getHeight()));
         }
+
+        for(Region r: regions) {
+            for (int[] px : r.getPoints()) {
+                blobs.getProcessor(px[2]).set(px[0], px[1], 1);
+            }
+        }
+
+
+
+        ImagePlus p2 = plus.createImagePlus();
+        p2.setStack(blobs);
+        VolumeDataObject vdo = new VolumeDataObject(Color.WHITE);
+        MeshImageStack mis2 = new MeshImageStack(p2);
+        vdo.setTextureData(mis2);
+        vdo.setMinMaxRange(0, 1);
+        frame.addDataObject(vdo);
+
+        List<DeformableMesh3D> meshes = regions.stream().map(r-> {
+                DeformableMesh3D mesh = FillingBinaryImage.fillBinaryWithMesh(mis2, r.getPoints());
+                mesh.setColor(ColorSuggestions.getSuggestion());
+                mesh.create3DObject();
+                frame.addDataObject(mesh.data_object);
+
+                return mesh;
+            }
+        ).collect(Collectors.toList());
+
+
+        AtomicInteger flag = new AtomicInteger(0);
+        new Thread(()->{
+            try{
+                while(!Thread.interrupted()){
+                    if(flag.get() == 0){
+                        synchronized (flag){
+                            flag.wait();
+                        }
+                    } else{
+                        for(int i = 0; i<50; i++) {
+                            meshes.forEach(DeformableMesh3D::update);
+                        }
+                    }
+                }
+            } catch(InterruptedException x){
+                return;
+            }
+        }).start();
+        frame.addPickListener( new CanvasView(){
+
+
+            @Override
+            public void updatePressed(PickResult[] results, MouseEvent evt) {
+
+            }
+
+            @Override
+            public void updateReleased(PickResult[] results, MouseEvent evt) {
+
+            }
+
+            @Override
+            public void updateClicked(PickResult[] results, MouseEvent evt) {
+                int i = flag.get();
+                if(i == 0){
+                    flag.set(1);
+                    synchronized (flag) {
+                        flag.notify();
+                    }
+                } else{
+                    flag.set(0);
+                }
+            }
+
+            @Override
+            public void updateMoved(PickResult[] results, MouseEvent evt) {
+
+            }
+
+            @Override
+            public void updateDragged(PickResult[] results, MouseEvent evt) {
+
+            }
+
+            public void check(){
+
+                System.out.println("updated");
+            }
+        });
     }
 
     public static DeformableMesh3D fillBinaryWithMesh(MeshImageStack stack, List<int[]> points){
+        return fillBinaryWithMesh(stack, points, minl, maxl);
+    }
+
+
+        public static DeformableMesh3D fillBinaryWithMesh(MeshImageStack stack, List<int[]> points, double minl, double maxl){
+        //center in image coordinates 0-based.
         double[] xyz = new double[3];
 
         for(int[] pt: points){
@@ -109,19 +212,27 @@ public class FillingBinaryImage {
 
         xyz[0] = xyz[0]/points.size();
         xyz[1] = xyz[1]/points.size();
-        xyz[2] = xyz[2]/points.size();
+        //center in image coordinates 0-based.
+        xyz[2] = xyz[2]/points.size() - 1;
         BinaryInterceptible bi = new BinaryInterceptible(points, stack, 1);
 
         double[] c = stack.getNormalizedCoordinate(xyz);
         double pv = stack.pixel_dimensions[0]*stack.pixel_dimensions[1]*stack.pixel_dimensions[2];
         double r = Math.cbrt(points.size()*pv*3.0/4/Math.PI)/stack.SCALE;
-        //a = new NewtonMesh3D(RayCastMesh.rayCastMesh(sA, sA.getCenter(), 2));
         DeformableMesh3D mesh = RayCastMesh.rayCastMesh(bi, bi.getCenter(), 2);
-        mesh.GAMMA = 1000;
-        mesh.ALPHA = 1.0;
-        mesh.BETA = 0.0;
 
-        return mesh;
+        ConnectionRemesher remesher = new ConnectionRemesher();
+
+        remesher.setMinAndMaxLengths(0.01, 0.02);
+        DeformableMesh3D remeshed = remesher.remesh(mesh);
+
+        remeshed.GAMMA = 1000;
+        remeshed.ALPHA = 2.0;
+        remeshed.BETA = 1.0;
+
+        remeshed.addExternalEnergy(new BallooningEnergy(bi, remeshed, 1000));
+        //remeshed.addExternalEnergy(new PerpendicularGradientEnergy(stack, remeshed, 1.0));
+        return remeshed;
 
     }
 

@@ -36,17 +36,23 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
+import ij.process.ShortProcessor;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class MeshDetector {
     List<Box3D> current = new ArrayList<>();
     MeshImageStack mis;
-    ImageStack threshed;
     int minSize = 50;
+    int maxSize = Integer.MAX_VALUE;
     public boolean spheres = false;
     public double max_overlap = 0.3;
+    int thresholdLevel = -1;
+    int nextLevel = 0;
     public MeshDetector(MeshImageStack mis){
         this.mis = mis;
     }
@@ -54,51 +60,70 @@ public class MeshDetector {
     public void addRegionsToAvoid(List<Box3D> regions){
         current.addAll(regions);
     }
-    List<DeformableMesh3D> guessMeshes(int level){
+    List<DeformableMesh3D> guessMeshes(){
 
-        //Get the current image stack for this frame/channel.
-        //create a thresholded version.
-        long start, end;
-        start = System.currentTimeMillis();
+        List<Region> regions = getRegionsFromThreshold(thresholdLevel);
+        regions = filterRegions(regions);
+
+        growRegions(2, regions);
+
+        List<DeformableMesh3D> guessed;
+        if(spheres){
+            guessed = spheres(regions);
+        } else{
+            guessed = fillBinaryBlobs(regions);
+        }
+
+        return guessed;
+    }
+
+    void growRegions(int steps, List<Region> regions){
+
         ImageStack currentFrame = mis.getCurrentFrame().getStack();
-        threshed = new ImageStack(currentFrame.getWidth(), currentFrame.getHeight());
+        int w = currentFrame.getWidth();
+        int h = currentFrame.getHeight();
+
+        ImageStack growing = new ImageStack(currentFrame.getWidth(), currentFrame.getHeight());
+        ImageStack threshed = new ImageStack(currentFrame.getWidth(), currentFrame.getHeight());
+
         for(int i = 1; i<= currentFrame.size(); i++){
+
             ImageProcessor proc = currentFrame.getProcessor(i).convertToShort(false);
-            proc.threshold(level);
-            threshed.addSlice(proc);
-        }
-        end = System.currentTimeMillis();
-        System.out.println("prepared binary image: " + (end - start)/1000);
-        start = System.currentTimeMillis();
-        List<Region> regions = ConnectedComponents3D.getRegions(threshed);
-        end = System.currentTimeMillis();
-        System.out.println(regions.size() + " regions detected in " + (end - start)/1000);
+            proc.threshold(nextLevel);
+            growing.addSlice(proc);
 
-        Integer biggest = -1;
-        int size = 0;
-        List<Region> toRemove = new ArrayList<>();
+            ImageProcessor ip = new ShortProcessor(w, h);
+            short[] pixels = (short[])ip.getPixels();
+            for(Region r: regions){
+                short l = (short)r.getLabel();
+                for(int[] px: r.getPoints()){
+                    pixels[px[0] + px[1]*w] = l;
+                }
+            }
+            threshed.addSlice(ip);
+        }
+
+        RegionGrowing rg = new RegionGrowing(threshed, growing);
+
+        rg.setRegions(regions);
+        for(int st = 0; st<steps; st++){
+            rg.step();
+        }
+
+    }
+    List<Region> filterRegions(List<Region> regions){
         int small = 0;
-
-        start = System.currentTimeMillis();
-
-        short[][] pixels = new short[threshed.getSize()][];
-        for(int i = 0; i<threshed.getSize(); i++){
-            pixels[i] = (short[])threshed.getPixels(i+1);
-        }
-
+        int large = 0;
+        //filter regions.
+        List<Region> filtered = new ArrayList<>();
         for (Region region : regions) {
             Integer key = region.getLabel();
             List<int[]> points = region.getPoints();
 
-            int width = threshed.getWidth();
-
             if (points.size() < minSize) {
                 small++;
-                toRemove.add(region);
-                for (int[] pt : points) {
-                    pixels[pt[2] - 1][pt[0] + pt[1]*width] = 0;
-                    //threshed.getProcessor(pt[2]).set(pt[0], pt[1], 0);
-                }
+            } else if(points.size() > maxSize){
+                large++;
             } else {
                 double[] rmin = mis.getNormalizedCoordinate(region.getLowCorner());
                 double[] rmax = mis.getNormalizedCoordinate(region.getHighCorner());
@@ -111,58 +136,56 @@ public class MeshDetector {
                     double bv = box.getVolume();
                     double iv = intersection.getVolume();
                     if((iv/cv > max_overlap) || (iv/bv > max_overlap)){
-                        toRemove.add(region);
-                        for (int[] pt : points) {
-                            pixels[pt[2] - 1][pt[0] + pt[1]*width] = 0;
-                            //threshed.getProcessor(pt[2]).set(pt[0], pt[1], 0);
-                        }
-
+                        obstructed = true;
+                        break;
                     }
                 }
-                for (int[] pt : points) {
-                    pixels[pt[2] - 1][pt[0] + pt[1]*width] = (short)key.shortValue();
-                    //threshed.getProcessor(pt[2]).set(pt[0], pt[1], key);
+                if(!obstructed){
+                    filtered.add(region);
                 }
             }
-            if (points.size() > size) {
-                size = points.size();
-                biggest = key;
-            }
+
 
         }
-        System.out.println(small + " to small. Biggest: " + biggest + " size of: " + size);
-        for (Region region : toRemove) {
-            regions.remove(region);
-        }
-        end = System.currentTimeMillis();
-        System.out.println( "removed small in: " + (end - start)/1000);
-
+        return filtered;
+    }
+    List<Region> getRegionsFromThreshold(int level){
+        long start, end;
         start = System.currentTimeMillis();
-        ImageStack growing = new ImageStack(currentFrame.getWidth(), currentFrame.getHeight());
-        int nlev = 1;
+        ImageStack currentFrame = mis.getCurrentFrame().getStack();
+        ImageStack threshed = new ImageStack(currentFrame.getWidth(), currentFrame.getHeight());
         for(int i = 1; i<= currentFrame.size(); i++){
             ImageProcessor proc = currentFrame.getProcessor(i).convertToShort(false);
-            proc.threshold(nlev);
-            growing.addSlice(proc);
-        }
-        RegionGrowing rg = new RegionGrowing(threshed, growing);
-        rg.setRegions(regions);
-        for(int st = 0; st<2; st++){
-            rg.step();
+            proc.threshold(level);
+            threshed.addSlice(proc);
         }
         end = System.currentTimeMillis();
-        System.out.println("regions grown: " + (end - start)/1000 + "s");
+        System.out.println("prepared binary image: " + (end - start)/1000);
         start = System.currentTimeMillis();
-        List<DeformableMesh3D> guessed;
-        if(spheres){
-            guessed = spheres(regions);
-        } else{
-            guessed = fillBinaryBlobs(regions);
-        }
+        List<Region> regions = ConnectedComponents3D.getRegions(threshed);
+        //TODO CC3D uses slice index.
         end = System.currentTimeMillis();
-        System.out.println("regions meshes in " + (end - start)/1000 + "s");
+        System.out.println(regions.size() + " regions detected in " + (end - start)/1000);
+        return regions;
+    }
+    public List<Region> getRegionsFromLabelledImage(){
+        Map<Integer, List<int[]>> pxRegions = new HashMap<>();
+        ImagePlus plus = mis.getCurrentFrame();
+        ImageStack stack = plus.getStack();
+        for(int i = 0; i<mis.getWidthPx(); i++){
+            for(int j = 0; j<mis.getHeightPx(); j++){
+                for(int z = 0; z<mis.getNSlices(); z++){
+                    int px2 = stack.getProcessor(z+1).get(i, j) & 0xffffff;
+                    if(px2 != 0) {
+                        //TODO Regions index for z.
+                        pxRegions.computeIfAbsent(px2, k->new ArrayList<>()).add(new int[]{i, j, z + 1 });
+                    }
 
-        return guessed;
+                }
+            }
+        }
+
+        return pxRegions.entrySet().stream().map(e -> new Region(e.getKey(), e.getValue())).collect(Collectors.toList());
     }
 
     List<DeformableMesh3D> spheres(List<Region> regions){
@@ -211,9 +234,5 @@ public class MeshDetector {
             guessed.add(mesh);
         }
         return guessed;
-    }
-
-    ImageStack getThreshedStack(){
-        return threshed;
     }
 }
