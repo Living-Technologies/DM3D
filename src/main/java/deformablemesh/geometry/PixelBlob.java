@@ -42,7 +42,7 @@ public class PixelBlob {
         int zi = z - lz;
         int yi = (y - ly);
         int xi = (x - lx);
-        return (zi >= 0 && zi < d && xi >= 0 && x < w && yi >= 0 && yi < h)
-                && ( blob[ z - lz ][(y - ly)*w + (x - lx)] != 0 );
+        return (zi >= 0 && zi < d && xi >= 0 && xi < w && yi >= 0 && yi < h)
+                && ( blob[ zi ][ ( yi ) * w + xi ] != 0 );
     }
 }

@@ -65,6 +65,7 @@ import java.util.stream.Collectors;
  */
 public class FillingBinaryImage {
     int frame;
+    static boolean spheres = true;
     MeshImageStack stack;
     List<DeformableMesh3D> meshes;
     public FillingBinaryImage(MeshImageStack mis, List<DeformableMesh3D> meshes){
@@ -124,7 +125,7 @@ public class FillingBinaryImage {
         frame.addDataObject(vdo);
 
         List<DeformableMesh3D> meshes = regions.stream().map(r-> {
-                DeformableMesh3D mesh = FillingBinaryImage.fillBinaryWithMesh(mis2, r.getPoints());
+                DeformableMesh3D mesh = FillingBinaryImage.fillBinaryWithMesh(mis2, r.getPoints(), 0.007, 0.014);
                 mesh.setColor(ColorSuggestions.getSuggestion());
                 mesh.create3DObject();
                 frame.addDataObject(mesh.data_object);
@@ -196,11 +197,11 @@ public class FillingBinaryImage {
     }
 
     public static DeformableMesh3D fillBinaryWithMesh(MeshImageStack stack, List<int[]> points){
-        return fillBinaryWithMesh(stack, points, minl, maxl);
+        return fillBinaryWithMesh(stack, points, 0.01, 0.02);
     }
 
 
-        public static DeformableMesh3D fillBinaryWithMesh(MeshImageStack stack, List<int[]> points, double minl, double maxl){
+    public static DeformableMesh3D fillBinaryWithMesh(MeshImageStack stack, List<int[]> points, double minl, double maxl){
         //center in image coordinates 0-based.
         double[] xyz = new double[3];
 
@@ -219,11 +220,21 @@ public class FillingBinaryImage {
         double[] c = stack.getNormalizedCoordinate(xyz);
         double pv = stack.pixel_dimensions[0]*stack.pixel_dimensions[1]*stack.pixel_dimensions[2];
         double r = Math.cbrt(points.size()*pv*3.0/4/Math.PI)/stack.SCALE;
-        DeformableMesh3D mesh = RayCastMesh.rayCastMesh(bi, bi.getCenter(), 2);
+        DeformableMesh3D mesh;
+
+        if(spheres){
+            double[] center = stack.getNormalizedCoordinate(xyz);
+            mesh = RayCastMesh.sphereRayCastMesh(2);
+            mesh.translate(c);
+            mesh.scale(r, c);
+        } else {
+            mesh = RayCastMesh.rayCastMesh(bi, bi.getCenter(), 2);
+        }
+
 
         ConnectionRemesher remesher = new ConnectionRemesher();
 
-        remesher.setMinAndMaxLengths(0.01, 0.02);
+        remesher.setMinAndMaxLengths(minl, maxl);
         DeformableMesh3D remeshed = remesher.remesh(mesh);
 
         remeshed.GAMMA = 1000;
@@ -232,6 +243,11 @@ public class FillingBinaryImage {
 
         remeshed.addExternalEnergy(new BallooningEnergy(bi, remeshed, 1000));
         //remeshed.addExternalEnergy(new PerpendicularGradientEnergy(stack, remeshed, 1.0));
+        int smoothingSteps = 100;
+        for(int i = 0; i<smoothingSteps; i++){
+            remeshed.update();
+        }
+
         return remeshed;
 
     }

@@ -41,12 +41,14 @@ import deformablemesh.io.MeshReader;
 import deformablemesh.io.TrackMateAdapter;
 import deformablemesh.meshview.*;
 import deformablemesh.ringdetection.FurrowTransformer;
+import deformablemesh.simulations.FillingBinaryImage;
 import deformablemesh.track.FrameToFrameDisplacement;
 import deformablemesh.track.Track;
 import deformablemesh.util.*;
 import deformablemesh.util.actions.ActionStack;
 import deformablemesh.util.actions.StateListener;
 import deformablemesh.util.actions.UndoableActions;
+import deformablemesh.util.connectedcomponents.Region;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -1033,6 +1035,24 @@ public class SegmentationController {
         List<DeformableMesh3D> guessed = detector.guessMeshes();
 
         startNewMeshTracks(guessed);
+    }
+
+    /**
+     * Processes the selected image by separating out all of the pixel regions
+     * and then 
+     */
+    public void meshesFromLabelledImage(){
+        MeshDetector detector = new MeshDetector(getMeshImageStack());
+        List<Region> regions = detector.getRegionsFromLabelledImage();
+
+        List<DeformableMesh3D> meshes = regions.stream().map(
+                region-> FillingBinaryImage.fillBinaryWithMesh(
+                        getMeshImageStack(),
+                        region.getPoints(),
+                        getMinConnectionLength(),
+                        getMaxConnectionLength() )
+                ).collect(Collectors.toList());
+        startNewMeshTracks( meshes );
     }
 
     /**
