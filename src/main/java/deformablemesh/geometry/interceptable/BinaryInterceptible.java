@@ -46,10 +46,10 @@ public class BinaryInterceptible implements Interceptable {
     MeshImageStack stack;
 
     /**
-     * //TODO 0-based image coordinates.
-     * @param pixels slice based image coordinates.
-     * @param stack
-     * @param label
+     *
+     * @param pixels index based image coordinates, z=0 is the first slice.
+     * @param stack image the pixels are from, used for geometry.
+     * @param label the label the pixels represent.
      */
     public BinaryInterceptible(List<int[]> pixels, MeshImageStack stack, int label){
         this.stack = stack;
@@ -61,7 +61,7 @@ public class BinaryInterceptible implements Interceptable {
 
             img[0] = px[0];
             img[1] = px[1];
-            img[2] = px[2] - 0.5;
+            img[2] = px[2];
 
             double[] nspace = stack.getNormalizedCoordinate(img);
             center[0] += nspace[0];
@@ -112,7 +112,7 @@ public class BinaryInterceptible implements Interceptable {
         if(
                 pt[0] == 0 || pt[0] == stack.getWidthPx() - 1
                 || pt[1] == 0 || pt[1] == stack.getHeightPx() - 1
-                || pt[2] == 1 || pt[2] == stack.getNSlices()
+                || pt[2] == 0 || pt[2] == stack.getNSlices()  - 1
         ) {
             //edge of the image is an edge.
             return true;
@@ -121,7 +121,7 @@ public class BinaryInterceptible implements Interceptable {
             for (int j = 0; j < 3; j++) {
                 for (int k = 0; k < 3; k++) {
                     //TODO 0-index z value
-                    if (stack.getValue(pt[0] + i - 1, pt[1] + j - 1, pt[2] + k - 2) != label) {
+                    if (stack.getValue(pt[0] + i - 1, pt[1] + j - 1, pt[2] + k - 1) != label) {
                         return true;
                     }
                 }

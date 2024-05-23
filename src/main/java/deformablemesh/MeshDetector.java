@@ -163,7 +163,6 @@ public class MeshDetector {
         System.out.println("prepared binary image: " + (end - start)/1000);
         start = System.currentTimeMillis();
         List<Region> regions = ConnectedComponents3D.getRegions(threshed);
-        //TODO CC3D uses slice index.
         end = System.currentTimeMillis();
         System.out.println(regions.size() + " regions detected in " + (end - start)/1000);
         return regions;
@@ -177,15 +176,26 @@ public class MeshDetector {
                 for(int z = 0; z<mis.getNSlices(); z++){
                     int px2 = stack.getProcessor(z+1).get(i, j) & 0xffffff;
                     if(px2 != 0) {
-                        //TODO Regions index for z.
-                        pxRegions.computeIfAbsent(px2, k->new ArrayList<>()).add(new int[]{i, j, z + 1 });
+                        pxRegions.computeIfAbsent(px2, k->new ArrayList<>()).add(new int[]{i, j, z});
                     }
 
                 }
             }
         }
-
-        return pxRegions.entrySet().stream().map(e -> new Region(e.getKey(), e.getValue())).collect(Collectors.toList());
+        List<Region> regions = new ArrayList<>();
+        for(Integer label: pxRegions.keySet()){
+            Region r = new Region(label, pxRegions.get(label));
+            List<Region> split = r.split();
+            for(Region sr: split){
+                if(sr.getPoints().size() > 100){
+                    regions.add(sr);
+                } else{
+                    System.out.println(sr.getLabel() + " : " + sr.getPoints().size());
+                }
+            }
+        }
+        //return pxRegions.entrySet().stream().map(e -> new Region(e.getKey(), e.getValue())).collect(Collectors.toList());
+        return regions;
     }
 
     List<DeformableMesh3D> spheres(List<Region> regions){

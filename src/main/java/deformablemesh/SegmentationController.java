@@ -1039,7 +1039,9 @@ public class SegmentationController {
 
     /**
      * Processes the selected image by separating out all of the pixel regions
-     * and then 
+     * and then creating spherical meshes and deforming them to the binary blob
+     * for a few steps.
+     *
      */
     public void meshesFromLabelledImage(){
         MeshDetector detector = new MeshDetector(getMeshImageStack());

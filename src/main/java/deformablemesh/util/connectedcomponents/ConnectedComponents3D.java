@@ -239,7 +239,7 @@ public class ConnectedComponents3D {
                 List<int[]> destination = log.computeIfAbsent(label, ArrayList::new);
 
                 for(int[] p: px){
-                    destination.add(new int[]{p[0], p[1], slice});
+                    destination.add(new int[]{p[0], p[1], slice - 1});
                     //regions no longer match labels!
                     cc2d.set(p[0], p[1], label);
                 }
@@ -250,7 +250,7 @@ public class ConnectedComponents3D {
             for(Integer key: regions2D.keySet()){
                 List<int[]> px = log.computeIfAbsent( key, ArrayList::new );
                 for(int[] px2d : regions2D.get(key)){
-                    px.add(new int[]{px2d[0], px2d[1], slice});
+                    px.add(new int[]{px2d[0], px2d[1], slice - 1});
                 }
             }
         }
@@ -263,7 +263,7 @@ public class ConnectedComponents3D {
      * @param value
      */
     private void set(int[] xyz, int value){
-        pixels.get(xyz[2]-1).set(xyz[0], xyz[1], value);
+        pixels.get(xyz[2]).set(xyz[0], xyz[1], value);
     }
 
     /**
@@ -279,7 +279,7 @@ public class ConnectedComponents3D {
         for(Integer key: log.keySet()){
             List<int[]> px = log.get(key);
             for(int[] x: px){
-                pixels[x[2] - 1][x[0] + width*x[1]] = key.shortValue();
+                pixels[x[2]][x[0] + width*x[1]] = key.shortValue();
                 //stack.getProcessor(x[2]).set(x[0], x[1], key);
             }
         }

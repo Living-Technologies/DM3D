@@ -1466,26 +1466,31 @@ public class DeformableMesh3DTools {
         ImageStack timeStack = new ImageStack(w, h);
 
         for(Integer i: frames){
-            int id = 1;
             ImageStack out = new ImageStack(w, h);
             for(int j = 0; j<n; j++){
                 out.addSlice(new ColorProcessor(w, h));
             }
-            for(Track t: allMeshTracks){
+            for(int id = 0; id < allMeshTracks.size(); id++){
+                Track t = allMeshTracks.get(id);
                 if(t.containsKey(i)){
-                    mosaicBinary(stack, out, t.getMesh(i), id++);
+                    mosaicBinary(stack, out, t.getMesh(i), id + 1);
                 }
             }
 
-
-            for(int j = 1; j<= n; j++){
-                int[] px = (int[])out.getProcessor(j).getPixels();
-                ImageProcessor proc = new ShortProcessor(out.getWidth(), out.getHeight());
-                short[] px2 = (short[])proc.getPixels();
-                for(int k = 0; k<px2.length; k++){
-                    px2[k] = (short)px[k];
+            if(allMeshTracks.size() < Short.MAX_VALUE) {
+                for (int j = 1; j <= n; j++) {
+                    int[] px = (int[]) out.getProcessor(j).getPixels();
+                    ImageProcessor proc = new ShortProcessor(out.getWidth(), out.getHeight());
+                    short[] px2 = (short[]) proc.getPixels();
+                    for (int k = 0; k < px2.length; k++) {
+                        px2[k] = (short) px[k];
+                    }
+                    timeStack.addSlice(proc);
                 }
-                timeStack.addSlice(proc);
+            } else{
+                for (int j = 1; j <= n; j++) {
+                    timeStack.addSlice(out.getProcessor(j));
+                }
             }
         }
         plus.setStack(timeStack, 1, n, frames.size());

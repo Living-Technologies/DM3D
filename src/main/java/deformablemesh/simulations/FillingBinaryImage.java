@@ -41,6 +41,7 @@ import deformablemesh.util.ColorSuggestions;
 import deformablemesh.util.connectedcomponents.Region;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.measure.Calibration;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import org.jogamp.java3d.utils.picking.PickResult;
@@ -91,6 +92,11 @@ public class FillingBinaryImage {
 
     public static void main(String[] args) throws IOException {
         ImagePlus plus = new ImagePlus(Paths.get("sample-mosaic.tif").toAbsolutePath().toString());
+        Calibration c = plus.getCalibration();
+        c.pixelDepth = 2.0;
+        c.pixelHeight = 0.35;
+        c.pixelWidth = 0.35;
+        plus.setCalibration(c);
         MeshImageStack mis = new MeshImageStack(plus);
         MeshDetector detector = new MeshDetector(mis);
         List<Region> regions = detector.getRegionsFromLabelledImage();
@@ -110,7 +116,7 @@ public class FillingBinaryImage {
 
         for(Region r: regions) {
             for (int[] px : r.getPoints()) {
-                blobs.getProcessor(px[2]).set(px[0], px[1], 1);
+                blobs.getProcessor(px[2] + 1).set(px[0], px[1], 1);
             }
         }
 
