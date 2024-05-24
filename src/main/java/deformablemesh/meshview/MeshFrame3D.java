@@ -36,6 +36,7 @@ import deformablemesh.track.Track;
 import deformablemesh.util.Vector3DOps;
 import ij.ImagePlus;
 import org.jogamp.java3d.*;
+import org.jogamp.java3d.utils.picking.PickResult;
 import org.jogamp.vecmath.Color3f;
 import org.jogamp.vecmath.Point3d;
 import org.jogamp.vecmath.Vector3d;
@@ -122,7 +123,13 @@ public class    MeshFrame3D {
         return Collections.unmodifiableList(channelVolumes);
     }
 
-
+    public boolean isObject(PickResult result, DeformableMesh3D mesh){
+        if(mesh.data_object!=null){
+            GeometryArray array = result.getGeometryArray();
+            return mesh.data_object.lines==array || mesh.data_object.surface_object.getGeometry()==array;
+        }
+        return false;
+    }
     public void createNewChannelVolume(){
         ImagePlus plus = GuiTools.selectOpenImage(frame);
         if(plus == null){

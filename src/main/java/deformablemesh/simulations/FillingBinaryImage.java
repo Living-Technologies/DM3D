@@ -34,6 +34,7 @@ import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.RayCastMesh;
 import deformablemesh.io.MeshReader;
 import deformablemesh.meshview.CanvasView;
+import deformablemesh.meshview.DeformableMeshDataObject;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.meshview.VolumeDataObject;
 import deformablemesh.track.Track;
@@ -44,6 +45,8 @@ import ij.ImageStack;
 import ij.measure.Calibration;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
+import org.jogamp.java3d.GeometryArray;
+import org.jogamp.java3d.Node;
 import org.jogamp.java3d.utils.picking.PickResult;
 
 import java.awt.*;
@@ -53,6 +56,7 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -148,7 +152,7 @@ public class FillingBinaryImage {
             }
         ).collect(Collectors.toList());
 
-
+        List<DeformableMesh3D> selectedMeshes = new CopyOnWriteArrayList<>();
         AtomicInteger flag = new AtomicInteger(0);
         new Thread(()->{
             try{
@@ -159,7 +163,7 @@ public class FillingBinaryImage {
                         }
                     } else{
                         for(int i = 0; i<50; i++) {
-                            meshes.forEach(DeformableMesh3D::update);
+                            selectedMeshes.forEach(DeformableMesh3D::update);
                         }
                     }
                 }
@@ -167,6 +171,7 @@ public class FillingBinaryImage {
                 return;
             }
         }).start();
+
         frame.addPickListener( new CanvasView(){
 
 
@@ -190,6 +195,25 @@ public class FillingBinaryImage {
                     }
                 } else{
                     flag.set(0);
+                }
+                for(PickResult result : results){
+                    System.out.println("working");
+
+                    for(DeformableMesh3D mesh : meshes){
+                        if(frame.isObject(result, mesh)){
+                            if(selectedMeshes.contains(mesh)){
+                                mesh.data_object.setWireColor(Color.BLUE);
+                                selectedMeshes.remove(mesh);
+                                return;
+                            }
+                            else {
+                                mesh.data_object.setWireColor(Color.RED);
+                                selectedMeshes.add(mesh);
+                                return;
+                            }
+                        }
+                    }
+
                 }
             }
 
@@ -246,7 +270,7 @@ public class FillingBinaryImage {
 
 
 
-        int meshin = 5;
+        int meshin = 3;
         for(int rm = 0; rm<meshin; rm++) {
             ConnectionRemesher remesher = new ConnectionRemesher();
             remesher.setMinAndMaxLengths(minl, maxl);
@@ -259,7 +283,7 @@ public class FillingBinaryImage {
             remeshed.addExternalEnergy(new BallooningEnergy(bi, remeshed, 1000));
             //remeshed.addExternalEnergy(new PerpendicularGradientEnergy(stack, remeshed, 1.0));
             //remeshed.addExternalEnergy(new PerpendicularIntensityEnergy(stack, remeshed, -1.0));
-            int smoothingSteps = 100;
+            int smoothingSteps = 10;
             for (int i = 0; i < smoothingSteps; i++) {
                 remeshed.update();
             }

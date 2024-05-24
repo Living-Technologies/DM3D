@@ -158,6 +158,12 @@ public class BinaryInterceptible implements Interceptable {
     @Override
     public boolean contains(double[] pt){
         double[] img = stack.getImageCoordinates(pt);
+        if( img[2] < 0 || img[1] < 0 || img[0] < 0){
+            //negative image coordinates are always out of bound.
+            //they also do not repsect "round down" behavior of truncation.
+            return false;
+        }
+
         int x = (int)img[0];
         int y = (int)img[1];
         int z = (int)img[2];
