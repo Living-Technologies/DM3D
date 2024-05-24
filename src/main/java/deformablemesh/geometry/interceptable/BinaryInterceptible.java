@@ -76,28 +76,17 @@ public class BinaryInterceptible implements Interceptable {
             if(isEdge(px)){
                 edge.add(nspace);
             }
-
-
-
         }
-        for(double[] pt: edge){
-            for(int j = 0; j<3; j++){
-                if(pt[j] < mins[j]){
-                    System.out.println("too low");
-                } else if(pt[j] > maxs[j]){
-                    System.out.println("too high");
-                }
-            }
-        }
+
 
 
 
         blob = new PixelBlob(pixels);
 
-
-        center[0] = center[0]/pixels.size();
-        center[1] = center[1]/pixels.size();
-        center[2] = center[2]/pixels.size();
+        double[] offset = stack.scaleToNormalizedLength(new double[]{0.5, 0.5, 0.5});
+        center[0] = center[0]/pixels.size() + offset[0];
+        center[1] = center[1]/pixels.size() + offset[1];
+        center[2] = center[2]/pixels.size() + offset[2];
     }
 
 
@@ -120,7 +109,6 @@ public class BinaryInterceptible implements Interceptable {
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
                 for (int k = 0; k < 3; k++) {
-                    //TODO 0-index z value
                     if (stack.getValue(pt[0] + i - 1, pt[1] + j - 1, pt[2] + k - 1) != label) {
                         return true;
                     }
@@ -172,7 +160,7 @@ public class BinaryInterceptible implements Interceptable {
         double[] img = stack.getImageCoordinates(pt);
         int x = (int)img[0];
         int y = (int)img[1];
-        int z = (int)img[2] + 1;
+        int z = (int)img[2];
         return blob.contains(x, y, z);
     }
 

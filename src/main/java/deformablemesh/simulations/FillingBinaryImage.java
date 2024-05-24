@@ -51,6 +51,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -92,11 +93,11 @@ public class FillingBinaryImage {
 
     public static void main(String[] args) throws IOException {
         ImagePlus plus = new ImagePlus(Paths.get("sample-mosaic.tif").toAbsolutePath().toString());
-        Calibration c = plus.getCalibration();
-        c.pixelDepth = 2.0;
-        c.pixelHeight = 0.35;
-        c.pixelWidth = 0.35;
-        plus.setCalibration(c);
+        //Calibration c = plus.getCalibration();
+        //c.pixelDepth = 2.0;
+        //c.pixelHeight = 0.35;
+        //c.pixelWidth = 0.35;
+        //plus.setCalibration(c);
         MeshImageStack mis = new MeshImageStack(plus);
         MeshDetector detector = new MeshDetector(mis);
         List<Region> regions = detector.getRegionsFromLabelledImage();
@@ -124,11 +125,18 @@ public class FillingBinaryImage {
 
         ImagePlus p2 = plus.createImagePlus();
         p2.setStack(blobs);
-        VolumeDataObject vdo = new VolumeDataObject(Color.WHITE);
+
         MeshImageStack mis2 = new MeshImageStack(p2);
+        VolumeDataObject vdo = new VolumeDataObject(Color.WHITE);
         vdo.setTextureData(mis2);
         vdo.setMinMaxRange(0, 1);
+
+        VolumeDataObject vdo2 = new VolumeDataObject(Color.RED);
+        vdo2.setTextureData(mis);
+        vdo2.setMinMaxRange(0, 1);
+        //vdo2.setTransparencyTrim(0, 100);
         frame.addDataObject(vdo);
+        frame.addDataObject(vdo2);
 
         List<DeformableMesh3D> meshes = regions.stream().map(r-> {
                 DeformableMesh3D mesh = FillingBinaryImage.fillBinaryWithMesh(mis2, r.getPoints(), 0.007, 0.014);
@@ -208,7 +216,6 @@ public class FillingBinaryImage {
 
 
     public static DeformableMesh3D fillBinaryWithMesh(MeshImageStack stack, List<int[]> points, double minl, double maxl){
-        //center in image coordinates 0-based.
         double[] xyz = new double[3];
 
         for(int[] pt: points){
@@ -219,8 +226,8 @@ public class FillingBinaryImage {
 
         xyz[0] = xyz[0]/points.size();
         xyz[1] = xyz[1]/points.size();
-        //center in image coordinates 0-based.
-        xyz[2] = xyz[2]/points.size() - 1;
+        xyz[2] = xyz[2]/points.size();
+
         BinaryInterceptible bi = new BinaryInterceptible(points, stack, 1);
 
         double[] c = stack.getNormalizedCoordinate(xyz);
@@ -238,23 +245,28 @@ public class FillingBinaryImage {
         }
 
 
-        ConnectionRemesher remesher = new ConnectionRemesher();
 
-        remesher.setMinAndMaxLengths(minl, maxl);
-        DeformableMesh3D remeshed = remesher.remesh(mesh);
+        int meshin = 5;
+        for(int rm = 0; rm<meshin; rm++) {
+            ConnectionRemesher remesher = new ConnectionRemesher();
+            remesher.setMinAndMaxLengths(minl, maxl);
+            DeformableMesh3D remeshed = remesher.remesh(mesh);
 
-        remeshed.GAMMA = 1000;
-        remeshed.ALPHA = 2.0;
-        remeshed.BETA = 1.0;
+            remeshed.GAMMA = 1000;
+            remeshed.ALPHA = 2.0;
+            remeshed.BETA = 1.0;
 
-        remeshed.addExternalEnergy(new BallooningEnergy(bi, remeshed, 1000));
-        //remeshed.addExternalEnergy(new PerpendicularGradientEnergy(stack, remeshed, 1.0));
-        int smoothingSteps = 100;
-        for(int i = 0; i<smoothingSteps; i++){
-            remeshed.update();
+            remeshed.addExternalEnergy(new BallooningEnergy(bi, remeshed, 1000));
+            //remeshed.addExternalEnergy(new PerpendicularGradientEnergy(stack, remeshed, 1.0));
+            //remeshed.addExternalEnergy(new PerpendicularIntensityEnergy(stack, remeshed, -1.0));
+            int smoothingSteps = 100;
+            for (int i = 0; i < smoothingSteps; i++) {
+                remeshed.update();
+            }
+            mesh = remeshed;
         }
 
-        return remeshed;
+        return mesh;
 
     }
 

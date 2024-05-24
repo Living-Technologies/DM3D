@@ -42,8 +42,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  *
- * The goal of this energy is to grow outwards, until it hits another mesh and cannot
- * grow any more.
+ * The goal of this energy is to grow outwards, until it hits the interceptable constraint,
+ * then it should stop growing outward.
  *
  * Created by msmith on 3/8/16.
  */
@@ -113,8 +113,10 @@ public class BallooningEnergy implements ExternalEnergy{
 
         mesh.reshape();
         mesh2.triangles.forEach(Triangle3D::update);
+
         mesh.addExternalEnergy(new BallooningEnergy(interceptor, mesh, 1));
         mesh.addExternalEnergy(new TriangleAreaDistributor(new MeshImageStack(), mesh, 1));
+
         int counter = 0;
 
 
