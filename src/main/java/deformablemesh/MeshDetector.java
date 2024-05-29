@@ -174,7 +174,7 @@ public class MeshDetector {
         for(int i = 0; i<mis.getWidthPx(); i++){
             for(int j = 0; j<mis.getHeightPx(); j++){
                 for(int z = 0; z<mis.getNSlices(); z++){
-                    int px2 = stack.getProcessor(z+1).get(i, j) & 0xffffff;
+                    int px2 = stack.getProcessor(z+1).get(i, j);
                     if(px2 != 0) {
                         pxRegions.computeIfAbsent(px2, k->new ArrayList<>()).add(new int[]{i, j, z});
                     }
@@ -187,14 +187,11 @@ public class MeshDetector {
             Region r = new Region(label, pxRegions.get(label));
             List<Region> split = r.split();
             for(Region sr: split){
-                if(sr.getPoints().size() > 100){
+                if(sr.getPoints().size() > 2){
                     regions.add(sr);
-                } else{
-                    System.out.println(sr.getLabel() + " : " + sr.getPoints().size());
                 }
             }
         }
-        //return pxRegions.entrySet().stream().map(e -> new Region(e.getKey(), e.getValue())).collect(Collectors.toList());
         return regions;
     }
 

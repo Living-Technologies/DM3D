@@ -1039,22 +1039,38 @@ public class SegmentationController {
 
     /**
      * Processes the selected image by separating out all of the pixel regions
-     * and then creating spherical meshes and deforming them to the binary blob
-     * for a few steps.
+     * and then creating spherical meshes and deforming them to the binary blob.
+     *
+     * This uses the min/max values of the mesh connection lengths.
+     *
+     *
+     * @param relaxSteps number of updates called on a mesh between remesh steps
+     * @param remeshSteps number of times a mesh is remesh to represent binary mesh.
+     */
+    public void meshesFromLabelledImage(int relaxSteps, int remeshSteps){
+        MeshDetector detector = new MeshDetector(getMeshImageStack());
+        List<Region> regions = detector.getRegionsFromLabelledImage();
+        FillingBinaryImage mesher = new FillingBinaryImage(getMeshImageStack());
+        mesher.setMinMaxLengths(getMinConnectionLength(),getMaxConnectionLength());
+        mesher.setRemeshSteps(remeshSteps);
+        mesher.setRelaxSteps(relaxSteps);
+        List<DeformableMesh3D> meshes = regions.stream().map(
+                region-> mesher.fillBlobWithMesh(region.getPoints())
+        ).collect(Collectors.toList());
+        startNewMeshTracks( meshes );
+    }
+    /**
+     *
+     * Generates meshes from a labelled image with a default relax steps and remesh
+     * steps.
+     *
+     * Primarily used from the menu item.
+     *
+     * @see SegmentationController#meshesFromLabelledImage(int, int)
      *
      */
     public void meshesFromLabelledImage(){
-        MeshDetector detector = new MeshDetector(getMeshImageStack());
-        List<Region> regions = detector.getRegionsFromLabelledImage();
-
-        List<DeformableMesh3D> meshes = regions.stream().map(
-                region-> FillingBinaryImage.fillBinaryWithMesh(
-                        getMeshImageStack(),
-                        region.getPoints(),
-                        getMinConnectionLength(),
-                        getMaxConnectionLength() )
-                ).collect(Collectors.toList());
-        startNewMeshTracks( meshes );
+        meshesFromLabelledImage(100, 3);
     }
 
     /**
@@ -2815,7 +2831,7 @@ public class SegmentationController {
     }
 
     /**
-     * Creates an imageplus that is a binary image with pixes values 1 inside a mesh and 0 outside.
+     * Creates an ImagePlus that is a binary image with pixes values 1 inside a mesh and 0 outside.
      *
      * @see DeformableMesh3DTools#createBinaryRepresentation(MeshImageStack, DeformableMesh3D)
      * */
@@ -2826,8 +2842,8 @@ public class SegmentationController {
     }
 
     /**
-     * Creates a labelled image of the provided tracks. The labels are not
-     * related frame to frame.
+     * Creates a labelled image of the provided tracks. The stacks
+     * will be labelled according to their index in the tracks list.
      */
     public void createLabelledImage(List<Track> tracks){
         submit( ()->{
@@ -2937,9 +2953,7 @@ public class SegmentationController {
      */
     public void createMosaicImage() {
 
-        submit(()->{
-            model.createMosaicImage();
-        });
+        submit(model::createMosaicImage);
 
     }
 
@@ -2949,9 +2963,7 @@ public class SegmentationController {
      */
     public void createLabelImage() {
 
-        submit(()->{
-            model.createLabelImage();
-        });
+        submit(model::createLabelImage);
 
     }
 
