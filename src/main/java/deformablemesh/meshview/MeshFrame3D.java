@@ -43,9 +43,7 @@ import org.jogamp.vecmath.Vector3d;
 import org.jogamp.vecmath.Vector3f;
 
 import javax.imageio.ImageIO;
-import javax.swing.JColorChooser;
-import javax.swing.JFrame;
-import javax.swing.JOptionPane;
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyListener;
 import java.awt.image.BufferedImage;
@@ -136,6 +134,7 @@ public class    MeshFrame3D {
             return;
         }
         Color c = JColorChooser.showDialog(null, "Select Color", Color.WHITE);
+
         int channel = 0;
         if(plus.getNChannels()>1){
             Object[] values = IntStream.range(1, plus.getNChannels()+1).boxed().toArray();
@@ -158,6 +157,7 @@ public class    MeshFrame3D {
             ChannelVolume cv = new ChannelVolume(stack, c);
             addChannelVolume(cv);
         }
+
     }
 
     public void chooseToremoveChannelVolume(){
@@ -180,25 +180,55 @@ public class    MeshFrame3D {
 
     public void chooseToContrastChannelVolume(){
         if(channelVolumes.size() == 0 ) return;
-        Object[] choices = channelVolumes.toArray();
 
-        Object option = JOptionPane.showInputDialog(
-                frame,
-                "Select Channel to adjust Contrast:",
-                "Choose Channel",
-                JOptionPane.QUESTION_MESSAGE,
-                null,
-                choices,
-                choices[0]
+        JDialog dialog = new JDialog(frame,"Select volume to contrast.", true);
+        JComboBox<ChannelVolume> channels = new JComboBox<>(channelVolumes.toArray(new ChannelVolume[0]));
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(channels, BorderLayout.NORTH);
+        JCheckBox box = new JCheckBox("Show volume as labelled image");
+        panel.add(box, BorderLayout.CENTER);
+        JButton accept = new JButton("adjust");
+        JButton cancel = new JButton("cancel");
+        JPanel row = new JPanel();
+        row.setLayout(new BoxLayout(row, BoxLayout.LINE_AXIS));
+        row.add(Box.createHorizontalGlue());
+        row.add(accept);
+
+        accept.addActionListener(evt->{
+            dialog.setVisible(false);
+            ChannelVolume volume = (ChannelVolume)channels.getSelectedItem();
+            if(volume == null) return;
+            if(box.isSelected()){
+                volume.getVolumeDataObject().showAsLabeledVolume();
+            } else{
+                VolumeContrastSetter setter = new VolumeContrastSetter(volume.vdo);
+                setter.setPreviewBackgroundColor(getBackgroundColor());
+                setter.showDialog(getJFrame());
+            }
+        });
+
+        cancel.addActionListener(evt->{
+            dialog.setVisible(false);
+        });
+        row.add(cancel);
+        panel.add(row, BorderLayout.SOUTH);
+        dialog.setContentPane(panel);
+        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+
+        dialog.pack();
+        Point p = frame.getLocation();
+        int w = frame.getWidth();
+        int h = frame.getHeight();
+        int dw = dialog.getWidth();
+        int dh = dialog.getHeight();
+        dialog.setLocation(
+                new Point(p.x + ( w - dw ) / 2, p.y + ( h - dh ) / 3 )
         );
-        if(option == null) return;
+        dialog.setVisible(true);
 
-        if(option instanceof ChannelVolume) {
-            ChannelVolume volume = (ChannelVolume) option;
-            VolumeContrastSetter setter = new VolumeContrastSetter(volume.vdo);
-            setter.setPreviewBackgroundColor(getBackgroundColor());
-            setter.showDialog(getJFrame());
-        }
+
+
+
     }
 
     /**

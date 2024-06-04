@@ -35,6 +35,7 @@ import deformablemesh.util.connectedcomponents.RegionGrowing;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ByteProcessor;
+import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 
@@ -167,15 +168,28 @@ public class MeshDetector {
         System.out.println(regions.size() + " regions detected in " + (end - start)/1000);
         return regions;
     }
+    @FunctionalInterface
+    private interface BackgroundCheck{
+        boolean isBackground(int i);
+    }
+
     public List<Region> getRegionsFromLabelledImage(){
         Map<Integer, List<int[]>> pxRegions = new HashMap<>();
         ImagePlus plus = mis.getCurrentFrame();
         ImageStack stack = plus.getStack();
-        for(int i = 0; i<mis.getWidthPx(); i++){
-            for(int j = 0; j<mis.getHeightPx(); j++){
-                for(int z = 0; z<mis.getNSlices(); z++){
-                    int px2 = stack.getProcessor(z+1).get(i, j);
-                    if(px2 != 0) {
+        BackgroundCheck checker;
+        if(stack.getProcessor(1) instanceof ColorProcessor){
+            System.out.print("Ignoring alpha channel");
+            checker = i-> (i & 0xffffff) == 0;
+        } else{
+            checker = i -> i == 0;
+        }
+        for(int z = 0; z<mis.getNSlices(); z++){
+            ImageProcessor proc = stack.getProcessor(z+1);
+            for(int i = 0; i<mis.getWidthPx(); i++){
+                for(int j = 0; j<mis.getHeightPx(); j++){
+                    int px2 = proc.get(i, j);
+                    if( ! checker.isBackground(px2) ) {
                         pxRegions.computeIfAbsent(px2, k->new ArrayList<>()).add(new int[]{i, j, z});
                     }
 
@@ -229,7 +243,7 @@ public class MeshDetector {
                 new_stack.addSlice(new ByteProcessor(w, h));
             }
             for (int[] pt : rs) {
-                new_stack.getProcessor(pt[2]).set(pt[0], pt[1], 1);
+                new_stack.getProcessor(pt[2] + 1).set(pt[0], pt[1], 1);
             }
 
             plus.setStack(new_stack);

@@ -86,8 +86,8 @@ public class FillingBinaryImage {
     }
 
     public static void main(String[] args) throws IOException {
-        ImagePlus plus = new ImagePlus(Paths.get("sample-mosaic.tif").toAbsolutePath().toString());
-
+        ImagePlus plus = new ImagePlus(Paths.get("C:/Users/msmith5/OneDrive - UMC Utrecht/Documenten/working/maria/Manual segmentation/20190525timelapsexy13t090c1.tif").toAbsolutePath().toString());
+        //ImagePlus plus = new ImagePlus(Paths.get("sample-mosaic.tif").toAbsolutePath().toString());
         MeshImageStack mis = new MeshImageStack(plus);
         MeshDetector detector = new MeshDetector(mis);
         List<Region> regions = detector.getRegionsFromLabelledImage();

@@ -110,19 +110,25 @@ public class MultiChannelVolumeTexture extends Texture3D{
         }
 
         /**
-         * Determines the transparency of the provided value by
-         * @param scale
-         * @return
+         * Determines the transparency of the provided clamped value.
+         * @param scale clamped value.
+         * @return normalized
          */
-        public int alphaFromScale( double scale){
+        private float alphaFromScale( float scale){
 
             if(scale < clear){
-                return 0;
+                return 0f;
             } if(scale > opaque){
-                return 255;
+                return 1f;
             }
-            return (int)(255 * (scale - clear)/(opaque - clear));
+            return (float)((scale - clear)/(opaque - clear));
         }
+        VoxelPainter painter = data ->{
+            if (data < clampedMin) data = clampedMin;
+            if (data > clampedMax) data = clampedMax;
+            float scale = (float)((data - clampedMin) / (clampedMax - clampedMin));
+            return new Vector4f(color.x*scale, color.y*scale, color.z*scale, alphaFromScale(scale));
+        };
     }
 
     public boolean matchesShape(double[][][] data){
@@ -169,20 +175,14 @@ public class MultiChannelVolumeTexture extends Texture3D{
 
         textures.set(index, double3d);
 
-        Calibration cal = new Calibration();
+        Calibration cal = calibrations.get(index);
         cal.color = c;
-        calibrations.set(index, cal);
-
         findMinAndMaxValues(cal, double3d);
         cal.setRange(cl_min, cl_max);
-
         clamp();
-
     }
 
     public void addChannel(double[][][] channelValues, double cl_min, double cl_max, Color3f c){
-
-
         Calibration cal = new Calibration();
         cal.color = c;
         calibrations.add(cal);
@@ -191,6 +191,11 @@ public class MultiChannelVolumeTexture extends Texture3D{
         cal.setRange(cl_min, cl_max);
 
         clamp();
+    }
+
+    public void setVolumePainter(int channel, VoxelPainter painter){
+        calibrations.get(channel).painter = painter;
+        refresh();
     }
 
     /**
@@ -232,7 +237,7 @@ public class MultiChannelVolumeTexture extends Texture3D{
      * Creates the data for the Texture3D
      *
      */
-    private void clamp() {
+    protected void clamp() {
         ImageComponent3D pArray = new ImageComponent3D(ImageComponent.FORMAT_RGBA, xDim, yDim, zDim);
 
 
@@ -260,19 +265,14 @@ public class MultiChannelVolumeTexture extends Texture3D{
                 int index = 0;
                 double[][][] double3d = textures.get(channel);
                 Calibration cal = calibrations.get(channel);
-                final Vector4f color4f = new Vector4f(cal.color.x, cal.color.y, cal.color.z, 1.f);
+                //final Vector4f color4f = new Vector4f(cal.color.x, cal.color.y, cal.color.z, 1.f);
                 int notFirst = channel==0?0:1;
                 for (int y = 0; y < yDim; y++) {
                     for (int x = 0; x < xDim; x++) {
 
                         double data = double3d[x][y][z];
-                        if (data < cal.clampedMin) data = cal.clampedMin;
-                        if (data > cal.clampedMax) data = cal.clampedMax;
-                        double scale = (data - cal.clampedMin) / (cal.clampedMax - cal.clampedMin);
+                        Vector4f v = cal.painter.getColor(data);
 
-                        Vector4f v = new Vector4f(color4f);
-                        v.scale((float) scale);
-                        //Vector4f v = new Vector4f(color4f.x, color4f.y, color4f.z, (float)(scale*255));
                         //R
                         byteData[index] = accumulate(byteData[index]*notFirst, (int)(v.x*255));
                         index++;
@@ -283,8 +283,7 @@ public class MultiChannelVolumeTexture extends Texture3D{
                         byteData[index] = accumulate(byteData[index]*notFirst, (int)(v.z*255));
                         index++;
                         //transparency
-                        int a = cal.alphaFromScale(scale);
-                        byteData[index] = accumulate(byteData[index]*notFirst, a);
+                        byteData[index] = accumulate(byteData[index]*notFirst, (int)(v.w*255));
                         index++;
                     }
                 }

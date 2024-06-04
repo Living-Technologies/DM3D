@@ -1719,7 +1719,7 @@ public class DeformableMesh3DTools {
         int slices = out.getSize();
         int w = out.getWidth();
         int h = out.getHeight();
-        double center[] = new double[3];
+        double[] center = new double[3];
 
         int sliceLow = (int)lowI[2];
         int sliceHigh = (int)highI[2];
