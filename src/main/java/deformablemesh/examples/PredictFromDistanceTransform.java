@@ -7,11 +7,15 @@ import deformablemesh.util.connectedcomponents.ConnectedComponents3D;
 import deformablemesh.util.connectedcomponents.Region;
 import deformablemesh.util.connectedcomponents.RegionGrowing;
 import ij.IJ;
+import ij.ImageJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 
+import javax.swing.*;
+import java.awt.*;
+import java.io.File;
 import java.nio.file.Paths;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -20,12 +24,22 @@ import java.util.List;
 public class PredictFromDistanceTransform {
 
     public static void main(String[] args){
-        Path ip = Paths.get(args[0]).toAbsolutePath();
-        Path op = ip.getParent().resolve(ip.getFileName().toString().replace(".tif", "-labelled.tif"));
+        Path ip;
+        if(args.length == 0 ){
+            FileDialog fd = new FileDialog((Frame)null, "Select file to segment.");
+            fd.setVisible(true);
+            String file = fd.getFile();
+            String director = fd.getDirectory();
+            ip = Paths.get(director, file);
+            System.out.println(ip);
+
+        } else{
+            ip = Paths.get(args[0]).toAbsolutePath();
+        }
 
 
-        ImagePlus distanceTransform = new ImagePlus(Paths.get(args[0]).toAbsolutePath().toString());
-        int level = Integer.parseInt(args[1]);
+        ImagePlus distanceTransform = new ImagePlus(ip.toString());
+        int level = 0;
         int minSize = 5;
 
         MeshImageStack mis = new MeshImageStack(distanceTransform);
@@ -41,11 +55,15 @@ public class PredictFromDistanceTransform {
                 proc.threshold(level);
                 threshed.addSlice(proc);
             }
+
             end = System.currentTimeMillis();
             System.out.println("prepared binary image: " + (end - start)/1000);
             start = System.currentTimeMillis();
             List<Region> regions = ConnectedComponents3D.getRegions(threshed);
+
+
             end = System.currentTimeMillis();
+
             System.out.println(regions.size() + " regions detected in " + (end - start)/1000);
 
             Integer biggest = -1;
@@ -70,7 +88,7 @@ public class PredictFromDistanceTransform {
                     small++;
                     toRemove.add(region);
                     for (int[] pt : points) {
-                        pixels[pt[2] - 1][pt[0] + pt[1]*width] = 0;
+                        pixels[pt[2]][pt[0] + pt[1]*width] = 0;
                     }
                 } else {
                     double[] rmin = mis.getNormalizedCoordinate(region.getLowCorner());
@@ -81,7 +99,10 @@ public class PredictFromDistanceTransform {
                     boolean obstructed = false;
 
                     for (int[] pt : points) {
-                        pixels[pt[2] - 1][pt[0] + pt[1]*width] = (short)key.shortValue();
+                        if(pt[1] == 0){
+                            System.out.println("why?");
+                        }
+                        pixels[pt[2]][pt[0] + pt[1]*width] = (short)key.shortValue();
                         //threshed.getProcessor(pt[2]).set(pt[0], pt[1], key);
                     }
                 }
@@ -129,10 +150,10 @@ public class PredictFromDistanceTransform {
 
 
 
-
+        new ImageJ();
         ImagePlus plus = mis.getOriginalPlus().createImagePlus();
         plus.setStack(stack);
         plus.setDimensions(1, mis.getNSlices(), mis.getNFrames());
-        IJ.save(plus, op.toString());
+        plus.show();
     }
 }
