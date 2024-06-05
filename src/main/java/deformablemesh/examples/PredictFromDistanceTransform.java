@@ -3,6 +3,7 @@ package deformablemesh.examples;
 import deformablemesh.MeshDetector;
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.Box3D;
+import deformablemesh.gui.GuiTools;
 import deformablemesh.util.connectedcomponents.ConnectedComponents3D;
 import deformablemesh.util.connectedcomponents.Region;
 import deformablemesh.util.connectedcomponents.RegionGrowing;
@@ -20,26 +21,31 @@ import java.nio.file.Paths;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class PredictFromDistanceTransform {
 
     public static void main(String[] args){
         Path ip;
+        int level;
+        boolean gui = false;
         if(args.length == 0 ){
             FileDialog fd = new FileDialog((Frame)null, "Select file to segment.");
             fd.setVisible(true);
             String file = fd.getFile();
             String director = fd.getDirectory();
             ip = Paths.get(director, file);
-            System.out.println(ip);
-
+            Double value = GuiTools.getNumericValue("Enter Initial Threshold", null);
+            level = value.intValue();
+            gui = true;
         } else{
             ip = Paths.get(args[0]).toAbsolutePath();
+            level = Integer.parseInt(args[1]);
         }
 
 
         ImagePlus distanceTransform = new ImagePlus(ip.toString());
-        int level = 0;
         int minSize = 5;
 
         MeshImageStack mis = new MeshImageStack(distanceTransform);
@@ -99,11 +105,7 @@ public class PredictFromDistanceTransform {
                     boolean obstructed = false;
 
                     for (int[] pt : points) {
-                        if(pt[1] == 0){
-                            System.out.println("why?");
-                        }
                         pixels[pt[2]][pt[0] + pt[1]*width] = (short)key.shortValue();
-                        //threshed.getProcessor(pt[2]).set(pt[0], pt[1], key);
                     }
                 }
                 if (points.size() > size) {
@@ -148,12 +150,27 @@ public class PredictFromDistanceTransform {
             }
         }
 
+        String n = ip.getFileName().toString();
+        Pattern p = Pattern.compile("\\.\\w+$");
+        Matcher m = p.matcher(n);
+        String outName;
+        if(m.find()){
+            String extension = m.group();
+            outName = n.replace(extension, "-labels" + extension);
+        } else{
+            outName = n + "-labels";
+        }
 
-
-        new ImageJ();
         ImagePlus plus = mis.getOriginalPlus().createImagePlus();
         plus.setStack(stack);
         plus.setDimensions(1, mis.getNSlices(), mis.getNFrames());
-        plus.show();
+        plus.setTitle(outName);
+
+        if(gui) {
+            new ImageJ();
+            plus.show();
+        } else{
+            IJ.save(plus, ip.getParent().resolve(outName).toString());
+        }
     }
 }
