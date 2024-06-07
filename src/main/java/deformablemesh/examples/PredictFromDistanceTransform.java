@@ -44,7 +44,6 @@ public class PredictFromDistanceTransform {
             level = Integer.parseInt(args[1]);
         }
 
-
         ImagePlus distanceTransform = new ImagePlus(ip.toString());
         int minSize = 5;
 
