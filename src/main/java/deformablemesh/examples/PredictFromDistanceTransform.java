@@ -3,29 +3,48 @@ package deformablemesh.examples;
 import deformablemesh.MeshDetector;
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.Box3D;
+import deformablemesh.gui.GuiTools;
 import deformablemesh.util.connectedcomponents.ConnectedComponents3D;
 import deformablemesh.util.connectedcomponents.Region;
 import deformablemesh.util.connectedcomponents.RegionGrowing;
 import ij.IJ;
+import ij.ImageJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 
+import javax.swing.*;
+import java.awt.*;
+import java.io.File;
 import java.nio.file.Paths;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class PredictFromDistanceTransform {
 
     public static void main(String[] args){
-        Path ip = Paths.get(args[0]).toAbsolutePath();
-        Path op = ip.getParent().resolve(ip.getFileName().toString().replace(".tif", "-labelled.tif"));
+        Path ip;
+        int level;
+        boolean gui = false;
+        if(args.length == 0 ){
+            FileDialog fd = new FileDialog((Frame)null, "Select file to segment.");
+            fd.setVisible(true);
+            String file = fd.getFile();
+            String director = fd.getDirectory();
+            ip = Paths.get(director, file);
+            Double value = GuiTools.getNumericValue("Enter Initial Threshold", null);
+            level = value.intValue();
+            gui = true;
+        } else{
+            ip = Paths.get(args[0]).toAbsolutePath();
+            level = Integer.parseInt(args[1]);
+        }
 
-
-        ImagePlus distanceTransform = new ImagePlus(Paths.get(args[0]).toAbsolutePath().toString());
-        int level = Integer.parseInt(args[1]);
+        ImagePlus distanceTransform = new ImagePlus(ip.toString());
         int minSize = 5;
 
         MeshImageStack mis = new MeshImageStack(distanceTransform);
@@ -41,11 +60,15 @@ public class PredictFromDistanceTransform {
                 proc.threshold(level);
                 threshed.addSlice(proc);
             }
+
             end = System.currentTimeMillis();
             System.out.println("prepared binary image: " + (end - start)/1000);
             start = System.currentTimeMillis();
             List<Region> regions = ConnectedComponents3D.getRegions(threshed);
+
+
             end = System.currentTimeMillis();
+
             System.out.println(regions.size() + " regions detected in " + (end - start)/1000);
 
             Integer biggest = -1;
@@ -70,7 +93,7 @@ public class PredictFromDistanceTransform {
                     small++;
                     toRemove.add(region);
                     for (int[] pt : points) {
-                        pixels[pt[2] - 1][pt[0] + pt[1]*width] = 0;
+                        pixels[pt[2]][pt[0] + pt[1]*width] = 0;
                     }
                 } else {
                     double[] rmin = mis.getNormalizedCoordinate(region.getLowCorner());
@@ -81,8 +104,7 @@ public class PredictFromDistanceTransform {
                     boolean obstructed = false;
 
                     for (int[] pt : points) {
-                        pixels[pt[2] - 1][pt[0] + pt[1]*width] = (short)key.shortValue();
-                        //threshed.getProcessor(pt[2]).set(pt[0], pt[1], key);
+                        pixels[pt[2]][pt[0] + pt[1]*width] = (short)key.shortValue();
                     }
                 }
                 if (points.size() > size) {
@@ -127,12 +149,27 @@ public class PredictFromDistanceTransform {
             }
         }
 
-
-
+        String n = ip.getFileName().toString();
+        Pattern p = Pattern.compile("\\.\\w+$");
+        Matcher m = p.matcher(n);
+        String outName;
+        if(m.find()){
+            String extension = m.group();
+            outName = n.replace(extension, "-labels" + extension);
+        } else{
+            outName = n + "-labels";
+        }
 
         ImagePlus plus = mis.getOriginalPlus().createImagePlus();
         plus.setStack(stack);
         plus.setDimensions(1, mis.getNSlices(), mis.getNFrames());
-        IJ.save(plus, op.toString());
+        plus.setTitle(outName);
+
+        if(gui) {
+            new ImageJ();
+            plus.show();
+        } else{
+            IJ.save(plus, ip.getParent().resolve(outName).toString());
+        }
     }
 }

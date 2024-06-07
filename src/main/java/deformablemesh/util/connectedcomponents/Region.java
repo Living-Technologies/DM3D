@@ -53,7 +53,7 @@ public class Region {
     VolumeDataObject dataObject;
     boolean selected = false;
     int label;
-    Region(int label, List<int[]> pts) {
+    public Region(int label, List<int[]> pts) {
         this.label= label;
         c = ColorSuggestions.getSuggestion();
         for(int[] pt: pts){
@@ -386,6 +386,21 @@ public class Region {
     }
     public List<Region> split(){
         ImageStack stack = getLocalBinaryPixels();
-        return ConnectedComponents3D.getRegions(stack);
+
+        List<Region> regions = ConnectedComponents3D.getRegions(stack);
+        List<Region> finished = new ArrayList<>();
+        for(Region r: regions){
+            if(r.label == 0){
+                continue;
+            }
+            for(int[] pt: r.pts){
+                pt[0] += lx;
+                pt[1] += ly;
+                pt[2] += lz;
+            }
+            finished.add(new Region(label, r.pts));
+        }
+
+        return finished;
     }
 }

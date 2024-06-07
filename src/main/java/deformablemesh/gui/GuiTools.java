@@ -37,6 +37,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.text.ParseException;
@@ -129,9 +130,6 @@ public class GuiTools {
 
         final JTextField field = new JTextField(10);
         field.setText(displayFormat(initial));
-        //field.setMinimumSize(new Dimension(100, 20));
-        //field.setPreferredSize(new Dimension(100, 20));
-        //field.setMaximumSize(new Dimension(200, 20));
         field.setEnabled(false);
         field.setHorizontalAlignment(JTextField.RIGHT);
 
@@ -353,6 +351,40 @@ public class GuiTools {
         log.setSize(frame.getWidth(), frame.getHeight());
         log.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
         log.setVisible(true);
+    }
+
+    public static Double getNumericValue(String prompt, JFrame frame) {
+        Double[] value = {null};
+        try {
+            EventQueue.invokeAndWait(()->{
+                JDialog log = new JDialog(frame, "Collecting Numeric Value", true);
+                JPanel content = new JPanel(new BorderLayout());
+                content.add(new JLabel(prompt), BorderLayout.NORTH);
+                JTextField field = new JTextField(10);
+                JLabel status = new JLabel(
+                        "enter value, press enter to continue");
+
+                field.addActionListener( evt ->{
+                    try{
+                        value[0] = Double.parseDouble(field.getText());
+                        log.dispose();
+                    } catch(Exception e){
+                        status.setText(field.getText() + " is not a valid number");
+                    }
+                });
+
+
+                content.add(field, BorderLayout.CENTER);
+                content.add(status, BorderLayout.SOUTH);
+
+                log.setContentPane(content);
+                log.pack();
+                log.setVisible(true);
+            });
+        } catch (InterruptedException | InvocationTargetException e) {
+            //oh well.
+        }
+        return value[0];
     }
 
     public static class LocaleNumericTextField{

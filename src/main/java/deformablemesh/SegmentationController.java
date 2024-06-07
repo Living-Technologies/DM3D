@@ -41,12 +41,14 @@ import deformablemesh.io.MeshReader;
 import deformablemesh.io.TrackMateAdapter;
 import deformablemesh.meshview.*;
 import deformablemesh.ringdetection.FurrowTransformer;
+import deformablemesh.simulations.FillingBinaryImage;
 import deformablemesh.track.FrameToFrameDisplacement;
 import deformablemesh.track.Track;
 import deformablemesh.util.*;
 import deformablemesh.util.actions.ActionStack;
 import deformablemesh.util.actions.StateListener;
 import deformablemesh.util.actions.UndoableActions;
+import deformablemesh.util.connectedcomponents.Region;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -418,7 +420,7 @@ public class SegmentationController {
      * Would not print until everything submitted before has finished.
      * @param runnable item the gets run on the main thread.
      */
-    public void submit(Executable runnable) {
+    public void submit(ETExecutable runnable) {
         main.submit(runnable);
     }
 
@@ -1028,10 +1030,47 @@ public class SegmentationController {
         ).collect(Collectors.toList());
 
         detector.addRegionsToAvoid(current);
-
-        List<DeformableMesh3D> guessed = detector.guessMeshes(level);
+        detector.thresholdLevel = level;
+        detector.nextLevel = 0;
+        List<DeformableMesh3D> guessed = detector.guessMeshes();
 
         startNewMeshTracks(guessed);
+    }
+
+    /**
+     * Processes the selected image by separating out all of the pixel regions
+     * and then creating spherical meshes and deforming them to the binary blob.
+     *
+     * This uses the min/max values of the mesh connection lengths.
+     *
+     *
+     * @param relaxSteps number of updates called on a mesh between remesh steps
+     * @param remeshSteps number of times a mesh is remesh to represent binary mesh.
+     */
+    public void meshesFromLabelledImage(int relaxSteps, int remeshSteps){
+        MeshDetector detector = new MeshDetector(getMeshImageStack());
+        List<Region> regions = detector.getRegionsFromLabelledImage();
+        FillingBinaryImage mesher = new FillingBinaryImage(getMeshImageStack());
+        mesher.setMinMaxLengths(getMinConnectionLength(),getMaxConnectionLength());
+        mesher.setRemeshSteps(remeshSteps);
+        mesher.setRelaxSteps(relaxSteps);
+        List<DeformableMesh3D> meshes = regions.stream().map(
+                region-> mesher.fillBlobWithMesh(region.getPoints())
+        ).collect(Collectors.toList());
+        startNewMeshTracks( meshes );
+    }
+    /**
+     *
+     * Generates meshes from a labelled image with a default relax steps and remesh
+     * steps.
+     *
+     * Primarily used from the menu item.
+     *
+     * @see SegmentationController#meshesFromLabelledImage(int, int)
+     *
+     */
+    public void meshesFromLabelledImage(){
+        meshesFromLabelledImage(100, 3);
     }
 
     /**
@@ -2792,7 +2831,7 @@ public class SegmentationController {
     }
 
     /**
-     * Creates an imageplus that is a binary image with pixes values 1 inside a mesh and 0 outside.
+     * Creates an ImagePlus that is a binary image with pixes values 1 inside a mesh and 0 outside.
      *
      * @see DeformableMesh3DTools#createBinaryRepresentation(MeshImageStack, DeformableMesh3D)
      * */
@@ -2803,8 +2842,8 @@ public class SegmentationController {
     }
 
     /**
-     * Creates a labelled image of the provided tracks. The labels are not
-     * related frame to frame.
+     * Creates a labelled image of the provided tracks. The stacks
+     * will be labelled according to their index in the tracks list.
      */
     public void createLabelledImage(List<Track> tracks){
         submit( ()->{
@@ -2914,9 +2953,7 @@ public class SegmentationController {
      */
     public void createMosaicImage() {
 
-        submit(()->{
-            model.createMosaicImage();
-        });
+        submit(model::createMosaicImage);
 
     }
 
@@ -2926,9 +2963,7 @@ public class SegmentationController {
      */
     public void createLabelImage() {
 
-        submit(()->{
-            model.createLabelImage();
-        });
+        submit(model::createLabelImage);
 
     }
 
@@ -3007,7 +3042,7 @@ public class SegmentationController {
         mis.setFrame(f);
         GuiTools.createTextOuputPane(builder.toString());
     }
-    public void plotVolumeAveragedIntensityVsTime(){
+    public Graph plotVolumeAveragedIntensityVsTime(){
         List<Track> tracks = getAllTracks();
         Graph plot = new Graph();
         MeshImageStack stack = getMeshImageStack();
@@ -3061,7 +3096,8 @@ public class SegmentationController {
         }
 
         stack.setFrame(start);
-        plot.show(false, "Intensity vs Time");
+        plot.show(false, getMeshImageStack().getOriginalPlus().getTitle() + " Intensity Plot");
+        return plot;
 
     }
 
@@ -3324,13 +3360,6 @@ public class SegmentationController {
     }
 
     /**
-     * Tasks for the exception throwing service.
-     */
-    public interface Executable{
-        void execute() throws Exception;
-    }
-
-    /**
      * Sets the position and normal of the furrow.
      *
      * @see RingController
@@ -3567,59 +3596,3 @@ public class SegmentationController {
 }
 
 
-/**
- * Historical class, that should be replaced, developed because of confusion regarding the way ExecutorServices
- * handle exceptions
- *
- * Executables are submitted and if they're already running on the main thread, then they're short circuited otherwise
- * they're submitted to the main executor service, which puts them in the queue for execution.
- */
-class ExceptionThrowingService{
-    ExecutorService main, monitor;
-    Thread main_thread;
-    Queue<Exception> exceptions = new LinkedBlockingDeque<>();
-    ExceptionThrowingService(){
-        main = Executors.newSingleThreadExecutor();
-        monitor = Executors.newSingleThreadExecutor();
-        main.submit(() -> {
-            main_thread = Thread.currentThread();
-            main_thread.setName("My Main Thread");
-        });
-    }
-
-    private void execute(SegmentationController.Executable e){
-        try{
-            e.execute();
-        } catch (Exception exc) {
-            throw new RuntimeException(exc);
-        }
-    }
-
-
-    public void submit(final SegmentationController.Executable r){
-
-        if(Thread.currentThread()==main_thread){
-            execute(r);
-            return;
-        }
-
-        final Future<?> f = main.submit(()->execute(r));
-
-        monitor.submit(() -> {
-            try {
-                f.get();
-            } catch (InterruptedException | ExecutionException e) {
-                GuiTools.errorMessage(e.toString() + ": " + e.getMessage());
-                e.printStackTrace();
-            }
-        });
-    }
-
-    public void shutdown(){
-        main.shutdown();
-        monitor.shutdown();
-    }
-
-
-
-}

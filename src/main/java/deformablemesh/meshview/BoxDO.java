@@ -49,6 +49,11 @@ public class BoxDO implements DataObject{
 
         };
     }
+
+    public void setColor(Color c){
+        float[] comps = c.getColorComponents(new float[4]);
+        colorAttributes.setColor(comps[0], comps[1], comps[2]);
+    }
     Appearance generateAppearance(){
         Appearance a = new Appearance();
 
@@ -56,6 +61,8 @@ public class BoxDO implements DataObject{
         colorAttributes.setCapability(ColoringAttributes.ALLOW_COLOR_WRITE);
 
         LineAttributes la = new LineAttributes();
+        la.setLineAntialiasingEnable(true);
+
         la.setLineWidth(1f);
         a.setColoringAttributes(colorAttributes);
         a.setLineAttributes(la);
@@ -67,10 +74,6 @@ public class BoxDO implements DataObject{
         Transform3D t = new Transform3D();
         t.setTranslation(new Vector3f((float)center[0], (float)center[1], (float)center[2]));
         transform.setTransform(t);
-    }
-    public void setColor(Color c){
-        float[] comps = c.getRGBColorComponents(new float[4]);
-        colorAttributes.setColor(comps[0], comps[1], comps[2]);
     }
     public BranchGroup getBranchGroup(){
         if(branchGroup ==null){

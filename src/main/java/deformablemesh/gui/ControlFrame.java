@@ -151,11 +151,24 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         JPanel colorStatusRow = new JPanel();
         colorStatusRow.add(new JLabel("selected mesh: " ));
         JLabel selectedColorLabel = new JLabel("");
+        JLabel first = new JLabel("first: ");
+        JLabel last = new JLabel("last: ");
         colorStatusRow.add(selectedColorLabel);
+        colorStatusRow.add(first);
+        colorStatusRow.add(last);
         status.add(colorStatusRow);
         status.add(message);
         segmentationController.addMeshListener(i->{
-            selectedColorLabel.setText(segmentationController.getSelectedMeshName());
+            Track track = segmentationController.getSelectedMeshTrack();
+            if(track != null){
+                selectedColorLabel.setText(track.getName());
+                first.setText("first: " + track.getFirstFrame());
+                last.setText("last: " + track.getLastFrame());
+            } else{
+                selectedColorLabel.setText("");
+                first.setText("first: ");
+                last.setText("last: ");
+            }
         });
         return status;
     }
@@ -1140,6 +1153,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             finished();
         });
 
+
         JMenuItem plySave = new JMenuItem("Export as PLY");
         mesh.add(plySave);
         plySave.addActionListener((evt)->{
@@ -1158,6 +1172,12 @@ public class ControlFrame implements ReadyObserver, FrameListener {
 
         JMenu trackMate = createTrackMateMenu();
         mesh.add(trackMate);
+
+        JMenuItem fromLabelledImage = new JMenuItem("Meshes from Labels");
+        mesh.add(fromLabelledImage);
+        fromLabelledImage.addActionListener(evt->{
+            segmentationController.submit(segmentationController::meshesFromLabelledImage);
+        });
 
         JMenuItem load_3d_furrows = new JMenuItem("load furrows");
         mesh.add(load_3d_furrows);
@@ -1218,7 +1238,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         });
 
         JMenuItem label = new JMenuItem("Create Label Image");
-        label.setToolTipText("Creates a grayscale image with unique labels in each frame.");
+        label.setToolTipText("Creates a grayscale image with unique labels for each track.");
         tools.add(label);
         label.addActionListener(evt ->{
             segmentationController.createLabelImage();

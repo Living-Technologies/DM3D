@@ -52,11 +52,11 @@ public class FurrowInput extends JPanel {
     double markY;
     Ellipse2D marker;
 
-    final static double border = 30;
-    final static double sphereRadius = 90;
+    final static double border = 20;
+    final static double sphereRadius = 45;
     static Ellipse2D sphere = new Ellipse2D.Double(border, border, 2*sphereRadius, 2*sphereRadius);
 
-    final static double bandWidth = 30;
+    final static double bandWidth = 20;
     final static double bandHeight = 2*sphereRadius;
     static Rectangle2D band = new Rectangle2D.Double(2*border + 2*sphereRadius, border, bandWidth, bandHeight);
     final static Color clearBlack = new Color(0,0,0,0);
@@ -65,7 +65,7 @@ public class FurrowInput extends JPanel {
     final static Color active = new Color(150, 120, 100);
 
     static BufferedImage background = createBackgroundImage();
-    final static double markerRadius = 12.5;
+    final static double markerRadius = 6.25;
     static int grating = 7;
     static int delta = (int)(bandHeight/grating);
     static int gratingThickness = (int)(bandHeight*0.5/delta);

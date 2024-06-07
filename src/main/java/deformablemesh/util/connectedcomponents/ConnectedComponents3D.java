@@ -25,6 +25,7 @@
  */
 package deformablemesh.util.connectedcomponents;
 
+import deformablemesh.MeshImageStack;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -36,9 +37,6 @@ import java.util.stream.Collectors;
 
 public class ConnectedComponents3D {
     final List<ConnectedComponents2D> pixels = new ArrayList<>();
-    int width;
-    int height;
-
     //Contains all of the points for an associated value
     TreeMap<Integer,List<int[]>> log = new TreeMap<>();
 
@@ -58,7 +56,7 @@ public class ConnectedComponents3D {
         cc3d.firstPass(short_threshed);
         cc3d.secondPass(short_threshed);
 
-        return cc3d.log.entrySet().stream().map(e -> new Region(e.getKey(), e.getValue())).collect(Collectors.toList());
+        return cc3d.log.entrySet().stream().filter(e -> e.getValue().size() > 0 ).map(e -> new Region(e.getKey(), e.getValue())).collect(Collectors.toList());
     }
     /*
         Takes a masked image and performs a first pass connected regions filter on it.
@@ -239,7 +237,7 @@ public class ConnectedComponents3D {
                 List<int[]> destination = log.computeIfAbsent(label, ArrayList::new);
 
                 for(int[] p: px){
-                    destination.add(new int[]{p[0], p[1], slice});
+                    destination.add(new int[]{p[0], p[1], slice - 1});
                     //regions no longer match labels!
                     cc2d.set(p[0], p[1], label);
                 }
@@ -250,7 +248,7 @@ public class ConnectedComponents3D {
             for(Integer key: regions2D.keySet()){
                 List<int[]> px = log.computeIfAbsent( key, ArrayList::new );
                 for(int[] px2d : regions2D.get(key)){
-                    px.add(new int[]{px2d[0], px2d[1], slice});
+                    px.add(new int[]{px2d[0], px2d[1], slice - 1});
                 }
             }
         }
@@ -263,7 +261,7 @@ public class ConnectedComponents3D {
      * @param value
      */
     private void set(int[] xyz, int value){
-        pixels.get(xyz[2]-1).set(xyz[0], xyz[1], value);
+        pixels.get(xyz[2]).set(xyz[0], xyz[1], value);
     }
 
     /**
@@ -272,6 +270,7 @@ public class ConnectedComponents3D {
      * @param stack
      */
     private void secondPass(ImageStack stack){
+        int width = stack.getWidth();
         short[][] pixels = new short[stack.getSize()][];
         for(int i = 0; i<pixels.length; i++){
             pixels[i] = (short[])stack.getPixels(i+1);
@@ -279,8 +278,7 @@ public class ConnectedComponents3D {
         for(Integer key: log.keySet()){
             List<int[]> px = log.get(key);
             for(int[] x: px){
-                pixels[x[2] - 1][x[0] + width*x[1]] = key.shortValue();
-                //stack.getProcessor(x[2]).set(x[0], x[1], key);
+                pixels[x[2]][x[0] + width*x[1]] = key.shortValue();
             }
         }
     }
@@ -292,20 +290,25 @@ public class ConnectedComponents3D {
 
         File output;
         File base;
-        ImagePlus plus;
+
 
         base = args.length >= 1? new File(args[0]) : new File(ij.IJ.getFilePath("select mosaic image"));
 
-        plus = ij.IJ.openImage(base.getAbsolutePath());
-        ImageStack threshed = new ImageStack(plus.getWidth(), plus.getHeight());
-        for(int i = 1; i<=plus.getNSlices(); i++){
-            ImageProcessor proc = plus.getStack().getProcessor(i).convertToShort(false);
-            threshed.addSlice( proc );
+        MeshImageStack mis = new MeshImageStack(ij.IJ.openImage(base.getAbsolutePath()));
+        ImagePlus working = mis.getCurrentFrame();
+
+        ImageStack threshed = new ImageStack(working.getWidth(), working.getHeight());
+        for(int i = 1; i<=working.getNSlices(); i++){
+            ImageProcessor proc = working.getStack().getProcessor(i).convertToShort(false);
+            threshed.addSlice( proc.duplicate() );
+
         }
+
         List<Region> regions = ConnectedComponents3D.getRegions(threshed);
 
         new ImagePlus("blobbed", threshed).show();
-
+        working.setTitle("original");
+        working.show();
     }
 
 }

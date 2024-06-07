@@ -201,6 +201,13 @@ public class VolumeDataObject implements DataObject {
         updateVolume();
     }
 
+    /**
+     * Sets the transparency clipping of the clamped data values.
+     * @param low Values below this will be fully transpaent.
+     * @param high Values above this will be fully opaque. Setting this
+     *             value greating than 1 will cause the transparency to
+     *             never be fully opaque.
+     */
     public void setTransparencyTrim(double low, double high){
         tLow = low;
         tHigh = high;
@@ -245,6 +252,10 @@ public class VolumeDataObject implements DataObject {
 
         }
 
+    }
+
+    public void showAsLabeledVolume(){
+        volume.setVolumePainter(0, new LabeledVoxelPainter(0));
     }
 
     @Override

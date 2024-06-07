@@ -47,13 +47,15 @@ public class Translator implements ModificationState {
 
     @Override
     public void updatePressed(double[] point, MouseEvent evt) {
-        if(point==null){
-            return;
-        }
 
         offset[0] = 0;
         offset[1] = 0;
         offset[2] = 0;
+
+        if(point==null){
+            return;
+        }
+
 
         if(meshFrame3D != null){
             meshFrame3D.setCanvasControllerEnabled(false);
@@ -73,6 +75,10 @@ public class Translator implements ModificationState {
             center[0] = center[0] + offset[0];
             center[1] = center[1] + offset[1];
             center[2] = center[2] + offset[2];
+
+            offset[0] = 0;
+            offset[1] = 0;
+            offset[2] = 0;
         }
     }
 

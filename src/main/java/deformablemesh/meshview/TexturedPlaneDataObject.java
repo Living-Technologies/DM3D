@@ -37,7 +37,6 @@ import java.awt.Color;
  * A volume
  */
 public class TexturedPlaneDataObject extends DeformableMeshDataObject {
-    private boolean showSurface = false;
     private Color volumeColor = Color.WHITE;
     Appearance texturedAppearance;
     MeshImageStack stack;
@@ -64,13 +63,6 @@ public class TexturedPlaneDataObject extends DeformableMeshDataObject {
         int w = stack.getWidthPx();
         int h = stack.getHeightPx();
         int d = stack.getNSlices();
-
-        int lowx = 0;
-        int highx = w;
-        int lowy = 0;
-        int highy = h;
-        int lowz = 0;
-        int highz = d;
 
 
 
@@ -102,7 +94,7 @@ public class TexturedPlaneDataObject extends DeformableMeshDataObject {
 
 
     private Appearance createTexturedSurface(){
-        MultiChannelVolumeTexture texture = new MultiChannelVolumeTexture(texture_data, min, max, DataCanvas.getComponents(Color.WHITE));
+        //MultiChannelVolumeTexture texture = new MultiChannelVolumeTexture(texture_data, min, max, DataCanvas.getComponents(Color.WHITE));
 
         TexCoordGeneration texCGen = new TexCoordGeneration();
         texCGen.setFormat(TexCoordGeneration.TEXTURE_COORDINATE_3);
@@ -132,7 +124,7 @@ public class TexturedPlaneDataObject extends DeformableMeshDataObject {
 
         appear.setTexCoordGeneration(texCGen);
 
-        appear.setTexture(texture);
+        appear.setTexture(volume);
 
         PolygonAttributes p = new PolygonAttributes();
         p.setCullFace(PolygonAttributes.CULL_NONE);
@@ -164,8 +156,6 @@ public class TexturedPlaneDataObject extends DeformableMeshDataObject {
         } else{
             surface_object.setAppearance(hiddenSurface());
         }
-
-        this.showSurface = showSurface;
     }
 
 

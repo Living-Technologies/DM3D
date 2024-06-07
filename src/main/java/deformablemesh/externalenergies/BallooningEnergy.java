@@ -38,11 +38,12 @@ import java.awt.event.KeyListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  *
- * The goal of this energy is to grow outwards, until it hits another mesh and cannot
- * grow any more.
+ * The goal of this energy is to grow outwards, until it hits the interceptable constraint,
+ * then it should stop growing outward.
  *
  * Created by msmith on 3/8/16.
  */
@@ -57,7 +58,6 @@ public class BallooningEnergy implements ExternalEnergy{
         this.mesh = mesh;
         this.weight = weight;
         calculator = new CurvatureCalculator(mesh);
-
     }
 
     @Override
@@ -81,9 +81,6 @@ public class BallooningEnergy implements ExternalEnergy{
     }
 
     public static void main(String[] args){
-
-
-
 
         DeformableMesh3D mesh2 = DeformableMesh3DTools.createRectangleMesh(2, 2, 2, 1);
         DeformableMesh3D mesh = RayCastMesh.sphereRayCastMesh(3);
@@ -116,9 +113,12 @@ public class BallooningEnergy implements ExternalEnergy{
 
         mesh.reshape();
         mesh2.triangles.forEach(Triangle3D::update);
+
         mesh.addExternalEnergy(new BallooningEnergy(interceptor, mesh, 1));
         mesh.addExternalEnergy(new TriangleAreaDistributor(new MeshImageStack(), mesh, 1));
+
         int counter = 0;
+
 
         frame.addKeyListener(new KeyListener(){
 

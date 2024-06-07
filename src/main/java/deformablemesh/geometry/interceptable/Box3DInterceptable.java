@@ -23,12 +23,17 @@ public class Box3DInterceptable implements Interceptable {
         List<Intersection> intersections = new ArrayList<>();
         for(AxisPlane plane: planes){
             for(Intersection section: plane.getIntersections(origin, direction)){
-                if(box.contains(section.location)){
+                if(contains(section.location)){
                     intersections.add(section);
                 }
             }
         }
         return intersections;
+    }
+
+    @Override
+    public boolean contains(double[] point){
+        return box.contains(point);
     }
 
     void createPlanes(){

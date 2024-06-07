@@ -50,8 +50,9 @@ public class DeformingMeshSans3D implements PlugIn {
         }
 
         ControlFrame controller = new ControlFrame(control);
-        controller.showFrame();
 
+        controller.showFrame();
+        controller.shutdownControllerOnClose();
         return control;
     }
 

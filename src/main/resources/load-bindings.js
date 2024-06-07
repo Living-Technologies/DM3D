@@ -23,6 +23,13 @@
  * THE SOFTWARE.
  * #L%
  */
+
+ function importer( fullName ){
+ 	tokens = fullName.split(".");
+ 	className = tokens[ tokens.length - 1];
+ 	eval(className + " = Java.type('" + fullName + "');");
+ 	echo(className + " imported");
+ }
 var CompositeInterceptables = Java.type("deformablemesh.geometry.interceptable.CompositeInterceptables");
 var InterceptingMesh3D = Java.type("deformablemesh.geometry.interceptable.InterceptingMesh3D");
 var DoubleArray = Java.type("double[]");
@@ -36,13 +43,40 @@ var ArrayList = Java.type("java.util.ArrayList");
 var Track = Java.type("deformablemesh.track.Track");
 var File = Java.type("java.io.File");
 var ImageEnergyType = Java.type("deformablemesh.externalenergies.ImageEnergyType");
-    var Graph = Java.type("lightgraph.Graph");
+var Graph = Java.type("lightgraph.Graph");
 var ImageStack = Java.type("ij.ImageStack");
 var ColorProcessor = Java.type("ij.process.ColorProcessor");
 var ImageStack = Java.type("ij.ImageStack");
 var MeshAnalysis = Java.type("deformablemesh.util.MeshAnalysis");
 var GroupDynamics = Java.type("deformablemesh.util.GroupDynamics");
+var DeformableMeshDataObject = Java.type("deformablemesh.meshview.DeformableMeshDataObject");
 GuiTools = Java.type("deformablemesh.gui.GuiTools");
+Vector3DOps = Java.type("deformablemesh.util.Vector3DOps");
+FileInfoVirtualStack = Java.type("ij.plugin.FileInfoVirtualStack");
+Files = Java.type("java.nio.file.Files");
+Paths = Java.type("java.nio.file.Paths");
+FolderOpener = Java.type("ij.plugin.FolderOpener");
+
+function loadFolderOfVolumes( name ){
+    images = Files.list(Paths.get(name)).filter( function(p){
+            return p.toString().contains(".tif");
+        }).toList();
+    count = images.size();
+    one = FileInfoVirtualStack.openVirtual(images.get(0).toAbsolutePath().toString());
+    slices = one.getNSlices();
+    channels = one.getNChannels();
+
+    plus = FolderOpener.open(name , "virtual");
+    total = plus.getStack().size();
+
+    if(channels*slices*count != total){
+        echo("inconsistencies!")
+    }
+    plus.setDimensions(channels, slices, count);
+    plus.setOpenAsHyperStack(true);
+    plus.show();
+    return plus;
+}
 
 function echo(obj){
     terminal.echo(obj);
@@ -53,7 +87,6 @@ function setSelectedMeshColor(color){
   if( color instanceof Color){
       GuiTools.SELECTED_MESH_COLOR = color;
   }
-
 }
 
 function snapshotsThreeSixty(steps){
@@ -104,7 +137,6 @@ function normalizeColors(){
 }
 
 function showPreviousMeshes(){
-    var DeformableMeshDataObject = Java.type("deformablemesh.meshview.DeformableMeshDataObject");
     controls.clearTransientObjects();
     alpha = 100;
     mesh = controls.getSelectedMesh();
@@ -127,3 +159,4 @@ function showPreviousMeshes(){
     }
 
 }
+

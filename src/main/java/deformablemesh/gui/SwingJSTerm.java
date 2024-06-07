@@ -25,6 +25,7 @@
  */
 package deformablemesh.gui;
 
+import deformablemesh.ETExecutor;
 import deformablemesh.SegmentationController;
 import deformablemesh.SegmentationModel;
 import ij.IJ;
@@ -46,11 +47,11 @@ import java.awt.event.KeyEvent;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -71,32 +72,57 @@ public class SwingJSTerm {
     List<String> commandHistory = new ArrayList<>();
     List<ReadyObserver> observers = new ArrayList<>();
     JFrame frame;
-    SegmentationController controls;
+    SegmentationController segmentationController;
     int commandIndex;
     String[] historyTemp = new String[1];
     JButton previous;
     JButton next;
     JTextField scriptFile;
     JButton runScriptFile;
-
-    public SwingJSTerm(SegmentationController controls){
+    ETExecutor executor;
+    public SwingJSTerm(){
         ScriptEngineManager manager = new ScriptEngineManager();
-
-        //NashornScriptEngineFactory factory = new NashornScriptEngineFactory();
-        //engine = factory.getScriptEngine();
         engine = manager.getEngineByName("nashorn");
         Bindings bindings = engine.createBindings();
-
         engine.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
-        engine.put("controls", controls);
         engine.put("terminal", this);
+        executor = exe -> {
+            try{
+                exe.execute();
+            } catch( Exception e){
+                throw new RuntimeException(e);
+            }
+        };
+    }
+    public SwingJSTerm(SegmentationController controls){
+        this();
+        this.segmentationController = controls;
+        engine.put("controls", controls);
         try {
             addClasses();
         } catch (Exception e) {
             //do without.
             e.printStackTrace();
         }
-        this.controls = controls;
+        executor = controls::submit;
+    }
+
+    /**
+     * This is the executor that the javascript will be evaluated
+     * by the engine on. The default causes javascript to be evaluated
+     * on the calling thread.
+     *
+     * If a controller is provided during construction, then the controller
+     * will be the default executor.
+     *
+     * @param e evaluates the javascript.
+     */
+    public void setExecutor(ETExecutor e){
+        executor = e;
+    }
+
+    public void addToScriptEngine(String name, Object obj){
+        engine.put(name, obj);
     }
 
     public void runFile(Path path){
@@ -155,13 +181,9 @@ public class SwingJSTerm {
         }
     }
 
-    public void appendToDisplay(String text){
-        int pos = display.getCaretPosition();
-
+    public void displayText(String text){
         display.append(text);
-        //System.out.println("old: " + pos + " new: " + display.getCaretPosition());
-        //display.setCaretPosition(display.getDocument().getLength());
-
+        display.setCaretPosition(display.getDocument().getLength());
     }
 
     public void addClasses() throws ScriptException {
@@ -301,7 +323,9 @@ public class SwingJSTerm {
 
     public void echo(Object o){
         String echoed;
-        if(o.getClass().isArray()){
+        if(o == null){
+            echoed = "null";
+        }else if(o.getClass().isArray()){
             if(o instanceof double[]){
                 echoed = Arrays.toString((double[])o);
             } else if(o instanceof int[]){
@@ -317,7 +341,7 @@ public class SwingJSTerm {
             echoed = o.toString() + "\n";
         }
         EventQueue.invokeLater(()->{
-            appendToDisplay(echoed);
+            displayText(echoed);
         });
     }
 
@@ -356,20 +380,20 @@ public class SwingJSTerm {
 
         EventQueue.invokeLater(()->{
             for(String line: lines){
-                appendToDisplay(line + '\n');
+                displayText(line + '\n');
             }
         });
 
-            controls.submit(()->{
+            executor.submit(()->{
                 observers.forEach(o->o.setReady(false));
                 try{
                     engine.eval(s);
                 } catch (ScriptException e) {
                     EventQueue.invokeLater(()->{
                         StackTraceElement[] elements = e.getStackTrace();
-                        appendToDisplay(e.getMessage() + '\n');
+                        displayText(e.getMessage() + '\n');
                         if(elements.length>0){
-                            appendToDisplay(elements[0].toString() + '\n');
+                            displayText(elements[0].toString() + '\n');
                         }
                     });
                 } finally{
@@ -381,7 +405,7 @@ public class SwingJSTerm {
     }
 
     public static void main(String[] args){
-        SwingJSTerm term = new SwingJSTerm(new SegmentationController(new SegmentationModel()));
+        SwingJSTerm term = new SwingJSTerm();
         term.showTerminal();
         term.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
@@ -393,6 +417,8 @@ public class SwingJSTerm {
 
 
 class TextBoxSelections{
+    final static String staticClassName = "jdk.dynalink.beans.StaticClass";
+
     Popup lastPopUp;
     JScrollPane view;
     JList<String> listView;
@@ -640,10 +666,38 @@ class TextBoxSelections{
         hidePopUp();
     }
     List<String> getAvailableFields( Object obj){
-        return Arrays.stream(obj.getClass().getFields()).map(Field::getName).collect(Collectors.toList());
+        Class<?> c = obj.getClass();
+        if(staticClassName.equals(c.getName())){
+            try{
+                Method m = c.getMethod("getRepresentedClass");
+                c = (Class<?>)m.invoke(obj);
+                return Arrays.stream(c.getFields()).filter(
+                        field->Modifier.isStatic(field.getModifiers())
+                    ).map(Field::getName).collect(Collectors.toList());
+            } catch(Exception e){
+                //silently fail.
+                //just display the obj.getClass variables.
+            }
+        }
+        return Arrays.stream(c.getFields()).filter(
+                field->!Modifier.isStatic(field.getModifiers())
+            ).map(Field::getName).collect(Collectors.toList());
     }
     List<String> getAvailableMethodNames(Object obj){
-        return Arrays.stream(obj.getClass().getMethods()).map(Method::getName).collect(Collectors.toList());
+        Class<?> c;
+        c = obj.getClass();
+        //for finding static methods.
+        if(staticClassName.equals(c.getName())){
+            try{
+                Method m = c.getMethod("getRepresentedClass");
+                c = (Class<?>)m.invoke(obj);
+                return Arrays.stream(c.getMethods()).filter(meth->Modifier.isStatic(meth.getModifiers())).map(Method::getName).collect(Collectors.toList());
+            } catch(Exception e){
+                //just display the obj.getClass variables.
+            }
+        }
+        //don't show static methods since they won't work.
+        return Arrays.stream(c.getMethods()).filter(meth->!Modifier.isStatic(meth.getModifiers())).map(Method::getName).collect(Collectors.toList());
     }
     void hidePopUp(){
         if(lastPopUp!=null){

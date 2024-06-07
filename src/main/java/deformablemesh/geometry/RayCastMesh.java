@@ -117,6 +117,9 @@ public class RayCastMesh {
 
             List<Intersection> intersections = object.getIntersections(origin, node.getCoordinates());
             Intersection best = bestIntersectionSpherical(intersections, origin, node.getCoordinates());
+            if(Double.isInfinite(best.location[0])){
+                best = bestIntersectionSphericalBackwards(intersections, origin, node.getCoordinates());
+            }
             node.setPosition(best.location);
 
         }
@@ -187,6 +190,36 @@ public class RayCastMesh {
                         b = dot;
                     }
                 }
+            }
+        }
+
+        if(best==null){
+            best= Intersection.inf(normal);
+        }
+
+        return best;
+
+    }
+
+    static Intersection bestIntersectionSphericalBackwards(List<Intersection> ints, double[] origin, double[] normal){
+        if(ints.size()==0){
+            return Intersection.inf(normal);
+        }
+        Intersection best=null;
+        double b = Double.NEGATIVE_INFINITY;
+        for(Intersection section: ints){
+            double[] distance = Vector3DOps.difference(section.location, origin);
+            double dot = Vector3DOps.dot(distance, normal);
+
+            //check if it is a backward travelling ray.
+            if(dot<0){
+                //now check the normals.
+                double s = Vector3DOps.dot(normal, section.surfaceNormal);
+                if(dot>b){
+                    best = section;
+                    b = dot;
+                }
+
             }
         }
 

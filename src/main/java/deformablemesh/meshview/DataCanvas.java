@@ -52,6 +52,7 @@ import java.util.List;
  * Shows the 3d scenes
  */
 public class DataCanvas extends Canvas3D {
+
     static class Camera{
         double ox, oy, oz;
         double radius = 1;
@@ -151,8 +152,11 @@ public class DataCanvas extends Canvas3D {
     public void addObject(DataObject a){
         group.addChild(a.getBranchGroup());
     }
-    
-    
+
+    public void removeAll() {
+        group.removeAllChildren();
+    }
+
     public void zoomIn(){
         double before = camera.radius;
         camera.zoomIn();
@@ -313,21 +317,6 @@ public class DataCanvas extends Canvas3D {
         rot.setTranslation(displace);
         ctg.setTransform(rot);
         viewListeners.forEach(ViewListener::viewUpdated);
-    }
-
-    public void debugOrientation(){
-        TransformGroup ctg = universe.getViewingPlatform().getViewPlatformTransform();
-        Transform3D transform = new Transform3D();
-        ctg.getTransform(transform);
-        Vector3d z = new Vector3d(0,0,1);
-        Vector3d y = new Vector3d(0,1,0);
-        Vector3d x = new Vector3d(1,0,0);
-        transform.transform(z);
-        transform.transform(y);
-        transform.transform(x);
-        System.out.println("Towards user: " + z);
-        System.out.println("Up: " + y);
-        System.out.println("Right: " + x);
     }
 
     /**
