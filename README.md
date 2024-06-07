@@ -3,27 +3,12 @@
 # DM3D
 
 ##
-**This is being moved. This is the original version that was published. I've moved it to 
-a version 1.0.x to signify feature complete release. Development will continue at 
-[Living Technologies](https://github.com/Living-Technologies)**
 
-This one will remain at the update site and might receive bug fixes. Future features
-will be found at a new update site.
-
-ThreeD image segmentation algorithm, for roundish cells.
+ThreeD image segmentation for roundish cells.
 
 The latest documentation can be found at:
 
 [DM3D Github pages](https://franciscrickinstitute.github.io/dm3d-pages/)
-
-## Roadmap 1.0 Draft
-
-As of version 0.8.0 these features have been added. There are some details that need
-to be worked out. Especially documentation.
-
-This is the start of a draft for a 1.0 release version. Right now I have quite a few
-components that are nearly ready but need to be added. The two major features that I
-want included in a 1.0 release.
 
 ## installation
 
@@ -44,6 +29,15 @@ which can be found in "plugins"->"PL_Mesh3D"->"Deforming Mesh 3D", and JFilament
 This includes guides for using the plugin, and javadoc for using the plugin via scripting.
 
 # Changes
+1.2.0
+- Creating meshes from labelled images
+- Displaying labelled images in the 3D viewer
+- sync mesh initializer to furrow position and improved refresh controls
+- assignable hotkeys
+
+1.1.0
+- translation modifier
+- internal work preparing for java 21
 
 1.0.0
 - Furrow controls in the 3D Canvas window.
