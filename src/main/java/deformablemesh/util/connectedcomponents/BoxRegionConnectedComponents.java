@@ -216,7 +216,7 @@ public class BoxRegionConnectedComponents {
             plus.setTitle("label: " + label);
             //plus.show();
 
-            DeformableMesh3D mesh = FillingBinaryImage.fillBinaryWithMesh(plus, rs);
+            DeformableMesh3D mesh = FillingBinaryImage.fillBinaryWithMesh(new MeshImageStack(plus), rs);
             mesh.clearEnergies();
             guessed.add(mesh);
         }

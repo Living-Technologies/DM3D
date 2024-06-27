@@ -48,12 +48,14 @@ public class PredictFromDistanceTransform {
         int minSize = 5;
 
         MeshImageStack mis = new MeshImageStack(distanceTransform);
+        MeshImageStack boundary = new MeshImageStack(distanceTransform, 0, 1);
         ImageStack stack = new ImageStack(mis.getWidthPx(), mis.getHeightPx());
         for(int frame = 0; frame<distanceTransform.getNFrames(); frame++){
             mis.setFrame(frame);
             long start, end;
             start = System.currentTimeMillis();
             ImageStack currentFrame = mis.getCurrentFrame().getStack();
+
             ImageStack threshed = new ImageStack(currentFrame.getWidth(), currentFrame.getHeight());
             for(int i = 1; i<= currentFrame.size(); i++){
                 ImageProcessor proc = currentFrame.getProcessor(i).convertToShort(false);
@@ -122,30 +124,46 @@ public class PredictFromDistanceTransform {
 
             start = System.currentTimeMillis();
             ImageStack growing = new ImageStack(currentFrame.getWidth(), currentFrame.getHeight());
-            int nlev = 1;
+            int nlev = 0;
+
             for(int i = 1; i<= currentFrame.size(); i++){
                 ImageProcessor proc = currentFrame.getProcessor(i).convertToShort(false);
                 proc.threshold(nlev);
                 growing.addSlice(proc);
             }
+
             RegionGrowing rg = new RegionGrowing(threshed, growing);
             rg.setRegions(regions);
             while( rg.getFrontierSize() > 0 ){
                 rg.step();
             }
+
             end = System.currentTimeMillis();
-            System.out.println("regions grown: " + (end - start)/1000);
-            int w = threshed.getWidth();
-            int h = threshed.getHeight();
-            int n = h*w;
-            for(int i = 0; i<threshed.getSize(); i++){
-                ColorProcessor proc = new ColorProcessor(w, h);
-                short[] labels = (short[])threshed.getProcessor(i+1).getPixels();
-                for(int j = 0; j<n; j++){
-                    int rgb = (( (labels[j]*137)%255 )<<16) +(( (labels[j]*61)%255 )<<8) + ( (labels[j]*13)%255 );
-                    proc.set(j, rgb);
+            System.out.println("DT regions grown: " + (end - start)/1000.0);
+
+            boundary.setFrame(frame);
+            ImageStack bd = boundary.getCurrentFrame().getStack();
+
+            for(int i = 1; i<= currentFrame.size(); i++){
+                ImageProcessor proc = growing.getProcessor(i);
+
+                ImageProcessor bdproc = bd.getProcessor(i).convertToShort(false);
+                bdproc.threshold(0);
+
+                short[] op = (short[])proc.getPixels();
+                short[] tg = (short[])bdproc.getPixels();
+
+                for(int s = 0; s<op.length; s++){
+                    op[s] = (short)(op[s] | tg[s]);
                 }
-                stack.addSlice(proc);
+            }
+
+            rg = new RegionGrowing(threshed, growing);
+            rg.setRegions(regions);
+            rg.step();
+            System.out.println("Single boundary step. " + (System.currentTimeMillis() - end)/1000.0 );
+            for(int i = 0; i<threshed.getSize(); i++){
+                stack.addSlice(threshed.getProcessor(i+1));
             }
         }
 

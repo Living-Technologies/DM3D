@@ -32,6 +32,7 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.io.FileInfo;
 import ij.measure.Calibration;
+import ij.plugin.Resizer;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 
@@ -755,8 +756,31 @@ public class MeshImageStack {
             stack.addSlice(proc);
         }
         ImagePlus plus = original.createImagePlus();
+        plus.setTitle(original.getTitle() + "-c" + channel + "-t" + CURRENT);
         plus.setStack(stack, 1, slices, 1);
         return plus;
+    }
+
+    /**
+     * Returns an isotropic version of the current frame.
+     *
+     * @return an image plus with the z resolution scaled to match the resolution of
+     *         the x-y resolution.
+     */
+    public ImagePlus getCurrentFrameIso(){
+        ImagePlus plus = getCurrentFrame();
+        Calibration c = plus.getCalibration();
+        double scale = c.pixelDepth/c.pixelWidth;
+        int newZ = (int)(scale * plus.getNSlices());
+        if(newZ == plus.getNSlices()){
+            return plus;
+        }
+        Resizer resizer = new Resizer();
+        ImagePlus iso = resizer.zScale(plus, newZ, ImageProcessor.BILINEAR);
+        Calibration c2 = iso.getCalibration();
+        c2.zOrigin = c.zOrigin * iso.getNSlices()/plus.getNSlices();
+        iso.setTitle(plus.getTitle() + "-iso");
+        return iso;
     }
 
     public double[] getIntensityValues() {

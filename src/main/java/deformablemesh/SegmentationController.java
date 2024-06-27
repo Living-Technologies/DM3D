@@ -1688,7 +1688,7 @@ public class SegmentationController {
     public void transformToImage(){
         MeshImageStack current = getMeshImageStack();
         ImagePlus plus = GuiTools.selectOpenImage(IJ.getInstance());
-        if(plus != null) return;
+        if(plus == null) return;
         setOriginalPlus(plus);
         MeshImageStack next = getMeshImageStack();
         List<Track> tracks = getAllTracks();

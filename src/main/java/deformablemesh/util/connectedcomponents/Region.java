@@ -26,6 +26,7 @@
 package deformablemesh.util.connectedcomponents;
 
 import deformablemesh.MeshImageStack;
+import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.gui.Drawable;
 import deformablemesh.meshview.DataObject;
 import deformablemesh.meshview.VolumeDataObject;
@@ -384,6 +385,13 @@ public class Region {
         }
         return stack;
     }
+
+    /**
+     * Applies a connected component algorithm on the current set of of pixels.
+     * This is useful for labelled regions that have disjoint labels.
+     *
+     * @return Regions that have been separated.
+     */
     public List<Region> split(){
         ImageStack stack = getLocalBinaryPixels();
 

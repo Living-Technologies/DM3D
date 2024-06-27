@@ -220,8 +220,21 @@ public class FillingBinaryImage {
         });
     }
 
+    /**
+     * Attempts to surround the provided mesh with 250
+     * @param stack
+     * @param points
+     * @return
+     */
     public static DeformableMesh3D fillBinaryWithMesh(MeshImageStack stack, List<int[]> points){
-        return fillBinaryWithMesh(stack, points, 0.01, 0.02);
+        double volume = stack.getNormalizedVolume(points.size());
+        int TARGET_TRIANGELS = 250;
+        double mstar = Math.sqrt( 12.8 * Math.pow(volume, 2.0/3.0) / TARGET_TRIANGELS   );
+        double mx = 4*mstar/3;
+        double mn = 2*mstar/3;
+        DeformableMesh3D mesh = fillBinaryWithMesh(stack, points, mn, mx);
+        System.out.println("triangles: " + mesh.triangles.size());
+        return mesh;
     }
 
     public DeformableMesh3D fillBlobWithMesh(List<int[]> points){
@@ -245,10 +258,8 @@ public class FillingBinaryImage {
         DeformableMesh3D mesh;
 
         if(spheres){
-            double[] center = stack.getNormalizedCoordinate(xyz);
-            mesh = RayCastMesh.sphereRayCastMesh(2);
-            mesh.translate(c);
-            mesh.scale(r, c);
+            MeshDetector detector = new MeshDetector(stack);
+            detector.e
         } else {
             mesh = RayCastMesh.rayCastMesh(bi, bi.getCenter(), 2);
         }
@@ -294,14 +305,6 @@ public class FillingBinaryImage {
         FillingBinaryImage filler = new FillingBinaryImage(stack);
         filler.setMinMaxLengths(minl, maxl);
         return filler.fillBlobWithMesh(points);
-    }
-
-    public static DeformableMesh3D fillBinaryWithMesh(ImagePlus plus, List<int[]> points){
-
-        MeshImageStack stack = new MeshImageStack(plus);
-        return fillBinaryWithMesh(stack, points);
-
-
     }
 
 
