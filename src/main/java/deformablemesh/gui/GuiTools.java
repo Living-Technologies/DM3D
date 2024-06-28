@@ -132,6 +132,7 @@ public class GuiTools {
         field.setText(displayFormat(initial));
         field.setEnabled(false);
         field.setHorizontalAlignment(JTextField.RIGHT);
+        field.setMaximumSize(field.getPreferredSize());
 
         field.addMouseListener(new MouseAdapter(){
             @Override

@@ -37,6 +37,8 @@ import deformablemesh.geometry.interceptable.Interceptable;
 import deformablemesh.geometry.projectable.Projectable;
 import deformablemesh.geometry.projectable.ProjectableMesh;
 import deformablemesh.gui.FrameListener;
+import deformablemesh.gui.GuiTools;
+import deformablemesh.gui.ReadyObserver;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.util.Vector3DOps;
 import ij.ImagePlus;
@@ -192,6 +194,15 @@ public class CircularMeshInitializationDialog implements FrameListener {
         tl.setToolTipText(fullTitle);
         row.add(tl);
 
+
+        JComponent scale = GuiTools.createInputField("scale", value->{
+            initializer.pickers.values().forEach(picker -> picker.setImageScale((float)value));
+        }, 1.0, ReadyObserver.dummy);
+        JComponent offset =  GuiTools.createInputField("offset", value->{
+            initializer.pickers.values().forEach(picker -> picker.setImageOffset((float)value));
+        }, 1, ReadyObserver.dummy);
+
+
         row.add(add);
         row.add(clear);
         row.add(close);
@@ -199,6 +210,14 @@ public class CircularMeshInitializationDialog implements FrameListener {
         row.add(snapshots);
         row.add(syncToFurrow);
         row.add(refreshMeshes);
+        row.add(new JLabel("contrast settings"));
+        JPanel orow = new JPanel();
+        orow.setLayout(new BoxLayout(orow, BoxLayout.LINE_AXIS));
+        orow.add(new JLabel("scale"));
+        orow.add(scale);
+        row.add(orow);
+        row.add(offset);
+
         row.add(Box.createHorizontalStrut(tl.getWidth()));
         row.add(showCursor);
         row.add(showMeshes);

@@ -630,44 +630,31 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         JButton action = new JButton("connection remesh");
         buttons.add(action);
 
-        JLabel scaledMinUnits = new JLabel("no units");
-        JLabel scaledMaxUnits = new JLabel("no units");
+        JLabel scaledMeanUnits = new JLabel("no units");
 
 
-
-        ParameterControl minValue = GuiTools.createInputField(
-                "min length",
-                v->{
-                    MeshImageStack stack = segmentationController.getMeshImageStack();
-                    if(stack != null){
-                        double scale = stack.SCALE;
-                        //TODO
-                        String unit = stack.getUnits();
-
-                        scaledMinUnits.setText(String.format(Locale.US, "%3.3f %s", scale*v, unit ));
-                    } else{
-                        scaledMinUnits.setText("");
-                    }
-                    segmentationController.setMinConnectionLength(v);
-                },
-                segmentationController.getMinConnectionLength(),
-                this
-        );
-
-        ParameterControl maxValue = GuiTools.createInputField(
-                "max length",
+        double initialMean = 0.5*(
+                segmentationController.getMaxConnectionLength() +
+                        segmentationController.getMinConnectionLength() );
+        ParameterControl targetMeanLength = GuiTools.createInputField(
+                "connection length",
                 v->{
                     MeshImageStack stack = segmentationController.getMeshImageStack();
                     if(stack != null){
                         double scale = stack.SCALE;
                         String unit = stack.getUnits();
-                        scaledMaxUnits.setText(String.format(Locale.US, "%3.3f %s", scale*v, unit ));
+                        scaledMeanUnits.setText(String.format(Locale.US, "%3.3f %s", scale*v, unit ));
                     } else{
-                        scaledMaxUnits.setText("");
+                        scaledMeanUnits.setText("");
                     }
-                    segmentationController.setMaxConnectionLength(v);
+                    //The mean length is the average of the min and max
+                    //2*min = max.
+                    double max = 4*v/3;
+                    double min = 2*v/3;
+                    segmentationController.setMaxConnectionLength(max);
+                    segmentationController.setMinConnectionLength(min);
                 },
-                segmentationController.getMaxConnectionLength(),
+                initialMean,
                 this
         );
 
@@ -677,11 +664,12 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             if(stack != null){
                 scale = stack.SCALE;
                 String unit = stack.getUnits();
-                scaledMaxUnits.setText(String.format(Locale.US, "%3.3f %s",  scale*maxValue.getValue(), unit ));
-                scaledMinUnits.setText(String.format(Locale.US, "%3.3f %s",  scale*minValue.getValue(), unit ));
+                double mean = 0.5*(
+                        segmentationController.getMaxConnectionLength() +
+                                segmentationController.getMinConnectionLength() );
+                scaledMeanUnits.setText(String.format(Locale.US, "%3.3f %s",  scale*mean, unit ));
             } else{
-                scaledMinUnits.setText("");
-                scaledMaxUnits.setText("");
+                scaledMeanUnits.setText("");
             }
         };
 
@@ -703,26 +691,18 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         gbc.gridwidth = 2;
         gbc.gridx = 0;
         gbc.gridy = 1;
-        host.add(minValue, gbc);
+        host.add(targetMeanLength, gbc);
         gbc.gridwidth = 1;
         gbc.gridx = 2;
-        host.add(scaledMinUnits, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        gbc.gridwidth = 2;
-        host.add(maxValue, gbc);
-        gbc.gridwidth = 1;
-        gbc.gridx = 2;
-        host.add(scaledMaxUnits, gbc);
+        host.add(scaledMeanUnits, gbc);
 
         action.addActionListener(evt->{
             boolean reMeshAll = ( evt.getModifiers() & ActionEvent.CTRL_MASK ) > 0;
             connectionRemesh(reMeshAll);
         });
+
         host.setOpaque(false);
         return host;
-
     }
 
     public void connectionRemesh(boolean reMeshAll){

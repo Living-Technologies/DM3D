@@ -74,7 +74,6 @@ public class MeshDetector {
 
         List<DeformableMesh3D> guessed;
         if(spheres){
-            //guessed = spheres(regions);
             guessed = ellipses(regions);
         } else{
             guessed = fillBinaryBlobs(regions);
@@ -231,7 +230,7 @@ public class MeshDetector {
         }
         return meshes;
     }
-    List<DeformableMesh3D> ellipses(List<Region> regions){
+    public List<DeformableMesh3D> ellipses(List<Region> regions){
         List<DeformableMesh3D> meshes = new ArrayList<>(regions.size());
 
         for(Region region : regions){
@@ -252,7 +251,7 @@ public class MeshDetector {
         m.scale(r, center);
         return m;
     }
-    static DeformableMesh3D createEllipse(Region region, MeshImageStack mis){
+    public static DeformableMesh3D createEllipse(Region region, MeshImageStack mis){
         double[] aves = {0, 0, 0};
         int n = region.getPoints().size();
         List<double[]> points = region.getPoints().stream().map(
@@ -363,32 +362,13 @@ public class MeshDetector {
 
         for (Region region : regions) {
             int label = region.getLabel();
-            List<int[]> rs = region.getPoints();
 
-            //Collections.sort(rs, (a,b)->Integer.compare(a[2], b[2]));
-            ImagePlus original = mis.original;
-            /*ImagePlus plus = original.createImagePlus();
-            int w = original.getWidth();
-            int h = original.getHeight();
-            ImageStack new_stack = new ImageStack(w, h);
-
-            for (int dummy = 0; dummy < original.getNSlices(); dummy++) {
-                new_stack.addSlice(new ByteProcessor(w, h));
-            }
-            for (int[] pt : rs) {
-                new_stack.getProcessor(pt[2] + 1).set(pt[0], pt[1], 1);
-            }
-
-            plus.setStack(new_stack);
-            plus.setTitle("label: " + label);
-            //plus.show();
-            */
             DeformableMesh3D mesh;
 
             if(minL <= 0 || minL >= maxL){
-                mesh = FillingBinaryImage.fillBinaryWithMesh(mis, rs);
+                mesh = FillingBinaryImage.fillBinaryWithMesh(mis, region);
             }else{
-                mesh = FillingBinaryImage.fillBinaryWithMesh(mis, rs, minL, maxL);
+                mesh = FillingBinaryImage.fillBinaryWithMesh(mis, region, minL, maxL);
             }
 
             mesh.clearEnergies();

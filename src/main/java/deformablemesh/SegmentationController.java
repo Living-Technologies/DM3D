@@ -1055,7 +1055,7 @@ public class SegmentationController {
         mesher.setRemeshSteps(remeshSteps);
         mesher.setRelaxSteps(relaxSteps);
         List<DeformableMesh3D> meshes = regions.stream().map(
-                region-> mesher.fillBlobWithMesh(region.getPoints())
+                mesher::fillBlobWithMesh
         ).collect(Collectors.toList());
         startNewMeshTracks( meshes );
     }

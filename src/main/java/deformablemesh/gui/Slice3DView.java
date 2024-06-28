@@ -161,6 +161,7 @@ public class Slice3DView{
     public double getZoom(){
         return zoom;
     }
+
     public void setSlice(Image s){
         slice = s;
         resize();
@@ -179,38 +180,9 @@ public class Slice3DView{
         resize();
     }
 
-    /**
-     * Sets the currently displayed set of curves. Requires a 2D set of curves in the associated furrow plane.
-     *
-     * @param replacements
-     */
-    public void setCurves(List<List<double[]>> replacements){
-        synchronized(drawables){
-            drawables.clear();
-        }
-        replacements.forEach(this::addCurve);
-    }
 
 
-    public void addCurve(List<double[]> points){
-        if(points.size()<2) return;
-        final Path2D path = new Path2D.Double();
-        double[] origin = points.get(0);
-        path.moveTo(origin[0], origin[1]);
-        for(int i = 1; i<points.size(); i++){
-            double[] next = points.get(i);
-            path.lineTo(next[0], next[1]);
-        }
-        path.lineTo(origin[0], origin[1]);
-        synchronized(drawables){
-            final Color c = colors[drawables.size()%colors.length];
 
-            drawables.add((g2d)->{
-                g2d.setColor(c);
-                g2d.draw(path);
-            });
-        }
-    }
 
     public void addShape(Shape s){
         synchronized(drawables){
@@ -268,16 +240,7 @@ public class Slice3DView{
 
     public static void main(String[] args){
         Slice3DView view = new Slice3DView();
-        ArrayList<double[]> points = new ArrayList<>();
-        for(int i=0; i<100; i++){
-            points.add(new double[]{Math.sin(i*Math.PI*0.01)*100 + 200, 100*Math.cos(i*Math.PI*0.01) + 200});
-        }
-        points.add(new double[]{20,20});
-        points.add(new double[]{120,20});
-        points.add(new double[]{120, 120});
-        points.add(new double[]{20,120});
 
-        view.addCurve(points);
         JFrame f = new JFrame("slice view");
 
         f.add(new JScrollPane(view.panel));

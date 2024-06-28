@@ -29,6 +29,16 @@ package deformablemesh.gui;
  * Created by melkor on 11/18/15.
  */
 public interface ReadyObserver {
+    public static final ReadyObserver dummy  = new ReadyObserver() {
+        @Override
+        public boolean isReady() {
+            return true;
+        }
+        @Override
+        public void setReady(boolean b) {
+
+        }
+    };
     boolean isReady();
     void setReady(boolean b);
 }

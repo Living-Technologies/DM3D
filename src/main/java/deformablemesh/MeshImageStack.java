@@ -437,6 +437,11 @@ public class MeshImageStack {
 
     }
 
+    public int getPixelValue(int x, int y, int z){
+        ImageProcessor proc = getProcessor(CURRENT, channel, z);
+        return proc.get(x, y);
+    }
+
     public BufferedImage createSlice(FurrowTransformer transformer) {
 
         int xcounts = transformer.getXCounts();
