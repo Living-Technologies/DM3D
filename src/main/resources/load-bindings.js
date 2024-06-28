@@ -56,6 +56,7 @@ FileInfoVirtualStack = Java.type("ij.plugin.FileInfoVirtualStack");
 Files = Java.type("java.nio.file.Files");
 Paths = Java.type("java.nio.file.Paths");
 FolderOpener = Java.type("ij.plugin.FolderOpener");
+IJ = Java.type("ij.IJ");
 
 function loadFolderOfVolumes( name , filter){
 
@@ -141,7 +142,6 @@ function restartOffscreenCanvas(){
   mf3d = controls.getMeshFrame3D();
   can = mf3d.getCanvas();
   can.destroyOffscreenCanvas();
-  can.createOffscreenCanvas();
 }
 
 function normalizeColors(){

@@ -274,14 +274,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         JPanel buttonPanel = new JPanel(new GridBagLayout());
         GridBagConstraints bcon = new GridBagConstraints();
 
-        buttonPanel.add( createButtonShowVolume(), bcon);
-        bcon.gridx = 1;
-        buttonPanel.add( createButtonAdjustVolumeContrast(), bcon);
-        bcon.gridy = 1;
-        bcon.gridx = 0;
-        buttonPanel.add( createButtonAdjustMinimum(), bcon);
-        bcon.gridx = 1;
-        buttonPanel.add( createButtonAdjustMaximum(), bcon);
+        buttonPanel.add( createManageVolumeButton(), bcon);
         return buttonPanel;
     }
 
@@ -499,16 +492,6 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         return content;
     }
 
-    private JButton createButtonAdjustVolumeContrast() {
-
-        JButton vc = new JButton("vol-contrast");
-        vc.addActionListener(evt->{
-            segmentationController.showVolumeClippingDialog();
-        });
-        buttons.add(vc);
-        return vc;
-    }
-
     private JCheckBox createRigidBoundaryCheckbox() {
         JCheckBox check = new JCheckBox("rigid boundaries");
         check.addActionListener(evt->{
@@ -543,14 +526,6 @@ public class ControlFrame implements ReadyObserver, FrameListener {
 
         };
         return saving;
-    }
-    private void createButtonMeasureVolume(JPanel buttonPanel) {
-        final JButton measureVolume = new JButton("measure volume");
-        measureVolume.setToolTipText("Measures volume vs time");
-        buttons.add(measureVolume);
-        buttonPanel.add(measureVolume);
-        measureVolume.addActionListener(evt-> segmentationController.measureVolume());
-
     }
 
     public JButton createButtonClearMesh(){
@@ -735,7 +710,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
 
     public JButton createButtonClearTransients(){
         JButton clearTransients = new JButton("X");
-        clearTransients.setToolTipText("Clear all force vectors.");
+        clearTransients.setToolTipText("Clear temporary items (eg force vectors).");
         buttons.add(clearTransients);
         clearTransients.addActionListener((evt)->{
             setReady(false);
@@ -745,19 +720,12 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         return clearTransients;
     }
 
-    public JButton createButtonShowVolume(){
-        final String showing = "show volume";
-        final String hide = "hide volume";
+    public JButton createManageVolumeButton(){
+        final String showing = "manage volumes";
         JButton show_volume = new JButton(showing);
         buttons.add(show_volume);
         show_volume.addActionListener(e -> {
-            if(showing.equals(show_volume.getText())){
-                show_volume.setText(hide);
-                showVolumeAction();
-            } else{
-                show_volume.setText(showing);
-                hideVolumeAction();
-            }
+                showVolumeManagerAction();
         });
         return show_volume;
     }
@@ -771,17 +739,6 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             finished();
         });
         return showForces;
-    }
-    public void createButtonShowMeshVolume(JPanel buttonPanel){
-
-        JButton showMeshVolume = new JButton("show mesh volume");
-        buttons.add(showMeshVolume);
-        buttonPanel.add(showMeshVolume);
-        showMeshVolume.addActionListener(e->{
-            setReady(false);
-            segmentationController.showBinaryBlob();
-            finished();
-        });
     }
 
 
@@ -803,75 +760,6 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         buttons.add(energySelector);
         panel.add(energySelector);
         return panel;
-    }
-
-    public JPanel createButtonAdjustMinimum(){
-        Insets margin = new Insets(5, 0, 5, 0);
-        JLabel m = new JLabel("min.");
-
-        JButton decrease_min = new JButton("-");
-        decrease_min.setPreferredSize(pm);
-        decrease_min.setMargin(margin);
-        buttons.add(decrease_min);
-        decrease_min.addActionListener(e -> {
-            setReady(false);
-            segmentationController.changeVolumeClipping(-1,0);
-            finished();
-        });
-
-        JButton increase_min = new JButton("+");
-        increase_min.setPreferredSize(pm);
-        increase_min.setMargin(margin);
-        buttons.add(increase_min);
-        increase_min.addActionListener(e -> {
-            setReady(false);
-            segmentationController.changeVolumeClipping(1,0);
-            finished();
-        });
-
-        JPanel sub = new JPanel();
-        sub.add(Box.createHorizontalStrut(5));
-        sub.setLayout(new BoxLayout(sub, BoxLayout.LINE_AXIS));
-        sub.add(m);
-        sub.add(Box.createHorizontalGlue());
-        sub.add(decrease_min);
-        sub.add(increase_min);
-        sub.add(Box.createHorizontalStrut(5));
-        return sub;
-    }
-
-    public JPanel createButtonAdjustMaximum(){
-        JLabel m = new JLabel("max.");
-        Insets margin = new Insets(5, 0, 5, 0);
-        JButton decrease_max = new JButton("-");
-        decrease_max.setPreferredSize(pm);
-        decrease_max.setMargin(margin);
-        buttons.add(decrease_max);
-        decrease_max.addActionListener(e -> {
-            setReady(false);
-            segmentationController.changeVolumeClipping(0,-1);
-            finished();
-        });
-
-        JButton increase_max = new JButton("+");
-        increase_max.setPreferredSize(pm);
-        increase_max.setMargin(margin);
-        buttons.add(increase_max);
-        increase_max.addActionListener(e -> {
-            setReady(false);
-            segmentationController.changeVolumeClipping(0,1);
-            finished();
-        });
-
-        JPanel sub = new JPanel();
-        sub.setLayout(new BoxLayout(sub, BoxLayout.LINE_AXIS));
-        sub.add(Box.createHorizontalStrut(5));
-        sub.add(m);
-        sub.add(Box.createHorizontalGlue());
-        sub.add(decrease_max);
-        sub.add(increase_max);
-        sub.add(Box.createHorizontalStrut(5));
-        return sub;
     }
 
     public void deformAction(boolean deformAll){
@@ -1508,18 +1396,40 @@ public class ControlFrame implements ReadyObserver, FrameListener {
 
     }
 
-    public void showVolumeAction(){
+    public void showVolumeManagerAction(){
         if(ready){
             setReady(false);
-            segmentationController.showVolume();
-            finished();
-        }
-    }
+            MeshFrame3D mf3d = segmentationController.getMeshFrame3D();
+            if(mf3d != null){
+                JDialog channelManager = new JDialog(getFrame(), true);
+                JPanel content = new JPanel();
+                JButton add = new JButton("add channel");
+                JButton contrast = new JButton( "contrast channel");
+                JButton remove = new JButton("remove");
+                add.addActionListener(evt->{
+                    mf3d.createNewChannelVolume();
+                    channelManager.setVisible(false);
+                });
+                contrast.addActionListener(evt->{
+                    mf3d.chooseToContrastChannelVolume();
+                    channelManager.setVisible(false);
+                });
+                remove.addActionListener(evt->{
+                    mf3d.chooseToremoveChannelVolume();
+                    channelManager.setVisible(false);
+                });
+                content.add(add);
+                content.add(contrast);
+                content.add(remove);
 
-    public void hideVolumeAction(){
-        if(ready){
-            setReady(false);
-            segmentationController.hideVolume();
+                channelManager.setContentPane(content);
+                channelManager.pack();
+                channelManager.setTitle("Add, Adjust or Remove 3D Volumes.");
+                GuiTools.centerComponent(mf3d.getJFrame(), channelManager);
+                channelManager.setVisible(true);
+                mf3d.setVisible(true);
+            }
+
             finished();
         }
     }

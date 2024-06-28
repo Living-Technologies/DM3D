@@ -32,6 +32,7 @@ import ij.WindowManager;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
+import javax.swing.plaf.basic.BasicComboBoxRenderer;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
@@ -412,31 +413,100 @@ public class GuiTools {
 
 
     }
+    private static class ImagePlusComboBoxRenderer extends JLabel implements ListCellRenderer<ImagePlus> {
+        @Override
+        public Component getListCellRendererComponent(JList<? extends ImagePlus> list, ImagePlus value, int index, boolean isSelected, boolean cellHasFocus) {
+            setOpaque(true);
+            if (isSelected) {
+                setBackground(list.getSelectionBackground());
+                setForeground(list.getSelectionForeground());
+            }
+            else {
+                setBackground(list.getBackground());
+                setForeground(list.getForeground());
+            }
 
+            setFont(list.getFont());
+
+            setText( value==null ? " " : value.getTitle());
+
+            return this;
+        }
+    }
+    public static JComboBox<ImagePlus> getAvailableImages(){
+        int[] titles = WindowManager.getIDList();
+        int n = titles==null ? 0 : titles.length;
+        ImagePlus[] images = new ImagePlus[n];
+        for(int i = 0; i<images.length; i++){
+            images[i] = WindowManager.getImage(titles[i]);
+        }
+        JComboBox<ImagePlus> box = new JComboBox<>(images);
+
+        box.setRenderer(new ImagePlusComboBoxRenderer());
+        return box;
+    }
+
+    public static void centerComponent(Frame frame, Component c){
+        if(frame == null){
+            //TODO center to something
+            return;
+        }
+        int w = c.getWidth();
+        int h = c.getHeight();
+        int ox = frame.getX();
+        int oy = frame.getY();
+        int fw = frame.getWidth();
+        int fh = frame.getHeight();
+        int dx = (fw - w)/2;
+        int dy = (fh - h)/2;
+        int x = ox + dx;
+        int y = oy + dy;
+        if(x < 0 ) x = 0;
+        if(y < 0 ) y = 0;
+
+        c.setLocation(x, y);
+
+    }
     static public ImagePlus selectOpenImage(Frame parent){
-        String[] imageLabels = WindowManager.getImageTitles();
 
-        if(imageLabels.length==0) return null;
+        JDialog log = new JDialog(parent, "Select Open Image", true);
+        JPanel content = new JPanel(new BorderLayout());
 
-        Object[] choices = new Object[imageLabels.length];
-        for(int i = 0; i<choices.length; i++){
-            choices[i] = imageLabels[i];
+        JPanel cd = new JPanel();
+        cd.setLayout(new BoxLayout(cd, BoxLayout.LINE_AXIS));
+        JComboBox<ImagePlus> plus = getAvailableImages();
+        String promptText;
+        if(plus.getItemCount() == 0){
+            promptText = "there are no open images!";
+        } else{
+            promptText = "Select open image";
         }
+        JLabel prompt = new JLabel(promptText);
+        ImagePlus[] result = new ImagePlus[1];
 
-        Object option = JOptionPane.showInputDialog(
-                parent,
-                "Choose from open images:",
-                "Choose Open Image",
-                JOptionPane.QUESTION_MESSAGE,
-                null,
-                choices,
-                choices[0]
-        );
-        if(option instanceof String) {
-            ImagePlus plus = WindowManager.getImage((String) option);
-            return plus;
-        }
-        return null;
+        JButton accept = new JButton("accept");
+        JButton cancel = new JButton("cancel");
+        cancel.addActionListener(evt->{
+            log.setVisible(false);
+        });
+
+        accept.addActionListener(evt->{
+            int dex = plus.getSelectedIndex();
+            ImagePlus choice = plus.getItemAt(dex);
+            result[0] = choice;
+            log.setVisible(false);
+        });
+        cd.add(accept);
+        cd.add(cancel);
+        content.add(prompt, BorderLayout.NORTH);
+        content.add(plus, BorderLayout.CENTER);
+        content.add(cd, BorderLayout.SOUTH);
+        log.setContentPane(content);
+        log.pack();
+        centerComponent(parent, log);
+        log.setVisible(true);
+
+        return result[0];
     }
 
     private static Image icon;

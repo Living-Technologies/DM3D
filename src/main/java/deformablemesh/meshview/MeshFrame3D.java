@@ -35,6 +35,7 @@ import deformablemesh.gui.RingController;
 import deformablemesh.track.Track;
 import deformablemesh.util.Vector3DOps;
 import ij.ImagePlus;
+import jogamp.opengl.awt.AWTUtil;
 import org.jogamp.java3d.*;
 import org.jogamp.java3d.utils.picking.PickResult;
 import org.jogamp.vecmath.Color3f;
@@ -49,6 +50,7 @@ import java.awt.event.KeyListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -133,7 +135,7 @@ public class    MeshFrame3D {
         if(plus == null){
             return;
         }
-        Color c = JColorChooser.showDialog(null, "Select Color", Color.WHITE);
+        Color c = JColorChooser.showDialog(frame, "Select Color", Color.WHITE);
 
         int channel = 0;
         if(plus.getNChannels()>1){
@@ -225,10 +227,6 @@ public class    MeshFrame3D {
                 new Point(p.x + ( w - dw ) / 2, p.y + ( h - dh ) / 3 )
         );
         dialog.setVisible(true);
-
-
-
-
     }
 
     /**
@@ -753,6 +751,41 @@ public class    MeshFrame3D {
 
     public boolean volumeShowing() {
         return showingVolume;
+    }
+
+    public static void main(String[] args){
+        JFrame jframe = new JFrame("what");
+        JLabel lbl = new JLabel("waiting");
+        jframe.add(lbl);
+        jframe.setSize(1024, 1024);
+        jframe.setVisible(true);
+
+        MeshFrame3D frame = new MeshFrame3D();
+        frame.showFrame(true);
+        MeshImageStack stack = new MeshImageStack(Paths.get("quality-sample.tif"));
+        VolumeDataObject vdo = new VolumeDataObject(Color.RED);
+        vdo.setTextureData(stack);
+        frame.addDataObject(vdo);
+        VolumeDataObject vdo2 = new VolumeDataObject(Color.YELLOW);
+        vdo2.setTextureData(stack);
+        vdo2.showAsLabeledVolume();
+        VolumeDataObject tmp;
+        for(int j = 0; j<100; j++) {
+            for (int i = 0; i < 100; i++) {
+                frame.canvas.rotateView(10, 0);
+                BufferedImage img = frame.snapShot();
+                ImageIcon icon = new ImageIcon(img);
+                lbl.setIcon(icon);
+            }
+            tmp = vdo;
+            frame.canvas.destroyOffscreenCanvas();
+            frame.removeDataObject(vdo);
+            vdo = vdo2;
+            vdo2 = tmp;
+
+            frame.addDataObject(vdo);
+
+        }
     }
 
 
