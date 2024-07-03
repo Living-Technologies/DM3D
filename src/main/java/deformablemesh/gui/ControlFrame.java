@@ -1236,13 +1236,10 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         JMenuItem remotePrediction = new JMenuItem("remote prediction");
         tools.add(remotePrediction);
         remotePrediction.addActionListener(evt->{
-            ImagePlus plus = segmentationController.getMeshImageStack().getOriginalPlus();
             RemotePrediction rep = new RemotePrediction();
-            int v = rep.setup("process", plus);
-            if(v == PlugInFilter.DOES_ALL){
-                new Thread(()->{
-                    rep.run(null);
-                }).start();
+            int v = rep.setup(segmentationController.getMeshImageStack());
+            if(v != -1){
+                new Thread(rep::run).start();
             }
         });
         JMenuItem substituteImageData = new JMenuItem("substitute data");

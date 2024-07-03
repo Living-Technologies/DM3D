@@ -788,6 +788,53 @@ public class MeshImageStack {
         return iso;
     }
 
+    /**
+     * This will get an multi-channel iso-tropic scaled version of the provided frame.
+     *
+     */
+    public ImagePlus getStackIso(int frame){
+        ImagePlus plus = getStack(frame);
+        Calibration c = plus.getCalibration();
+        double scale = c.pixelDepth/c.pixelWidth;
+        int newZ = (int)(scale * plus.getNSlices());
+        if(newZ == plus.getNSlices()){
+            return plus;
+        }
+        Resizer resizer = new Resizer();
+        ImagePlus iso = resizer.zScale(plus, newZ, ImageProcessor.BILINEAR);
+        Calibration c2 = iso.getCalibration();
+        c2.zOrigin = c.zOrigin * iso.getNSlices()/plus.getNSlices();
+        iso.setTitle(plus.getTitle() + "-iso");
+        return iso;
+    }
+
+    /**
+     * This will get an N channel version of the provided frame.
+     *
+     * @param i
+     * @return
+     */
+    public ImagePlus getStack(int frame){
+        int slices = original.getNSlices();
+        int channels = original.getNChannels();
+        int py = original.getHeight();
+        int px = original.getWidth();
+        ImageStack stack = new ImageStack(px, py);
+
+
+        for(int i = 0;i<slices; i++){
+            for(int j = 0; j<channels; j++) {
+                int n = i * CHANNELS + frame * CHANNELS * slices + j + 1;
+                ImageProcessor proc = original.getStack().getProcessor(n).duplicate();
+                stack.addSlice(proc);
+            }
+        }
+        ImagePlus plus = original.createImagePlus();
+        plus.setTitle(original.getTitle() + "-t" + CURRENT);
+        plus.setStack(stack, channels, slices, 1);
+        return plus;
+    }
+
     public double[] getIntensityValues() {
         double[] n = new double[data.length*data[0].length*data[0][0].length];
         final int row = data[0][0].length;
