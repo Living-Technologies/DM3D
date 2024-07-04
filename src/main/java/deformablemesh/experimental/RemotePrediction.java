@@ -35,6 +35,7 @@ import ij.measure.Calibration;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
+import org.janelia.saalfeldlab.n5.N5FSWriter;
 
 import javax.swing.JDialog;
 import javax.swing.JLabel;
@@ -52,6 +53,8 @@ import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This is an experimental class derived from https://github.com/odinsbane/JavaTF2ModelRunner
@@ -138,14 +141,16 @@ public class RemotePrediction{
         DataInputStream din = new DataInputStream(in);
         dos.writeInt(toProcess.getNFrames());
         ImagePlus[] cannon = new ImagePlus[1];
-        Semaphore limiter = new Semaphore(3);
+        AtomicBoolean stopSending = new AtomicBoolean(false);
         for(int i = 0; i<toProcess.getNFrames(); i++){
             final int frame = i;
 
             Future<Integer> future = sending.submit(()->{
+                if(stopSending.get()){
+                    return -1;
+                }
                 try {
                     System.out.println("starting frame " + frame);
-                    limiter.acquire();
                     final ImagePlus plus = toProcess.getStackIso(frame);
                     if(cannon[0] == null){
                         cannon[0] = plus;
@@ -159,6 +164,7 @@ public class RemotePrediction{
                     progress.step();
                     return frame;
                 } catch(IOException e){
+                    stopSending.set(true);
                     throw new RuntimeException(e);
                 }
             });
@@ -215,7 +221,6 @@ public class RemotePrediction{
 
             }
             progress.step();
-            limiter.release();
             progress.updateStatus("compiled frame " + frame + " with " + outputs + " outputs");
 
         }

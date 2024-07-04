@@ -32,6 +32,8 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.io.FileInfo;
 import ij.measure.Calibration;
+import ij.plugin.FileInfoVirtualStack;
+import ij.plugin.FolderOpener;
 import ij.plugin.Resizer;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
@@ -39,9 +41,13 @@ import ij.process.ImageProcessor;
 import javax.swing.*;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.nio.FloatBuffer;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static deformablemesh.geometry.DeformableMesh3D.ORIGIN;
 
@@ -788,6 +794,7 @@ public class MeshImageStack {
         return iso;
     }
 
+
     /**
      * This will get an multi-channel iso-tropic scaled version of the provided frame.
      *
@@ -830,7 +837,7 @@ public class MeshImageStack {
             }
         }
         ImagePlus plus = original.createImagePlus();
-        plus.setTitle(original.getTitle() + "-t" + CURRENT);
+        plus.setTitle(original.getTitle() + "-t" + frame);
         plus.setStack(stack, channels, slices, 1);
         return plus;
     }
@@ -847,6 +854,22 @@ public class MeshImageStack {
         }
         return n;
     }
+    public static MeshImageStack fromFolder(Path folder) throws IOException {
+        return fromFolder(folder, ".tif");
+    }
+    public static MeshImageStack fromFolder(Path folder, String filter) throws IOException {
+        List<Path> images = Files.list(folder).filter(p->p.toString().contains(filter)).collect(Collectors.toList());
+        int frames = images.size();
+        ImagePlus base = FileInfoVirtualStack.openVirtual(images.get(0).toAbsolutePath().toString());
+        Calibration c = base.getCalibration();
+        int channels = base.getNChannels();
+        int slices = base.getNSlices();
+        ImagePlus plus = FolderOpener.open(folder.toAbsolutePath().toString(), "virtual filter=" + filter);
+        plus.setDimensions(channels, slices, frames);
+        plus.setCalibration(c);
+        return new MeshImageStack(plus);
+    }
+
 
     public ImagePlus getOriginalPlus() {
         return original;
