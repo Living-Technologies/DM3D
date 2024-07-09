@@ -64,7 +64,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  */
 public class RemotePrediction{
-    Socket server;
+    PredictionClient client;
     MeshImageStack toProcess;
     ProgressDialog progress;
     static class ProgressDialog extends JDialog{
@@ -95,7 +95,7 @@ public class RemotePrediction{
         String hostname = gd.getNextString();
         int port = Integer.parseInt( gd.getNextString() );
         try {
-            server = new Socket(hostname, port);
+            client = new PredictionClient(hostname, port);
         } catch (IOException e) {
             System.out.println("Canceling! " + e.getMessage());
             return -1;
@@ -135,12 +135,8 @@ public class RemotePrediction{
     public void process() throws IOException, ExecutionException, InterruptedException {
         ExecutorService sending = Executors.newFixedThreadPool(1);
         List<Future<Integer>> finishing = new ArrayList<>();
-        OutputStream os = server.getOutputStream();
-        DataOutputStream dos = new DataOutputStream(os);
-        final InputStream in = server.getInputStream();
-        DataInputStream din = new DataInputStream(in);
-        dos.writeInt(toProcess.getNFrames());
         ImagePlus[] cannon = new ImagePlus[1];
+        client.start(toProcess.getNFrames());
         AtomicBoolean stopSending = new AtomicBoolean(false);
         for(int i = 0; i<toProcess.getNFrames(); i++){
             final int frame = i;
@@ -155,12 +151,7 @@ public class RemotePrediction{
                     if(cannon[0] == null){
                         cannon[0] = plus;
                     }
-                    byte[] data = FloatRunner.getImageData(plus);
-                    dos.writeInt(plus.getNChannels());
-                    dos.writeInt(plus.getWidth());
-                    dos.writeInt(plus.getHeight());
-                    dos.writeInt(plus.getNSlices());
-                    os.write(data);
+                    client.writeImage(plus);
                     progress.step();
                     return frame;
                 } catch(IOException e){
@@ -175,23 +166,11 @@ public class RemotePrediction{
         for(Future<Integer> result: finishing){
             int frame = result.get();
             progress.updateStatus("compiling frame " + frame);
-            int outputs = din.readInt();
 
-            for(int i = 0; i<outputs; i++){
-                int c = din.readInt();
-                int w = din.readInt();
-                int h = din.readInt();
-                int s = din.readInt();
-                byte[] buffer = new byte[c*w*h*s*4];
-                int read = 0;
-                while(read < buffer.length){
-                    int r = din.read(buffer, read, buffer.length - read);
-                    if(r<0) break;
+            List<ImagePlus> predictions = client.getOutputs();
 
-                    read += r;
-                }
-                ImagePlus op = FloatRunner.toImage(buffer, c, w, h, s, cannon[0]);
-
+            for(int i = 0; i<predictions.size(); i++) {
+                ImagePlus op = predictions.get(i);
                 if(frame == 0){
                     ImagePlus smaller = op.createImagePlus();
                     ImageStack stack = smaller.getStack();
@@ -204,7 +183,6 @@ public class RemotePrediction{
                     smaller.setTitle("op-" + i +" " + "-pred-" + cannon[0].getShortTitle());
                     smaller.setStack(stack, nc, ns, 1);
                     smaller.show();
-                    System.out.println("showing");
                     pluses.add(smaller);
                 } else{
                     ImagePlus or = pluses.get(i);
@@ -218,13 +196,10 @@ public class RemotePrediction{
                     or.setStack(stack,nc, ns, (frame + 1));
                     or.setOpenAsHyperStack(true);
                 }
-
             }
             progress.step();
-            progress.updateStatus("compiled frame " + frame + " with " + outputs + " outputs");
-
+            progress.updateStatus("compiled frame " + frame + " with " + predictions.size() + " outputs");
         }
-        sending.shutdown();
     }
     public static void main(String... args){
         ImageJ ij = IJ.getInstance();
@@ -271,6 +246,9 @@ class FloatRunner {
             c1.pixelDepth = c0.pixelDepth*original.getNSlices() / dup.getNSlices();
             c1.pixelWidth = c0.pixelWidth*original.getWidth() / dup.getWidth();
             c1.pixelHeight = c0.pixelHeight*original.getHeight() / dup.getHeight();
+            c1.xOrigin = c0.xOrigin*dup.getWidth()/original.getWidth();
+            c1.yOrigin = c0.yOrigin*dup.getHeight()/original.getHeight();
+            c1.zOrigin = c0.zOrigin*dup.getNSlices()/ original.getNSlices();
             dup.setCalibration(c1);
         }
 
