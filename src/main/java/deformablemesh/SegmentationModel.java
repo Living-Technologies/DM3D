@@ -507,8 +507,8 @@ public class SegmentationModel {
             case PerpendicularGradient:
                 erg = new PerpendicularGradientEnergy(stack, mesh, getImageWeight());
                 break;
-            case SmoothingForce:
-                erg = new SmoothingForce(mesh, getImageWeight());
+            case BrightRegionEnergy:
+                erg = new BrightRegionEnergy(stack, mesh, getImageWeight());
                 break;
             case None:
             default:

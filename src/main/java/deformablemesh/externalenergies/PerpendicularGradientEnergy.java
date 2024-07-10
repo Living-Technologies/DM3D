@@ -58,6 +58,14 @@ public class PerpendicularGradientEnergy implements ExternalEnergy {
         this.weight = weight;
         this.mesh =mesh;
     }
+    PerpendicularGradientEnergy(MeshImageStack stack, Map<Integer, Set<Triangle3D>> map, double weight){
+        this.stack = stack;
+        this.weight = weight;
+        this.map = map;
+        //use an empty mesh.
+        this.mesh = new DeformableMesh3D(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+
+    }
 
     @Override
     public void updateForces(double[] positions, double[] fx, double[] fy, double[] fz) {

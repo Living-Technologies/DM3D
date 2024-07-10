@@ -16,9 +16,8 @@ import org.janelia.saalfeldlab.n5.universe.N5Factory;
 import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.*;
 
 import java.nio.file.Path;
-import java.util.concurrent.ExecutionException;
 
-public class WriteZarrPredictions {
+public class WriteZarrPredictions implements AutoCloseable{
     final N5Writer n5;
 
     public WriteZarrPredictions(Path volumeName){
@@ -29,7 +28,7 @@ public class WriteZarrPredictions {
         writeTimepoint(n5, dataset, data, frame);
     }
 
-    public void finish(){
+    public void close(){
         n5.close();
     }
 
@@ -86,7 +85,7 @@ public class WriteZarrPredictions {
         if (n5.datasetExists(dataset + "/s0")) {
             N5Utils.saveRegion(imgWithTime, n5, dataset + "/s0");
         } else {
-            N5Utils.save(imgWithTime, n5, dataset + "/s0", new int[]{64, 64, 64, 1}, new GzipCompression());
+            N5Utils.save(imgWithTime, n5, dataset + "/s0", new int[]{imp.getWidth(), imp.getHeight(), imp.getNSlices(), 1}, new GzipCompression());
         }
     }
 

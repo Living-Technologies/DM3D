@@ -5,13 +5,11 @@ import ij.ImagePlus;
 import ij.ImageStack;
 
 import java.io.IOException;
-import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -82,7 +80,7 @@ public class HeadlessRemotePrediction implements AutoCloseable{
     public void close() throws Exception {
         writeThread.shutdown();
         client.close();
-        writer.finish();
+        writer.close();
     }
 
     public static void main(String[] args) throws Exception {
@@ -97,7 +95,7 @@ public class HeadlessRemotePrediction implements AutoCloseable{
         Path volumeName = Paths.get(args[1]);
 
         try(HeadlessRemotePrediction hrp = new HeadlessRemotePrediction(stack)){
-            hrp.connect("localhost", 5050);
+            hrp.connect("172.30.138.167", 5050);
             hrp.prepareOutput(volumeName);
             hrp.process();
         }
