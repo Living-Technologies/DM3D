@@ -82,7 +82,7 @@ public class RegionGrowing{
     boolean isFrontier(int label, int[] xyz){
         for(int i = -1; i<=1; i++){
             int z = xyz[2] + i;
-            if(z<1 || z>slices){
+            if(z<0 || z>slices-1){
                 continue;
             }
             for(int j = -1; j<=1; j++){
@@ -115,7 +115,7 @@ public class RegionGrowing{
         List<int[]> values = new ArrayList<>();
         for(int i = -1; i<=1; i++){
             int z = front[2] + i;
-            if(z<1 || z>slices){
+            if(z<0 || z>slices-1){
                 continue;
             }
             for(int j = -1; j<=1; j++){
@@ -176,14 +176,14 @@ public class RegionGrowing{
         return frontiers.values().stream().mapToInt(List::size).sum();
     }
     public void setLabel(int[] xyz, int label){
-        labelPixels.get(xyz[2]-1)[xyz[0] + width*xyz[1]] = (short)label;
+        labelPixels.get(xyz[2])[xyz[0] + width*xyz[1]] = (short)label;
     }
     boolean isValid(int x, int y, int z){
-        return constraintPixels.get(z-1)[x + y*width] != 0;
+        return constraintPixels.get(z)[x + y*width] != 0;
     }
 
     int getLabel(int x, int y, int z){
-        return labelPixels.get(z-1)[x + y*width];
+        return labelPixels.get(z)[x + y*width];
     }
 
 }

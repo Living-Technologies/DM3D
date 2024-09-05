@@ -672,7 +672,9 @@ public class ConnectionRemesher {
         rmesh.setShowSurface(true);
         rem.frame.addDataObject(rmesh.data_object);
     }
-
+    public boolean isOpenSurface(){
+        return openSurface;
+    }
     public void setMinAndMaxLengths(double minConnectionLength, double maxConnectionLength) {
         minLength = minConnectionLength;
         maxLength = maxConnectionLength;

@@ -52,6 +52,8 @@ import deformablemesh.util.connectedcomponents.Region;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.measure.Calibration;
+import ij.plugin.Resizer;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
@@ -750,8 +752,14 @@ public class SegmentationController {
      * @param last frame inclusive
      */
     public void generateTrainingDataFromLabelledImage(int first, int last){
-        ImagePlus plus = GuiTools.selectOpenImage(IJ.getInstance());
-        ImagePlus original = getMeshImageStack().getOriginalPlus();
+        ImagePlus plus = GuiTools.selectOpenImage(IJ.getInstance(), "Selected Labelled Image");
+        if(plus == null){
+            return;
+        }
+        MeshImageStack labelMis = new MeshImageStack(plus);
+        MeshImageStack stack = getMeshImageStack();
+
+
         Path baseFolder = Paths.get(IJ.getDirectory("Select root folder"));
 
         Path labelPath = baseFolder.resolve("labels");
@@ -769,28 +777,32 @@ public class SegmentationController {
 
         File labelFolder = labelPath.toFile();
         File imageFolder = imagePath.toFile();
-        String name = original.getTitle().replace(".tif", "");
-        Create3DTrainingData creator = new Create3DTrainingDataFromLabelledImage(original, plus);
+        String name = stack.original.getTitle().replace(".tif", "");
+
         for(int i = first; i<=last; i++){
+            ImagePlus image = stack.getStackIso(i);
+            ImagePlus labels = labelMis.getStack(i);
+            if(labels.getNSlices() != image.getNSlices()){
+                Resizer resizer = new Resizer();
+                labels = resizer.zScale(plus, image.getNSlices(), ImageProcessor.NEAREST_NEIGHBOR);
+                Calibration c2 = labels.getCalibration();
+                c2.zOrigin = image.getCalibration().zOrigin;
+            }
+            Create3DTrainingData creator = new Create3DTrainingDataFromLabelledImage(image, labels);
             String sliceName = String.format("%s-t%04d.tif", name, i);
-            creator.run(i);
-            ImagePlus maskPlus = original.createImagePlus();
+            creator.run(0);
+            ImagePlus maskPlus = image.createImagePlus();
             maskPlus.setStack(creator.getLabeledStack());
             IJ.save(maskPlus, new File(labelFolder, sliceName).getAbsolutePath());
             System.out.println("finished frame: " + i);
-            //maskPlus.show();
             try {
-                ImagePlus scaled = creator.getOriginalFrame(i);
-                //scaled.setOpenAsHyperStack(true);
-                scaled.setLut(LUT.createLutFromColor(Color.WHITE));
-                IJ.save(scaled, new File(imageFolder, sliceName).getAbsolutePath());
+                image.setLut(LUT.createLutFromColor(Color.WHITE));
+                IJ.save(image, new File(imageFolder, sliceName).getAbsolutePath());
 
             } catch(Exception e){
                 e.printStackTrace();
             }
         }
-
-
     }
 
     /**
@@ -1050,6 +1062,7 @@ public class SegmentationController {
     public void meshesFromLabelledImage(int relaxSteps, int remeshSteps){
         MeshDetector detector = new MeshDetector(getMeshImageStack());
         List<Region> regions = detector.getRegionsFromLabelledImage();
+        System.out.println(regions.size());
         FillingBinaryImage mesher = new FillingBinaryImage(getMeshImageStack());
         mesher.setMinMaxLengths(getMinConnectionLength(),getMaxConnectionLength());
         mesher.setRemeshSteps(remeshSteps);

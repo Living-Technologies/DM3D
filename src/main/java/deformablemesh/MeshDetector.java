@@ -206,6 +206,10 @@ public class MeshDetector {
         for(Integer label: pxRegions.keySet()){
             Region r = new Region(label, pxRegions.get(label));
             List<Region> split = r.split();
+            if(split.size() > 1){
+                String s = split.stream().map(g->Integer.toString(g.getPoints().size())).collect(Collectors.joining(","));
+                System.out.println("splits: " + s);
+            }
             for(Region sr: split){
                 if(sr.getPoints().size() > 2){
                     regions.add(sr);
@@ -290,12 +294,16 @@ public class MeshDetector {
         Matrix v = evd.getV();
         Matrix d = evd.getD();
 
+
         double lx = Math.sqrt(d.get(0, 0)*15/4/n);
         double ly = Math.sqrt(d.get(1, 1)*15/4/n);
         double lz = Math.sqrt(d.get(2, 2)*15/4/n);
 
+        //If the determinate is less than 0 there is an 'improper rotation'.
+        //because the ellipse is symmetric along the axis we can just take
+        //the negative of the rotation.
+        double factor = v.det() > 0 ? 1 : -1;
         DeformableMesh3D mesh = ellipsoidMesh(lx, ly, lz);
-
         Matrix vector = new Matrix(3, 1);
         for(Node3D node: mesh.nodes){
             double[] c = node.getCoordinates();
@@ -305,14 +313,15 @@ public class MeshDetector {
 
             Matrix si =  v.times(vector);
 
-            c[0] = si.get(0, 0);
-            c[1] = si.get(1, 0);
-            c[2] = si.get( 2, 0);
+            c[0] = si.get(0, 0)*factor;
+            c[1] = si.get(1, 0)*factor;
+            c[2] = si.get( 2, 0)*factor;
             node.setPosition(c);
         }
         mesh.translate(aves);
         return mesh;
     }
+
 
     /**
      * Creates an elliptical mesh with the semi major axis provided.

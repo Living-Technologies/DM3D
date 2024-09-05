@@ -467,9 +467,8 @@ public class GuiTools {
         c.setLocation(x, y);
 
     }
-    static public ImagePlus selectOpenImage(Frame parent){
-
-        JDialog log = new JDialog(parent, "Select Open Image", true);
+    static public ImagePlus selectOpenImage(Frame parent, String title){
+        JDialog log = new JDialog(parent, title, true);
         JPanel content = new JPanel(new BorderLayout());
 
         JPanel cd = new JPanel();
@@ -507,6 +506,9 @@ public class GuiTools {
         log.setVisible(true);
 
         return result[0];
+    }
+    static public ImagePlus selectOpenImage(Frame parent){
+       return selectOpenImage(parent, "Select Open Image");
     }
 
     private static Image icon;

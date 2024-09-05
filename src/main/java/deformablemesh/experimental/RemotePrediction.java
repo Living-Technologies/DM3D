@@ -81,7 +81,7 @@ public class RemotePrediction{
             setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         }
         public void updateStatus(String s){
-            status.setText(s);
+            EventQueue.invokeLater(()->status.setText(s));
         }
         public void step(){
             EventQueue.invokeLater(()->progress.setValue(progress.getValue() + 1));
@@ -180,9 +180,9 @@ public class RemotePrediction{
                     for(int j = 1; j<=fresh.size(); j++){
                         stack.addSlice(fresh.getProcessor(j).convertToByte(false));
                     }
-                    smaller.setTitle("op-" + i +" " + "-pred-" + cannon[0].getShortTitle());
+                    smaller.setTitle("op-" + i + "-pred-" + cannon[0].getShortTitle());
                     smaller.setStack(stack, nc, ns, 1);
-                    smaller.show();
+                    EventQueue.invokeLater(smaller::show);
                     pluses.add(smaller);
                 } else{
                     ImagePlus or = pluses.get(i);
@@ -193,8 +193,10 @@ public class RemotePrediction{
                     for(int j = 1; j<=fresh.size(); j++){
                         stack.addSlice(fresh.getProcessor(j).convertToByte(false));
                     }
-                    or.setStack(stack,nc, ns, (frame + 1));
-                    or.setOpenAsHyperStack(true);
+                    EventQueue.invokeLater(()->{
+                        or.setStack(stack,nc, ns, (frame + 1));
+                        or.setOpenAsHyperStack(true);
+                    });
                 }
             }
             progress.step();

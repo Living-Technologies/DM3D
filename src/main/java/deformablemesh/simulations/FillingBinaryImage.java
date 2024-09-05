@@ -237,7 +237,7 @@ public class FillingBinaryImage {
 
     public DeformableMesh3D fillBlobWithMesh(Region region){
         List<int[]> points = region.getPoints();
-        double[] center = {0, 0, 0};
+        /*double[] center = {0, 0, 0};
         for(int[] pt: points){
             center[0] += pt[0];
             center[1] += pt[1];
@@ -247,13 +247,15 @@ public class FillingBinaryImage {
         center[1] = center[1]/points.size();
         center[2] = center[2]/points.size();
         center = stack.getNormalizedCoordinate(center);
+        */
         BinaryInterceptible bi = new BinaryInterceptible(points, stack, region.getLabel());
-        //DeformableMesh3D mesh = MeshDetector.createEllipse(region, stack);
-        DeformableMesh3D mesh2 = RayCastMesh.rayCastMesh(bi, center , 3);
+        DeformableMesh3D mesh = MeshDetector.createEllipse(region, stack);
+        double v = mesh.calculateVolume();
+        //DeformableMesh3D mesh2 = RayCastMesh.rayCastMesh(bi, center , 3);
         for(int rm = 0; rm<remeshSteps; rm++) {
             ConnectionRemesher remesher = new ConnectionRemesher();
             remesher.setMinAndMaxLengths(minL, maxL);
-            DeformableMesh3D remeshed = remesher.remesh(mesh2);
+            DeformableMesh3D remeshed = remesher.remesh(mesh);
 
             remeshed.GAMMA = 1000;
             remeshed.ALPHA = 2.0;
@@ -264,12 +266,12 @@ public class FillingBinaryImage {
             for (int i = 0; i < relaxSteps; i++) {
                 remeshed.update();
             }
-
-            mesh2 = remeshed;
+            double v2 = remeshed.calculateVolume();
+            mesh = remeshed;
 
         }
 
-        return mesh2;
+        return mesh;
     }
     public void setMinMaxLengths(double minl, double maxl){
         minL = minl;

@@ -127,7 +127,7 @@ public static ImagePlus dummyPlus(){
     public static void saveDummyData() throws Exception {
         int[] blockSize = new int[]{64, 64, 64, 64, 64};
         Compression compression = new GzipCompression();
-        String n5Root = "dummy.zarr";
+        String n5Root = "C:\\Users\\msmith5\\dummy.zarr";
         N5Writer n5 = new N5Factory().openWriter(n5Root);
         String dataset = "dummy-dataset";
         String arrayLocation = "/s0";
@@ -166,7 +166,7 @@ public static ImagePlus dummyPlus(){
         ImagePlus plus = mis.getOriginalPlus();
 
         plus.setOpenAsHyperStack(true);
-        N5Examples ex = new N5Examples("third-try.n5");
+        N5Examples ex = new N5Examples("./third-try.n5");
         ex.writeImage(mis);
 
     }

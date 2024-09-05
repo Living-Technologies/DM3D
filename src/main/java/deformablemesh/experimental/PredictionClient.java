@@ -29,9 +29,12 @@ public class PredictionClient implements AutoCloseable{
         socket.close();
     }
     List<ImagePlus> getOutputs() throws IOException {
+
         int outputs = reading.readInt();
+        System.out.println("reading: " + outputs + "outputs");
         List<ImagePlus> pluses = new ArrayList<>();
         for(int i = 0; i<outputs; i++){
+            System.out.println("o - " + i);
             int c = reading.readInt();
             int w = reading.readInt();
             int h = reading.readInt();
@@ -47,6 +50,7 @@ public class PredictionClient implements AutoCloseable{
             ImagePlus op = FloatRunner.toImage(buffer, c, w, h, s, cannon);
             pluses.add(op);
         }
+        System.out.println("finished reading");
         return pluses;
     }
     public void writeImage(ImagePlus plus) throws IOException {

@@ -161,6 +161,7 @@ public class DeformableMesh3D{
 
 
     }
+
     public List<Node3D> getConnectedNodes(){
 
         return nodes.stream().filter(n->

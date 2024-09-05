@@ -767,7 +767,8 @@ public class MeshImageStack {
             stack.addSlice(proc);
         }
         ImagePlus plus = original.createImagePlus();
-        plus.setTitle(original.getTitle() + "-c" + channel + "-t" + CURRENT);
+        String name = original.getTitle().replaceFirst("\\..*$", "");
+        plus.setTitle(name  + "-c" + channel + "-t" + CURRENT);
         plus.setStack(stack, 1, slices, 1);
         return plus;
     }
@@ -790,13 +791,15 @@ public class MeshImageStack {
         ImagePlus iso = resizer.zScale(plus, newZ, ImageProcessor.BILINEAR);
         Calibration c2 = iso.getCalibration();
         c2.zOrigin = c.zOrigin * iso.getNSlices()/plus.getNSlices();
-        iso.setTitle(plus.getTitle() + "-iso");
+        String name = original.getTitle().replaceFirst("\\..*$", "");
+
+        iso.setTitle(name + "-iso");
         return iso;
     }
 
 
     /**
-     * This will get an multi-channel iso-tropic scaled version of the provided frame.
+     * This will get a multi-channel iso-tropic scaled version of the provided frame.
      *
      */
     public ImagePlus getStackIso(int frame){
