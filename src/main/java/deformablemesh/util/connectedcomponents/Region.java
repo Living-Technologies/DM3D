@@ -25,12 +25,14 @@
  */
 package deformablemesh.util.connectedcomponents;
 
+import deformablemesh.MeshDetector;
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.gui.Drawable;
 import deformablemesh.meshview.DataObject;
 import deformablemesh.meshview.VolumeDataObject;
 import deformablemesh.util.ColorSuggestions;
+import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ShortProcessor;
 
@@ -73,9 +75,9 @@ public class Region {
         center[1] = center[1]/pts.size();
         center[2] = center[2]/pts.size();
 
-        //hx = hx+1;
-        //hy = hy+1;
-        //hz = hz+1;
+        hx = hx+1;
+        hy = hy+1;
+        hz = hz+1;
         this.pts = pts;
     }
     public void validate(){
@@ -448,5 +450,10 @@ public class Region {
                 hy - ly,
                 hz - lz
         };
+    }
+
+    public static void main(String[] args){
+        ImagePlus plus = new ImagePlus("C:\\Users\\msmith5\\OneDrive - UMC Utrecht\\Documenten\\working\\maria\\rutgers-latest\\Labels.tif");
+        List<Region> regions = new MeshDetector(new MeshImageStack(plus)).getRegionsFromLabelledImage();
     }
 }

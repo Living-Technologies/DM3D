@@ -2,10 +2,10 @@ package deformablemesh.experimental;
 
 import deformablemesh.MeshDetector;
 import deformablemesh.MeshImageStack;
-import deformablemesh.geometry.ConnectionRemesher;
-import deformablemesh.geometry.DeformableMesh3D;
-import deformablemesh.geometry.Triangle3D;
+import deformablemesh.geometry.*;
+import deformablemesh.io.MeshWriter;
 import deformablemesh.meshview.MeshFrame3D;
+import deformablemesh.track.Track;
 import deformablemesh.util.ColorSuggestions;
 import deformablemesh.util.connectedcomponents.ConnectedComponents3D;
 import deformablemesh.util.connectedcomponents.Region;
@@ -36,6 +36,7 @@ import net.imglib2.type.numeric.integer.UnsignedByteType;
 
 import java.awt.*;
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -174,8 +175,7 @@ public class Imglib2Mesh {
         }
 
         DeformableMesh3D dm3d = new DeformableMesh3D(positions, cindexes, indexes);
-        ConnectionRemesher rm = new ConnectionRemesher();
-        rm.remesh(dm3d);
+
         return dm3d;
     }
 
@@ -212,6 +212,9 @@ public class Imglib2Mesh {
             int sx = (int)v.x();
             int sy = (int)v.y();
             int sz = (int)v.z();
+            if( Math.pow(sx - v.x(), 2) + Math.pow(sy - v.y(), 2) + Math.pow(sz - v.z(), 2) > 0 ){
+                System.out.println("non-integer vertex: " + v.x() + ", " + v.y() + ", " + v.z());
+            }
             i2 = space[sz][sy][sx] - 1;
             if( i2 < 0){
                 space[sz][sy][sx] = dex + 1;
@@ -342,7 +345,14 @@ public class Imglib2Mesh {
                 for(Mesh bm : MeshConnectedComponents.iterable(mesh)){
                     DeformableMesh3D dm3d = convertMesh(bm, ist);
                     if(dm3d.calculateVolume() > 0){
-                        meshes.add(dm3d);
+                        try {
+                            List<DeformableMesh3D> checked = topoCheck(dm3d);
+                            meshes.addAll(checked);
+                        } catch(Exception e){
+                            Track t = new Track("red-" + e.getMessage());
+                            t.addMesh(mis.CURRENT, dm3d);
+                            broken.add(t);
+                        }
                     }
                 }
             }
@@ -351,8 +361,22 @@ public class Imglib2Mesh {
         return meshes;
     }
 
+    public static List<DeformableMesh3D> topoCheck(DeformableMesh3D mesh){
+        TopoCheck tc = new TopoCheck();
+        List<DeformableMesh3D> m2;
+        m2 = tc.checkMesh(mesh);
 
-    public static void main(String[] args){
+        //TopoCheck t2 = new TopoCheck();
+        //m2 = t2.checkMesh(m2);
+        //if(tc.fourBy.size() == 0){
+        //    return null;
+        //}
+        return m2;
+    }
+
+    static List<Track> broken = new ArrayList<>();
+
+    public static void main(String[] args) throws IOException {
         new ImageJ();
         ImagePlus plus = FileInfoVirtualStack.openVirtual(new File(args[0]).getAbsolutePath());
         MeshImageStack mis = new MeshImageStack(plus);
@@ -364,9 +388,9 @@ public class Imglib2Mesh {
 
 
 
-        for(int i = 0; i < mis.getNFrames(); i++){
+        for(int i = 0; i < 10; i++){
             mis.setFrame(i);
-
+            mf3d.clearTransients();
             long start = System.currentTimeMillis();
             List<DeformableMesh3D> meshes = Imglib2Mesh.guessMeshes(mis);
             System.out.println(System.currentTimeMillis() - start);
@@ -376,16 +400,19 @@ public class Imglib2Mesh {
 
                 dm3d.setShowSurface(false);
                 dm3d.create3DObject();
+                dm3d.data_object.setShowSurface(true);
                 dm3d.data_object.setColor(c);
                 dm3d.data_object.setWireColor(c);
-
-                mf3d.addDataObject(dm3d.data_object);
+                mf3d.addTransientObject(dm3d.data_object);
 
             }
 
         }
-
-
-
+        if(broken.size() > 0){
+            System.out.println(broken.size() + " broken meshes saved to broken.bmf");
+            MeshWriter.saveMeshes(new File("broken.bmf"), broken);
+        } else{
+            System.out.println("File successfully converted!");
+        }
     }
 }

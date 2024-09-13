@@ -629,6 +629,13 @@ public class ConnectionRemesher {
 
     public void addConnection(Connection3D c){
         if(connections.contains(c)){
+
+            int i = connections.indexOf(c);
+            Connection3D o = connections.get(connections.indexOf(c));
+            int a = nodes.indexOf(c.A);
+            int b = nodes.indexOf(c.B);
+            int e = nodes.indexOf(o.A);
+            int d = nodes.indexOf(o.B);
             throw new RuntimeException("adding existing connection");
         }
         connections.add(c);

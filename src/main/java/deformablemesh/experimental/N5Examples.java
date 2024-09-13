@@ -127,7 +127,7 @@ public static ImagePlus dummyPlus(){
     public static void saveDummyData() throws Exception {
         int[] blockSize = new int[]{64, 64, 64, 64, 64};
         Compression compression = new GzipCompression();
-        String n5Root = "C:\\Users\\msmith5\\dummy.zarr";
+        String n5Root = ".\\dummy.zarr";
         N5Writer n5 = new N5Factory().openWriter(n5Root);
         String dataset = "dummy-dataset";
         String arrayLocation = "/s0";
@@ -143,6 +143,8 @@ public static ImagePlus dummyPlus(){
 
         }
 
+        n5.close();
+
     }
 
     public static void loadDummyData() throws IOException {
@@ -151,6 +153,10 @@ public static ImagePlus dummyPlus(){
         String dataset = "dummy-dataset";
         String arrayLocation = "/s0";
         new ImageJ();
+        for(String s : n5.deepList(dataset)){
+            System.out.println(s);
+        }
+
         ImagePlus plus = N5Importer.open(n5Root, dataset + arrayLocation);
         //p.show();
         //CachedCellImg<UnsignedByteType, ?> img = N5Utils.open(n5, dataset + arrayLocation);

@@ -70,10 +70,8 @@ class Imglib2MeshBenchMark {
 
         List<DeformableMesh3D> meshes = new ArrayList<>();
         List<List<Triangle3D>> results = new ArrayList<>(n);
-        List<Set<Imglib2Mesh.Con>> connections = new ArrayList<>();
         for(int i = 0; i<n; i++){
             results.add(new ArrayList<>());
-            connections.add(new HashSet<>());
         }
 
         for(Triangle3D triangle: mesh.triangles){
@@ -86,15 +84,11 @@ class Imglib2MeshBenchMark {
                     int i1 = triangle.B.index;
                     int i2 = triangle.C.index;
 
-                    connections.get(i).add(new Imglib2Mesh.Con(i0, i1));
-                    connections.get(i).add(new Imglib2Mesh.Con(i1, i2));
-                    connections.get(i).add(new Imglib2Mesh.Con(i2, i0));
-
                     found = true;
                 }
             }
             if(!found){
-                System.out.println("Broken!");
+                System.out.println("Triangle not found in partition!");
             }
         }
         int[] map = new int[mesh.triangle_index.length];
@@ -109,23 +103,16 @@ class Imglib2MeshBenchMark {
             }
 
             List<Triangle3D> triangles = results.get(i);
-            int[] tindexes = new int[triangles.size()*3];
-            current = 0;
+            List<int[]> triangleIndexes = new ArrayList<>();
             for(Triangle3D triangle : triangles){
-                tindexes[3*current] = map[triangle.A.index];
-                tindexes[3*current + 1] = map[triangle.B.index];
-                tindexes[3*current + 2] = map[triangle.C.index];
-                current++;
+                triangleIndexes.add(
+                    new int[]{
+                        map[triangle.A.index], map[triangle.B.index], map[triangle.C.index]
+                    }
+                );
+
             }
-            Set<Imglib2Mesh.Con> cons = connections.get(i);
-            int[] cindexes = new int[cons.size()*2];
-            current = 0;
-            for(Imglib2Mesh.Con con : cons){
-                cindexes[current*2] = map[con.a];
-                cindexes[current*2 + 1] = map[con.b];
-                current++;
-            }
-            meshes.add(new DeformableMesh3D(positions, cindexes, tindexes));
+            meshes.add( TopoCheck.fromTriangles(positions, triangleIndexes) );
         }
 
         return meshes;

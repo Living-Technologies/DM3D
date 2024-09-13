@@ -115,8 +115,6 @@ public class DeformableMesh3D{
             triangle_index[3*i+2] = dices[2];
         }
 
-
-
     }
 
     public DeformableMesh3D(double[] positions, int[] connection_indices, int[] triangle_indices) {
@@ -158,8 +156,6 @@ public class DeformableMesh3D{
                 throw new RuntimeException("Unable to load mesh: " + e.getMessage(), e);
             }
         }
-
-
     }
 
     public List<Node3D> getConnectedNodes(){
