@@ -133,7 +133,7 @@ public class TopoCheck {
     static double[] cm = null;
     public DeformableMesh3D splitFourByConnections(DeformableMesh3D mesh){
         debug = mesh;
-        System.out.println(fourBy.size() + "connections to check");
+        System.out.println(fourBy.size() + " connections to fix");
         int added = 0;
 
         NodeSplitting nodeSplitter = new NodeSplitting(mesh);
@@ -151,41 +151,104 @@ public class TopoCheck {
         List<Connection3D> chainSorted = new ArrayList<>();
 
         for(List<Connection3D> chain : chainedConnections){
-            chainSorted.addAll(chain);
-            //find connections with 2 set partitions.
-            for(Connection3D c3d : chain){
+            Deque<Connection3D> stack = new ArrayDeque<>(chain.size());
+            Deque<Connection3D> unfinished = new ArrayDeque<>(chain);
+            Set<Connection3D> processed = new HashSet<>();
+            stack.add(unfinished.pop());
+            boolean processingPinch = true;
+            List<Connection3D> visited = new ArrayList<>();
+            while(stack.size() > 0){
+                Connection3D con = stack.pop();
+                if(nodeSplitter.wasSplit(con.A) && nodeSplitter.wasSplit(con.B)){
+                    throw new RuntimeException("Unecessary check!");
+                }else if(nodeSplitter.wasSplit(con.A) || nodeSplitter.wasSplit(con.B)){
+                    //finishing.
+                    Node3D toSplit = nodeSplitter.wasSplit(con.A) ? con.B : con.A;
+                    List<List<Triangle3D>> parti = partitionTriangles(toSplit);
+                    if(parti.size()==2){
+                        if( pinched(mapper.maps.get(con), parti) != processingPinch ) {
+                            processed.add(con);
+                            //leave it!
+                            continue;
+                        }
+                    }
+                    Node3D alreadySplit = toSplit == con.A ? con.B : con.A;
+                    nodeSplitter.split(toSplit, alreadySplit, parti);
+                    processed.add(con);
+                    Iterator<Connection3D> citer = unfinished.iterator();
+                    while(citer.hasNext()){
+                        Connection3D prospect = citer.next();
+                        if(prospect.A == toSplit || prospect.B == toSplit){
+                            if(! processed.contains(prospect)) {
+                                stack.add(prospect);
+                                citer.remove();
+                            }
+                        }
+                    }
+                } else{
+                    List<List<Triangle3D>> parti = partitionTriangles(con.A);
+                    if(parti.size() == 2 && pinched(mapper.maps.get(con), parti) == processingPinch ){
+                        nodeSplitter.split(con.A, con.B, parti);
+                        stack.add(con);
+                    } else{
+                        List<List<Triangle3D>> parti2 = partitionTriangles(con.B);
+                        if(parti2.size() == 2 && pinched(mapper.maps.get(con), parti2) == processingPinch ){
+                            nodeSplitter.split(con.B, con.A, parti2);
+                            stack.add(con);
+                        } else{
+                            //we cannot split the nodes on this connection, put it back.
+                            visited.add(con);
+                            unfinished.add(con);
+                            Connection3D candidate = unfinished.pop();
+                            stack.add(candidate);
+                            if(visited.contains(candidate)){
+                                if(!processingPinch){
+                                    throw new RuntimeException("Looped through 2 times!");
+                                }
+                                visited.clear();
+                                processingPinch = false;
+                            }
+                        }
+                    }
+
+                }
 
             }
-            //remove them if pinch
-            //... and add their neighbors to a queue.
-            //if kiss - treat it as a 0 partitioning.
-            //progress from 2 set partitions to collapsing nodes that are neighbors.
-
-            //TODO this still fails on current problem. WHAT is the TOPO difference
-            System.out.print("chain: ");
-            for(Connection3D con : chain){
-                List<List<Triangle3D>> partA = partitionTriangles(con.A);
-                List<List<Triangle3D>> partB = partitionTriangles(con.B);
-
-                if(partA.size() == 2){
-                    boolean pinched = pinched(mapper.maps.get(con), partA);
-                    if(pinched){
-                        nodeSplitter.split(con.A, partA.get(0));
-                    }else{
-                        nodeSplitter.split(con.A, new ArrayList<>());
-                    }
-                }
-                if(partB.size() == 2){
-                    boolean pinched = pinched(mapper.maps.get(con), partA);
-                    if(pinched){
-                        nodeSplitter.split(con.A, partA.get(0));
-                    }else{
-                        nodeSplitter.split(con.A, new ArrayList<>());
-                    }
-                }
-            }
-            System.out.println("->");
+            System.out.println("unfinished: " + unfinished.size() + " processed: " + processed.size() + " starting: " + chain.size());
+            //chainSorted.addAll(chain);
         }
+        if(mf3d != null) {
+            Set<Triangle3D> stationary = new HashSet<>();
+            Set<Triangle3D> moved = new HashSet<>();
+            for (Node3D node : nodeSplitter.split.keySet()) {
+                List<Triangle3D> triangles = nodeSplitter.split.get(node);
+                stationary.addAll(nodeToTriangle.get(node).stream().filter(t -> !triangles.contains(t)).collect(Collectors.toList()));
+                moved.addAll(triangles);
+            }
+            List<int[]> tindex0 = stationary.stream().map(Triangle3D::getIndices).collect(Collectors.toList());
+            List<int[]> tindex1 = moved.stream().map(Triangle3D::getIndices).collect(Collectors.toList());
+            DeformableMesh3D mStat = fromTriangles(debug.positions, tindex0);
+            if (cm == null) {
+                cm = mStat.getBoundingBox().getCenter();
+                cm[0] = -cm[0];
+                cm[1] = -cm[1];
+                cm[2] = -cm[2];
+            }
+            mStat.translate(cm);
+            mStat.create3DObject();
+            mStat.data_object.setWireColor(Color.BLACK);
+            mStat.data_object.setColor(ColorSuggestions.getSuggestion());
+            mStat.data_object.setShowSurface(true);
+            mf3d.addTransientObject(mStat.data_object);
+            DeformableMesh3D mMove = fromTriangles(debug.positions, tindex1);
+            mMove.translate(cm);
+            mMove.create3DObject();
+            mMove.data_object.setWireColor(Color.BLACK);
+            mMove.data_object.setColor(ColorSuggestions.getSuggestion());
+            mMove.data_object.setShowSurface(true);
+            mf3d.addTransientObject(mMove.data_object);
+        }
+
 
         for(Connection3D con: chainSorted){
             //Two groups they all need to have new connections
@@ -304,7 +367,7 @@ public class TopoCheck {
                         System.out.println("skipping remapping A: " + count0 + ", " + count1);
                         int dex = count0 > count1 ? 0 : 1;
                         List<List<Triangle3D>> ab = regions.get(dex);
-                        nodeSplitter.split(con.B, ab.get(1));
+                        //nodeSplitter.split(con.B, ab.get(1));
                     } else if(nodeSplitter.wasSplit(con.B)){
                         List<Triangle3D> split = nodeSplitter.split.get(con.B);
                         long count0 = regions.get(0).get(0).stream().filter(split::contains).count();
@@ -312,20 +375,20 @@ public class TopoCheck {
                         System.out.println("skipping remapping B: " + count0 + ", " + count1);
                         int dex = count0 > count1 ? 0 : 1;
                         List<List<Triangle3D>> ab = regions.get(dex);
-                        nodeSplitter.split(con.A, ab.get(0));
+                        //nodeSplitter.split(con.A, ab.get(0));
                     } else{
                         List<List<Triangle3D>> ab = regions.get(0);
-                        nodeSplitter.split(con.A, ab.get(0));
-                        nodeSplitter.split(con.B, ab.get(1));
+                        //nodeSplitter.split(con.A, ab.get(0));
+                        //nodeSplitter.split(con.B, ab.get(1));
                     }
 
                 } else {
                     if(pa && !pb){
                         System.out.println("single A");
-                        nodeSplitter.split(con.A, partA.get(0));
+                        //nodeSplitter.split(con.A, partA.get(0));
                     } else if(pb && !pa){
                         System.out.println("single B");
-                        nodeSplitter.split(con.B, partB.get(0));
+                        //nodeSplitter.split(con.B, partB.get(0));
                     } else{
                         System.out.println("Windings should be consistent!");
                     }
@@ -419,6 +482,27 @@ public class TopoCheck {
             //System.out.println("  " + pinched[0] + ", " + pinched[1] + " :: " + cw + ", " + ccw);
         }
         if(pinched[0] != pinched[1]){
+            DeformableMesh3D mesh1 = fromTriangles(debug.positions, partitions.get(0).stream().map(Triangle3D::getIndices).collect(Collectors.toList()));
+            if(cm == null){
+                cm = mesh1.getBoundingBox().getCenter();
+                cm[0] = -cm[0];
+                cm[1] = -cm[1];
+                cm[2] = -cm[2];
+            }
+            mesh1.translate(cm);
+            mesh1.create3DObject();
+            mesh1.data_object.setWireColor(Color.BLACK);
+            mesh1.data_object.setColor(ColorSuggestions.getSuggestion());
+            mesh1.data_object.setShowSurface(true);
+            mf3d.addTransientObject(mesh1.data_object);
+            DeformableMesh3D mesh2 = fromTriangles(debug.positions, partitions.get(1).stream().map(Triangle3D::getIndices).collect(Collectors.toList()));
+            mesh2.translate(cm);
+            mesh2.create3DObject();
+            mesh2.data_object.setWireColor(Color.BLACK);
+            mesh2.data_object.setColor(ColorSuggestions.getSuggestion());
+            mesh2.data_object.setShowSurface(true);
+            mf3d.addTransientObject(mesh2.data_object);
+
             throw new RuntimeException("Inconsistent partition mapping");
         }
         return pinched[0];
@@ -471,7 +555,7 @@ public class TopoCheck {
                     }
                 }
                 double cross = Vector3DOps.dot(dir, Vector3DOps.cross(rper, zero));
-                if (cross > 0) {
+                if (cross >= 0) {
                     a.angle = Math.acos(dot);
                 } else {
                     a.angle = 2 * Math.PI - Math.acos(dot);
@@ -484,7 +568,32 @@ public class TopoCheck {
             a.cw = Vector3DOps.dot(x, r) < 0;
             st.add(a);
         }
+
+
+
         st.sort(Comparator.comparingDouble(SortedT::getAngle));
+
+        for(int i = 0; i<st.size() - 1; i++){
+            if(st.get(i).angle == st.get(i+1).angle){
+                if(i > 0){
+                    //check previous.
+                    if( st.get(i - 1).cw == st.get(i).cw){
+                        SortedT a = st.get(i);
+                        SortedT b = st.get(i+1);
+                        st.set(i, b);
+                        st.set(i+1, a);
+                    }
+                } else{
+                    if( st.get(i + 1).cw == st.get(i + 2).cw){
+                        SortedT a = st.get(i);
+                        SortedT b = st.get(i+1);
+                        st.set(i, b);
+                        st.set(i+1, a);
+                    }
+                }
+            }
+        }
+
         //This worked! That is amazing.
         System.out.println(st.stream().map(s -> s.cw).collect(Collectors.toList()));
         return st;
@@ -707,16 +816,32 @@ public class TopoCheck {
             m2 = removeFoldedTriangles(m2);
             iterations++;
         }
-        if(fourBy.size() > 0) {
+        while(fourBy.size() > 0) {
             mesh = splitFourByConnections(mesh);
+            populateNodeToTriangle(mesh);
+            populatedConnectionMappings(mesh);
         }
 
         List<DeformableMesh3D> meshes = Imglib2MeshBenchMark.partition(mesh, Imglib2MeshBenchMark.connectedComponents(mesh.triangles));
 
-        return meshes.stream().filter(m->m.triangles.size()>0).map(m ->{
+
+        if(mf3d != null) {
+            List<DeformableMesh3D> small = meshes.stream().filter(m->m.triangles.size() < 20).collect(Collectors.toList());
+            for(DeformableMesh3D sm : small){
+                sm.create3DObject();
+                sm.data_object.setShowSurface(true);
+                sm.data_object.setColor(Color.BLUE);
+                mf3d.addDataObject(sm.data_object);
+            }
+        }
+        return meshes.stream().filter(m->m.triangles.size()>20).map(m ->{
             ConnectionRemesher cr = new ConnectionRemesher();
             cr.setMinAndMaxLengths(0.005, 0.01);
-            return cr.remesh(m);
+            DeformableMesh3D rmed = cr.remesh(m);
+            if(cr.isOpenSurface()){
+                throw new RuntimeException("No open surfaces!");
+            }
+            return rmed;
         }).collect(Collectors.toList());
     }
     static MeshFrame3D mf3d;
@@ -733,9 +858,7 @@ public class TopoCheck {
             TopoCheck tc = new TopoCheck();
             try {
                 DeformableMesh3D mesh = t.getMesh(t.getFirstFrame());
-                List<int[]> triangles = mesh.triangles.stream().map(Triangle3D::getIndices).collect(Collectors.toList());
-                DeformableMesh3D sample = fromTriangles(mesh.positions, triangles);
-                List<DeformableMesh3D> checked = tc.checkMesh(sample);
+                List<DeformableMesh3D> checked = tc.checkMesh(mesh);
             } catch(Exception e){
                 e.printStackTrace();
                 break;

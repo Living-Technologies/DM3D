@@ -390,9 +390,9 @@ public class Imglib2Mesh {
 
         for(int i = 0; i < 10; i++){
             mis.setFrame(i);
-            mf3d.clearTransients();
             long start = System.currentTimeMillis();
             List<DeformableMesh3D> meshes = Imglib2Mesh.guessMeshes(mis);
+            mf3d.clearTransients();
             System.out.println(System.currentTimeMillis() - start);
 
             for(DeformableMesh3D dm3d : meshes){

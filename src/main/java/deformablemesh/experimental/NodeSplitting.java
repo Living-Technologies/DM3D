@@ -21,7 +21,7 @@ public class NodeSplitting {
     public boolean wasSplit(Node3D node){
         return split.containsKey(node);
     }
-    public void split(Node3D node, List<Triangle3D> triangles){
+    private void split(Node3D node, List<Triangle3D> triangles){
         split.put(node, triangles);
         int adex = positions.size();
         double[] pos1 = node.getCoordinates();
@@ -30,6 +30,53 @@ public class NodeSplitting {
             int[] values = triIndexes.get(trianglesOld.indexOf(tri));
             replace(node, adex, values);
         }
+    }
+
+    public void split(Node3D node, Node3D neighbor, List<List<Triangle3D>> partitions){
+        if(wasSplit(node)){
+            throw new RuntimeException("Resplitting is not allow!");
+        }
+        if(wasSplit(neighbor)){
+            List<Triangle3D> separated = split.get(neighbor);
+            List<Triangle3D> next = regroupTriangles(separated, partitions);
+            split(node, next);
+        } else{
+            //free to choose!
+            List<Triangle3D> next = arbitraryGroup(partitions);
+            split(node, next);
+        }
+    }
+    List<Triangle3D> arbitraryGroup(List<List<Triangle3D>> partitions){
+
+        if(partitions.size() == 2){
+            return partitions.get(0);
+        }
+        throw new RuntimeException("Working on it!!! NodeSplitting.class");
+    }
+    /**
+     * The changed triangles will border a section of the triangles that need to be changed.
+     * it is important that the remapped triangles belong to the same section.
+     *
+     * @param changed
+     * @param toChange
+     * @return
+     */
+    List<Triangle3D> regroupTriangles(List<Triangle3D> changed, List<List<Triangle3D>> toChange){
+        List<Triangle3D> grouped = new ArrayList<>();
+        List<Triangle3D> leftover = new ArrayList<>();
+        List<Triangle3D> intersection = new ArrayList<>();
+        for(List<Triangle3D> incomplete : toChange){
+            List<Triangle3D> inter = incomplete.stream().filter(changed::contains).collect(Collectors.toList());
+            if(inter.size() > 0){
+                grouped.addAll(incomplete);
+            } else{
+                leftover.addAll(incomplete);
+            }
+            intersection.addAll(inter);
+
+        }
+
+        return grouped;
     }
 
     void replace(Node3D old, int next, int[] dest){
