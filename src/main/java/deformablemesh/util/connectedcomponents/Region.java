@@ -453,7 +453,5 @@ public class Region {
     }
 
     public static void main(String[] args){
-        ImagePlus plus = new ImagePlus("C:\\Users\\msmith5\\OneDrive - UMC Utrecht\\Documenten\\working\\maria\\rutgers-latest\\Labels.tif");
-        List<Region> regions = new MeshDetector(new MeshImageStack(plus)).getRegionsFromLabelledImage();
     }
 }

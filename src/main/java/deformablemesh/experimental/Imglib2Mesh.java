@@ -332,6 +332,9 @@ public class Imglib2Mesh {
             rg.step();
         }
 
+        rg.erode();
+        rg.dilate();
+
         for(Region r: regions){
             r.validate();
             Img<UnsignedByteType> img = image(r);
@@ -388,7 +391,7 @@ public class Imglib2Mesh {
 
 
 
-        for(int i = 0; i < 10; i++){
+        for(int i = 0; i < mis.getNFrames(); i++){
             mis.setFrame(i);
             long start = System.currentTimeMillis();
             List<DeformableMesh3D> meshes = Imglib2Mesh.guessMeshes(mis);

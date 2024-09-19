@@ -86,17 +86,36 @@ public class TopoCheck {
                 connectionToTriangle.get( con ).add(t);
                 triangleToConnection.get( t ).add(con);
             }
-
+            Set<Triangle3D> junk = new HashSet<>();
             if(shared.size() < 2){
+                junk.addAll(shared);
                 System.out.println("Broken connections! " + shared.size());
             } else if(shared.size() > 2){
                 fourBy.add(con);
+            } else if(shared.size() != 2){
+                System.out.println("crazy connections");
             }
 
+            if(mf3d != null && junk.size() > 0 ){
+                DeformableMesh3D sm = fromTriangles(mesh.positions, junk.stream().map(Triangle3D::getIndices).collect(Collectors.toList()));
+                if(cm == null) {
+                    cm = sm.getBoundingBox().getCenter();
+                    cm[0] = -cm[0];
+                    cm[1] = -cm[1];
+                    cm[2] = -cm[2];
+                }
+                sm.translate(cm);
+                sm.create3DObject();
+                sm.data_object.setShowSurface(true);
+                sm.data_object.setColor(ColorSuggestions.getSuggestion());
+                mf3d.addDataObject(sm.data_object);
+            }
 
         }
 
     }
+
+
     static class SortedT{
         double angle;
         boolean cw;
@@ -113,6 +132,8 @@ public class TopoCheck {
     }
     FourByConnectionMapper mapper = new FourByConnectionMapper();
     static DeformableMesh3D debug;
+
+
 
     List<List<Triangle3D>> regroupTriangles(List<List<Triangle3D>> small, List<List<Triangle3D>> big){
         List<List<Triangle3D>> grouped = new ArrayList<>();
@@ -151,6 +172,16 @@ public class TopoCheck {
         List<Connection3D> chainSorted = new ArrayList<>();
 
         for(List<Connection3D> chain : chainedConnections){
+            System.out.print("chain: " );
+            for(Connection3D con : chain){
+                List<List<Triangle3D>> pa = partitionTriangles(con.A);
+                List<List<Triangle3D>> pb = partitionTriangles(con.B);
+                boolean na = pa.size() == 2 ? pinched(mapper.maps.get(con), pa): false;
+                boolean nb = pb.size() == 2 ? pinched(mapper.maps.get(con), pb): false;
+
+                System.out.print(":" + na + " " + pa.size() + " -- " + nb + " " + pb.size());
+            }
+            System.out.println("-->");
             Deque<Connection3D> stack = new ArrayDeque<>(chain.size());
             Deque<Connection3D> unfinished = new ArrayDeque<>(chain);
             Set<Connection3D> processed = new HashSet<>();
@@ -194,7 +225,9 @@ public class TopoCheck {
                         List<List<Triangle3D>> parti2 = partitionTriangles(con.B);
                         if(parti2.size() == 2 && pinched(mapper.maps.get(con), parti2) == processingPinch ){
                             nodeSplitter.split(con.B, con.A, parti2);
-                            stack.add(con);
+                            if(!processingPinch) {
+                                stack.add(con);
+                            }
                         } else{
                             //we cannot split the nodes on this connection, put it back.
                             visited.add(con);
@@ -236,15 +269,15 @@ public class TopoCheck {
             }
             mStat.translate(cm);
             mStat.create3DObject();
-            mStat.data_object.setWireColor(Color.BLACK);
-            mStat.data_object.setColor(ColorSuggestions.getSuggestion());
+            mStat.data_object.setWireColor(Color.WHITE);
+            mStat.data_object.setColor(new Color(255, 200, 200, 100));
             mStat.data_object.setShowSurface(true);
             mf3d.addTransientObject(mStat.data_object);
             DeformableMesh3D mMove = fromTriangles(debug.positions, tindex1);
             mMove.translate(cm);
             mMove.create3DObject();
-            mMove.data_object.setWireColor(Color.BLACK);
-            mMove.data_object.setColor(ColorSuggestions.getSuggestion());
+            mMove.data_object.setWireColor(Color.WHITE);
+            mMove.data_object.setColor(new Color(200, 200, 255, 100));
             mMove.data_object.setShowSurface(true);
             mf3d.addTransientObject(mMove.data_object);
         }
@@ -654,6 +687,51 @@ public class TopoCheck {
      * @param node
      * @return
      */
+    List<List<Triangle3D>> freePartitionTriangles(Node3D node){
+        Deque<Triangle3D> awaiting = new ArrayDeque<>(nodeToTriangle.get(node));
+        List<List<Triangle3D>> partitions = new ArrayList<>();
+        List<Triangle3D> working = new ArrayList<>();
+        Triangle3D tri = awaiting.pop();
+        working.add(tri);
+        partitions.add(working);
+        Deque<Triangle3D> next = new ArrayDeque<>();
+        while(awaiting.size() > 0) {
+            List<Connection3D> cons = triangleToConnection.get(tri);
+            for (Connection3D con : cons) {
+                if (con.A == node || con.B == node) {
+                    List<Triangle3D> neighbors = connectionToTriangle.get(con);
+                    for(Triangle3D neighbor : neighbors){
+                        if (!working.contains(neighbor)) {
+                            working.add(neighbor);
+                            awaiting.remove(neighbor);
+                            next.add(neighbor);
+                        }
+                    }
+                }
+            }
+            if(next.size() == 0){
+                working = new ArrayList<>();
+                partitions.add(working);
+                tri = awaiting.pop();
+                working.add(tri);
+            } else{
+                tri = working.remove(0);
+            }
+
+
+        }
+
+
+        return partitions;
+    }
+
+    /**
+     * Triangles are expected to share a single node. If we don't
+     * remove the provided connection, the the triangles will all be
+     * connected.
+     * @param node
+     * @return
+     */
     List<List<Triangle3D>> partitionTriangles(Node3D node){
 
         Deque<Triangle3D> awaiting = new ArrayDeque<>(nodeToTriangle.get(node));
@@ -755,6 +833,14 @@ public class TopoCheck {
                 }
             }
         }
+        for(Node3D node: mesh.nodes){
+            List<Triangle3D> folded = nodeToTriangle.get(node);
+            if(folded.size() == 2) {
+                folded.forEach(t -> {
+                    if (!toRemove.contains(t)) toRemove.add(t);
+                });
+            }
+        }
 
         if(toRemove.size()>0) {
             List<Triangle3D> triangle3DS = new ArrayList<>(mesh.triangles);
@@ -806,6 +892,16 @@ public class TopoCheck {
         return null;
     }
 
+    public DeformableMesh3D foldedMeshes2(DeformableMesh3D mesh){
+        for(Node3D node : mesh.nodes){
+            List<Triangle3D> triangles = nodeToTriangle.get(node);
+            if(triangles.size() == 2){
+                System.out.println("folded triangle!");
+            }
+        }
+        return mesh;
+    }
+
     public List<DeformableMesh3D> checkMesh(DeformableMesh3D mesh){
         DeformableMesh3D m2 = mesh;
         int iterations = 0;
@@ -816,21 +912,32 @@ public class TopoCheck {
             m2 = removeFoldedTriangles(m2);
             iterations++;
         }
+
+
         while(fourBy.size() > 0) {
             mesh = splitFourByConnections(mesh);
             populateNodeToTriangle(mesh);
             populatedConnectionMappings(mesh);
         }
 
+
+
         List<DeformableMesh3D> meshes = Imglib2MeshBenchMark.partition(mesh, Imglib2MeshBenchMark.connectedComponents(mesh.triangles));
 
 
         if(mf3d != null) {
-            List<DeformableMesh3D> small = meshes.stream().filter(m->m.triangles.size() < 20).collect(Collectors.toList());
+            List<DeformableMesh3D> small = meshes.stream().filter(m->m.triangles.size() > 0).collect(Collectors.toList());
             for(DeformableMesh3D sm : small){
+                if(cm == null) {
+                    cm = sm.getBoundingBox().getCenter();
+                    cm[0] = -cm[0];
+                    cm[1] = -cm[1];
+                    cm[2] = -cm[2];
+                }
+                sm.translate(cm);
                 sm.create3DObject();
-                sm.data_object.setShowSurface(true);
-                sm.data_object.setColor(Color.BLUE);
+                sm.data_object.setShowSurface(false);
+                sm.data_object.setWireColor(Color.BLACK);
                 mf3d.addDataObject(sm.data_object);
             }
         }
@@ -852,7 +959,7 @@ public class TopoCheck {
         mf3d.showFrame(true);
         mf3d.addLights();
         mf3d.setBackgroundColor(new Color(200, 200, 200));
-
+        int skip = 0;
         for(Track t: tracks){
             System.out.println("fixing: " + t.getName());
             TopoCheck tc = new TopoCheck();
