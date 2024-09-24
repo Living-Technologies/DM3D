@@ -1,5 +1,6 @@
 package deformablemesh.experimental;
 
+import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Triangle3D;
@@ -112,7 +113,7 @@ class Imglib2MeshBenchMark {
                 );
 
             }
-            meshes.add( TopoCheck.fromTriangles(positions, triangleIndexes) );
+            meshes.add( DeformableMesh3DTools.fromTriangles(positions, triangleIndexes) );
         }
 
         return meshes;

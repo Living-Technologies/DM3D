@@ -7,8 +7,6 @@ import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.track.Track;
 import deformablemesh.util.ColorSuggestions;
 import deformablemesh.util.Vector3DOps;
-import edu.mines.jtk.mesh.TriMesh;
-import org.checkerframework.checker.units.qual.C;
 
 import java.awt.*;
 import java.io.File;
@@ -97,7 +95,7 @@ public class TopoCheck {
             }
 
             if(mf3d != null && junk.size() > 0 ){
-                DeformableMesh3D sm = fromTriangles(mesh.positions, junk.stream().map(Triangle3D::getIndices).collect(Collectors.toList()));
+                DeformableMesh3D sm = DeformableMesh3DTools.fromTriangles(mesh.positions, junk.stream().map(Triangle3D::getIndices).collect(Collectors.toList()));
                 if(cm == null) {
                     cm = sm.getBoundingBox().getCenter();
                     cm[0] = -cm[0];
@@ -260,7 +258,7 @@ public class TopoCheck {
             }
             List<int[]> tindex0 = stationary.stream().map(Triangle3D::getIndices).collect(Collectors.toList());
             List<int[]> tindex1 = moved.stream().map(Triangle3D::getIndices).collect(Collectors.toList());
-            DeformableMesh3D mStat = fromTriangles(debug.positions, tindex0);
+            DeformableMesh3D mStat = DeformableMesh3DTools.fromTriangles(debug.positions, tindex0);
             if (cm == null) {
                 cm = mStat.getBoundingBox().getCenter();
                 cm[0] = -cm[0];
@@ -273,7 +271,7 @@ public class TopoCheck {
             mStat.data_object.setColor(new Color(255, 200, 200, 100));
             mStat.data_object.setShowSurface(true);
             mf3d.addTransientObject(mStat.data_object);
-            DeformableMesh3D mMove = fromTriangles(debug.positions, tindex1);
+            DeformableMesh3D mMove = DeformableMesh3DTools.fromTriangles(debug.positions, tindex1);
             mMove.translate(cm);
             mMove.create3DObject();
             mMove.data_object.setWireColor(Color.WHITE);
@@ -348,7 +346,7 @@ public class TopoCheck {
                         ).map(
                                 Triangle3D::getIndices
                         ).collect(Collectors.toList());
-                        DeformableMesh3D mesh1 = fromTriangles(debug.positions, triangleIndexes);
+                        DeformableMesh3D mesh1 = DeformableMesh3DTools.fromTriangles(debug.positions, triangleIndexes);
                         if(cm == null){
                             cm = mesh1.getBoundingBox().getCenter();
                             cm[0] = -cm[0];
@@ -361,7 +359,7 @@ public class TopoCheck {
                         mesh1.data_object.setColor(ColorSuggestions.getSuggestion());
                         mesh1.data_object.setShowSurface(true);
                         mf3d.addTransientObject(mesh1.data_object);
-                        DeformableMesh3D mesh2 = fromTriangles(debug.positions, triangleIndexes2);
+                        DeformableMesh3D mesh2 = DeformableMesh3DTools.fromTriangles(debug.positions, triangleIndexes2);
                         mesh2.translate(cm);
                         mesh2.create3DObject();
                         mesh2.data_object.setWireColor(Color.BLACK);
@@ -434,7 +432,7 @@ public class TopoCheck {
             }
 
         if(broken){
-            DeformableMesh3D ft = fromTriangles(
+            DeformableMesh3D ft = DeformableMesh3DTools.fromTriangles(
                     mesh.positions,
                     borked.stream().map(
                             Triangle3D::getIndices
@@ -449,7 +447,7 @@ public class TopoCheck {
         }
         List<double[]> positions = nodeSplitter.positions;
         List<int[]> triIndexes = nodeSplitter.triIndexes;
-        List<int[]> connections = reconnect(triIndexes);
+        List<int[]> connections = DeformableMesh3DTools.reconnect(triIndexes);
 
         return new DeformableMesh3D(positions, connections, triIndexes);
     }
@@ -515,7 +513,7 @@ public class TopoCheck {
             //System.out.println("  " + pinched[0] + ", " + pinched[1] + " :: " + cw + ", " + ccw);
         }
         if(pinched[0] != pinched[1]){
-            DeformableMesh3D mesh1 = fromTriangles(debug.positions, partitions.get(0).stream().map(Triangle3D::getIndices).collect(Collectors.toList()));
+            DeformableMesh3D mesh1 = DeformableMesh3DTools.fromTriangles(debug.positions, partitions.get(0).stream().map(Triangle3D::getIndices).collect(Collectors.toList()));
             if(cm == null){
                 cm = mesh1.getBoundingBox().getCenter();
                 cm[0] = -cm[0];
@@ -528,7 +526,7 @@ public class TopoCheck {
             mesh1.data_object.setColor(ColorSuggestions.getSuggestion());
             mesh1.data_object.setShowSurface(true);
             mf3d.addTransientObject(mesh1.data_object);
-            DeformableMesh3D mesh2 = fromTriangles(debug.positions, partitions.get(1).stream().map(Triangle3D::getIndices).collect(Collectors.toList()));
+            DeformableMesh3D mesh2 = DeformableMesh3DTools.fromTriangles(debug.positions, partitions.get(1).stream().map(Triangle3D::getIndices).collect(Collectors.toList()));
             mesh2.translate(cm);
             mesh2.create3DObject();
             mesh2.data_object.setWireColor(Color.BLACK);
@@ -633,52 +631,6 @@ public class TopoCheck {
     }
 
     static boolean first = true;
-    static DeformableMesh3D fromTriangles(double[] positions, List<int[]> triangles){
-        int[] cnets = new int[positions.length/3];
-        Set<Integer> ints = new HashSet<>();
-        for(int[] t: triangles){
-            for(int i : t){
-                ints.add(i);
-            }
-        }
-
-        double[] next = new double[ints.size()*3];
-        int dex = 0;
-        for(int i: ints){
-            cnets[i] = dex;
-            System.arraycopy(positions, 3*i, next, 3*dex, 3);
-            dex++;
-        }
-        List<int[]> connections = reconnect(triangles);
-        int[] tri = new int[triangles.size()*3];
-        int[] con = new int[connections.size()*2];
-        Set<Imglib2Mesh.Con> cons = new HashSet<>();
-        for(int i = 0; i<connections.size(); i++){
-            con[2*i] = cnets[connections.get(i)[0]];
-            con[2*i+1] = cnets[connections.get(i)[1]];
-            if(!cons.add(new Imglib2Mesh.Con(con[2*i], con[2*i+1]))){
-                System.out.println("How!");
-            };
-        }
-
-        for(int i = 0; i<triangles.size(); i++){
-            int[] t = triangles.get(i);
-            tri[3*i] = cnets[t[0]];
-            tri[3*i + 1] = cnets[t[1]];
-            tri[3*i + 2] = cnets[t[2]];
-
-        }
-        return new DeformableMesh3D(next, con, tri);
-    }
-    static List<int[]> reconnect(List<int[]> triangles){
-        Set<Imglib2Mesh.Con> cons = new HashSet<>();
-        for(int[] t : triangles){
-            cons.add(new Imglib2Mesh.Con(t[0], t[1]));
-            cons.add(new Imglib2Mesh.Con(t[1], t[2]));
-            cons.add(new Imglib2Mesh.Con(t[2], t[0]));
-        }
-        return cons.stream().map(c -> new int[]{c.a, c.b}).collect(Collectors.toList());
-    }
 
     /**
      * Triangles are expected to share a single node. If we don't

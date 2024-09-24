@@ -2020,6 +2020,86 @@ public class DeformableMesh3DTools {
         g.show(true);
 
     }
+
+    public static DeformableMesh3D fromTriangles(double[] positions, List<int[]> triangles){
+        int[] cnets = new int[positions.length/3];
+        Set<Integer> ints = new HashSet<>();
+        for(int[] t: triangles){
+            for(int i : t){
+                ints.add(i);
+            }
+        }
+
+        double[] next = new double[ints.size()*3];
+        int dex = 0;
+        for(int i: ints){
+            cnets[i] = dex;
+            System.arraycopy(positions, 3*i, next, 3*dex, 3);
+            dex++;
+        }
+        List<int[]> connections = reconnect(triangles);
+        int[] tri = new int[triangles.size()*3];
+        int[] con = new int[connections.size()*2];
+        Set<Con> cons = new HashSet<>();
+        for(int i = 0; i<connections.size(); i++){
+            con[2*i] = cnets[connections.get(i)[0]];
+            con[2*i+1] = cnets[connections.get(i)[1]];
+            if(!cons.add(new Con(con[2*i], con[2*i+1]))){
+                System.out.println("How!");
+            };
+        }
+
+        for(int i = 0; i<triangles.size(); i++){
+            int[] t = triangles.get(i);
+            tri[3*i] = cnets[t[0]];
+            tri[3*i + 1] = cnets[t[1]];
+            tri[3*i + 2] = cnets[t[2]];
+
+        }
+        return new DeformableMesh3D(next, con, tri);
+    }
+
+    public static List<int[]> reconnect(List<int[]> triangles){
+        Set<Con> cons = new HashSet<>();
+        for(int[] t : triangles){
+            cons.add(new Con(t[0], t[1]));
+            cons.add(new Con(t[1], t[2]));
+            cons.add(new Con(t[2], t[0]));
+        }
+        return cons.stream().map(c -> new int[]{c.a, c.b}).collect(Collectors.toList());
+    }
+
+    /**
+     * A class for creating the connections from triangles. Should
+     * really be a record.
+     *
+     */
+    public static class Con{
+        public final int a;
+        public final int b;
+        public Con(long a, long b){
+            if( a > b){
+                this.a = (int)b;
+                this.b = (int)a;
+            } else{
+                this.a = (int)a;
+                this.b = (int)b;
+            }
+
+        }
+        @Override
+        public boolean equals(Object o){
+            if(o instanceof Con){
+                Con c = (Con)o;
+                return c.a == a && c.b == b;
+            }
+            return false;
+        }
+        @Override
+        public int hashCode(){
+            return a + (b<<16);
+        }
+    }
 }
 
 class Node3DPath implements PossiblePath<Node3D>{

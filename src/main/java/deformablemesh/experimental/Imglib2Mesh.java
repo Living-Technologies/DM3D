@@ -1,5 +1,6 @@
 package deformablemesh.experimental;
 
+import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshDetector;
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.*;
@@ -10,27 +11,24 @@ import deformablemesh.util.ColorSuggestions;
 import deformablemesh.util.connectedcomponents.ConnectedComponents3D;
 import deformablemesh.util.connectedcomponents.Region;
 import deformablemesh.util.connectedcomponents.RegionGrowing;
-import edu.mines.jtk.mesh.TriMesh;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.plugin.FileInfoVirtualStack;
-import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
+import ij.process.ShortProcessor;
 import net.imglib2.RandomAccess;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImg;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.basictypeaccess.array.ByteArray;
-import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.mesh.Mesh;
 import net.imglib2.mesh.Triangle;
 import net.imglib2.mesh.Triangles;
 import net.imglib2.mesh.Vertex;
 import net.imglib2.mesh.alg.MarchingCubesRealType;
 import net.imglib2.mesh.alg.MeshConnectedComponents;
-import net.imglib2.mesh.alg.RemoveDuplicateVertices;
 import net.imglib2.mesh.impl.nio.BufferMesh;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 
@@ -39,39 +37,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class Imglib2Mesh {
-    /**
-     * A class for creating the connections from triangles. Should
-     * really be a record.
-     *
-     */
-    static class Con{
-        final int a, b;
-        Con(long a, long b){
-            if( a > b){
-                this.a = (int)b;
-                this.b = (int)a;
-            } else{
-                this.a = (int)a;
-                this.b = (int)b;
-            }
-
-        }
-        @Override
-        public boolean equals(Object o){
-            if(o instanceof Con){
-                Con c = (Con)o;
-                return c.a == a && c.b == b;
-            }
-            return false;
-        }
-        @Override
-        public int hashCode(){
-            return a + (b<<16);
-        }
-    }
 
 
     /**
@@ -151,7 +118,7 @@ public class Imglib2Mesh {
 
         int[] indexes = new int[3*triangles.size()];
         int i = 0;
-        Set<Con> connections = new HashSet<>();
+        Set<DeformableMesh3DTools.Con> connections = new HashSet<>();
         for(Triangle t: triangles){
 
             int i0 = (int)t.vertex0();
@@ -162,14 +129,14 @@ public class Imglib2Mesh {
             indexes[i++] = i1;
             indexes[i++] = i2;
 
-            connections.add(new Con(i0, i1));
-            connections.add(new Con(i1, i2));
-            connections.add(new Con(i2, i0));
+            connections.add(new DeformableMesh3DTools.Con(i0, i1));
+            connections.add(new DeformableMesh3DTools.Con(i1, i2));
+            connections.add(new DeformableMesh3DTools.Con(i2, i0));
         }
 
         int[] cindexes = new int[2*connections.size()];
         i = 0;
-        for(Con c: connections){
+        for(DeformableMesh3DTools.Con c: connections){
             cindexes[i++] = c.a;
             cindexes[i++] = c.b;
         }
@@ -272,10 +239,30 @@ public class Imglib2Mesh {
     public static List<DeformableMesh3D> fromLabels(MeshImageStack stack){
         MeshDetector detector = new MeshDetector(stack);
         List<Region> regions = detector.getRegionsFromLabelledImage();
+        ImageStack space = new ImageStack(stack.getWidthPx(), stack.getHeightPx());
+        for(int i = 0; i<stack.getNSlices(); i++){
+            space.addSlice(new ShortProcessor(stack.getWidthPx(), stack.getHeightPx()));
+        }
+        int label = 1;
+        List<Region> shorties = new ArrayList<>();
+        for(Region r : regions){
+            for(int[] pt : r.getPoints()){
+                space.getProcessor(pt[2] + 1 ).set(pt[0], pt[1], label);
+            }
+            shorties.add(new Region(label++, r.getPoints()));
+        }
+        new ImagePlus("debug", space).show();
+        RegionGrowing rg = new RegionGrowing(space, space);
+        rg.setRegions(shorties);
+
+        //Removes topological errors that cannot be handled.
+        rg.erode();
+        rg.dilate();
+
         ImageSpaceTransformer ist = new ImageSpaceTransformer(stack);
 
         List<DeformableMesh3D> meshes = new ArrayList<>();
-        for(Region r: regions){
+        for(Region r: shorties){
             r.validate();
             Img<UnsignedByteType> img = image(r);
 
@@ -293,7 +280,7 @@ public class Imglib2Mesh {
                 }
             }
         }
-                return meshes;
+        return meshes;
     }
 
     /**
@@ -332,6 +319,7 @@ public class Imglib2Mesh {
             rg.step();
         }
 
+        //Removes topological errors that cannot be handled.
         rg.erode();
         rg.dilate();
 
