@@ -189,4 +189,9 @@ public class ColorSuggestions {
         }
 
     }
+
+    public static Color addTransparency(Color c, float f) {
+        float[] comps = c.getColorComponents(new float[4]);
+        return new Color(comps[0], comps[1], comps[2], f);
+    }
 }

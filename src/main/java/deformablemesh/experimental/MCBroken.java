@@ -65,7 +65,7 @@ public class MCBroken {
         ChannelVolume cv = new ChannelVolume(mis, Color.BLACK);
         VolumeDataObject vdo = cv.getVolumeDataObject();
         vdo.setMinMaxRange(0, 1);
-        vdo.setTransparencyTrim(0, 1);
+        vdo.setTransparencyTrim(0, 10);
         mf3d.addDataObject(cv.getVolumeDataObject());
 
         List<Region> r = new MeshDetector(mis).getRegionsFromLabelledImage();

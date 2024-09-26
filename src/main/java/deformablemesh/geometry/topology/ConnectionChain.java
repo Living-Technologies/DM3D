@@ -1,4 +1,4 @@
-package deformablemesh.experimental;
+package deformablemesh.geometry.topology;
 
 import deformablemesh.geometry.Connection3D;
 import deformablemesh.geometry.Node3D;

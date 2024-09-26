@@ -27,9 +27,15 @@ import java.util.Set;
  * This class contains remnants of code I am not ready to throw away. It includes
  * some tests that were used to benchmarking.
  */
-class Imglib2MeshBenchMark {
+public class Imglib2MeshBenchMark {
 
-    static List<Set<Integer>> connectedComponents(List<Triangle3D> triangles){
+    /**
+     * This will find triangles that do not contain common nodes.
+     *
+     * @param triangles
+     * @return a list of node sets that are not linked through through common triangles.
+     */
+    static List<Set<Integer>> partitionNodes(List<Triangle3D> triangles){
         List<Set<Integer>> ret = new ArrayList<>();
         List<Set<Integer>> adding = new ArrayList<>();
 
@@ -57,16 +63,16 @@ class Imglib2MeshBenchMark {
                         }
                 );
             }
-
-
         }
-
-
         return ret;
 
     }
 
-    static List<DeformableMesh3D> partition(DeformableMesh3D mesh, List<Set<Integer>> partitions){
+    public static List<DeformableMesh3D> connectedComponents(DeformableMesh3D mesh){
+        return partition(mesh, partitionNodes(mesh.triangles));
+    }
+
+    private static List<DeformableMesh3D> partition(DeformableMesh3D mesh, List<Set<Integer>> partitions){
         int n = partitions.size();
 
         List<DeformableMesh3D> meshes = new ArrayList<>();

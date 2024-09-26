@@ -4,6 +4,7 @@ import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshDetector;
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.*;
+import deformablemesh.geometry.topology.TopoCheck;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.track.Track;
@@ -80,13 +81,13 @@ public class Imglib2Mesh {
             d = (int)r.getHighCorner()[2] - oz;
         }
         double getX(double x){
-            return (x + ox)*dx * iscale  + sx;
+            return (x + ox + 0.5)*dx * iscale  + sx;
         }
         double getY(double y){
-            return (y + oy)*dy * iscale + sy;
+            return (y + oy + 0.5)*dy * iscale + sy;
         }
         double getZ(double z){
-            return (z + oz)*dz * iscale + sz;
+            return (z + oz + 0.5)*dz * iscale + sz;
         }
 
     }
@@ -353,15 +354,9 @@ public class Imglib2Mesh {
     }
 
     public static List<DeformableMesh3D> topoCheck(DeformableMesh3D mesh){
-        TopoCheck tc = new TopoCheck();
+        TopoCheck tc = new TopoCheck(mesh);
         List<DeformableMesh3D> m2;
-        m2 = tc.checkMesh(mesh);
-
-        //TopoCheck t2 = new TopoCheck();
-        //m2 = t2.checkMesh(m2);
-        //if(tc.fourBy.size() == 0){
-        //    return null;
-        //}
+        m2 = tc.repairMesh();
         return m2;
     }
 

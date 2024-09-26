@@ -27,10 +27,8 @@ package deformablemesh.geometry;
 
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
-import deformablemesh.experimental.Imglib2Mesh;
-import deformablemesh.io.MeshWriter;
+import deformablemesh.geometry.topology.TopoCheck;
 import deformablemesh.meshview.MeshFrame3D;
-import deformablemesh.track.Track;
 import deformablemesh.util.ColorSuggestions;
 import deformablemesh.util.Vector3DOps;
 import deformablemesh.util.connectedcomponents.ConnectedComponents3D;
@@ -41,15 +39,9 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.plugin.FileInfoVirtualStack;
 import ij.process.ImageProcessor;
-import net.imglib2.img.Img;
-import net.imglib2.mesh.Mesh;
-import net.imglib2.mesh.alg.MarchingCubesRealType;
-import net.imglib2.mesh.alg.MeshConnectedComponents;
-import net.imglib2.type.numeric.integer.UnsignedByteType;
 
 import java.awt.*;
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
@@ -59,17 +51,25 @@ import java.util.List;
 public class BinaryMeshGenerator {
     public static DeformableMesh3D voxelMesh(List<int[]> points, MeshImageStack stack, int label){
         List<DeformableMesh3D> meshes = new ArrayList<>();
-
+        int w = stack.getWidthPx();
+        int h = stack.getHeightPx();
+        int d = stack.getNSlices();
+        double[] a = stack.getNormalizedCoordinate(new double[]{1, 0, 0});
+        double[] b = stack.getNormalizedCoordinate(new double[]{0, 0, 0});
+        System.out.println("nominal separation" + Vector3DOps.distance(a, b));
         for(int[] pt: points){
             List<DeformableMesh3D> voxel = new ArrayList<>();
             for(int i = 0; i<2; i++){
-                if(stack.getValue(pt[0] + 2*i -1, pt[1], pt[2])!=label){
+                int xi = pt[0] + 2*i - 1;
+                if(xi == w || xi < 0 || stack.getValue(xi, pt[1], pt[2]) != label){
                     voxel.add(generateVoxelPlane(stack, pt, new double[]{2*i -1, 0, 0}));
                 }
             }
 
             for(int j = 0; j<2; j++){
-                if(stack.getValue(pt[0], pt[1] + 2*j - 1, pt[2])!=label){
+                int yi = pt[1] + 2*j - 1;
+
+                if(yi == h || yi < 0 || stack.getValue(pt[0], yi, pt[2]) != label){
                     voxel.add(generateVoxelPlane(stack, pt, new double[]{0, 2*j -1, 0}));
                 }
 
@@ -77,27 +77,25 @@ public class BinaryMeshGenerator {
 
             for(int k = 0; k<2; k++){
                 int zdex = pt[2] + 2*k - 1;
-                if(zdex<0||zdex>=stack.getNSlices()||stack.getValue(pt[0], pt[1], zdex)!=label){
+                if( zdex<0 || zdex == d || stack.getValue(pt[0], pt[1], zdex) != label){
                     voxel.add(generateVoxelPlane(stack, pt, new double[]{0, 0, 2*k - 1}));
                 }
 
             }
-            System.out.println(voxel.size());
             if(voxel.size()>0){
-                //DeformableMesh3D mesh = voxel.get(0);
-                //for(int i = 1; i<voxel.size(); i++){
-                //    mesh = mergeMeshes(mesh, voxel.get(i));
-                //}
-                //meshes.add(mesh);
-                DeformableMesh3D mesh = DeformableMesh3DTools.mergeMeshes(voxel);
 
-                meshes.add(mergeOverlappingVertexes(mesh));
+                DeformableMesh3D mesh = DeformableMesh3DTools.mergeMeshes(voxel);
+                DeformableMesh3D merged = mergeOverlappingVertexes(mesh);
+                meshes.add(merged);
+
             }
         }
 
 
-
-        return mergeOverlappingVertexes(DeformableMesh3DTools.mergeMeshes(meshes));
+        DeformableMesh3D combined = DeformableMesh3DTools.mergeMeshes(meshes);
+        DeformableMesh3D merged = mergeOverlappingVertexes(combined);
+        System.out.println(merged.calculateVolume() + " // " + combined.calculateVolume());
+        return merged;
     }
 
     static DeformableMesh3D mergeMeshes(DeformableMesh3D a, DeformableMesh3D b){
@@ -215,10 +213,21 @@ public class BinaryMeshGenerator {
     static public DeformableMesh3D getQuad(double[] origin, double[] nx, double[] ny){
 
         double[] positions = {
-                origin[0] - 0.5*nx[0] - 0.5*ny[0], origin[1] - 0.5*nx[1] - 0.5*ny[1], origin[2] - 0.5*nx[2] - 0.5*ny[2],
-                origin[0] + 0.5*nx[0] - 0.5*ny[0], origin[1] + 0.5*nx[1] - 0.5*ny[1], origin[2] + 0.5*nx[2] - 0.5*ny[2],
-                origin[0] + 0.5*nx[0] + 0.5*ny[0], origin[1] + 0.5*nx[1] + 0.5*ny[1], origin[2] + 0.5*nx[2] + 0.5*ny[2],
-                origin[0] - 0.5*nx[0] + 0.5*ny[0], origin[1] - 0.5*nx[1] + 0.5*ny[1], origin[2] - 0.5*nx[2] + 0.5*ny[2]
+                origin[0] - 0.5*nx[0] - 0.5*ny[0],
+                origin[1] - 0.5*nx[1] - 0.5*ny[1],
+                origin[2] - 0.5*nx[2] - 0.5*ny[2],
+
+                origin[0] + 0.5*nx[0] - 0.5*ny[0],
+                origin[1] + 0.5*nx[1] - 0.5*ny[1],
+                origin[2] + 0.5*nx[2] - 0.5*ny[2],
+
+                origin[0] + 0.5*nx[0] + 0.5*ny[0],
+                origin[1] + 0.5*nx[1] + 0.5*ny[1],
+                origin[2] + 0.5*nx[2] + 0.5*ny[2],
+
+                origin[0] - 0.5*nx[0] + 0.5*ny[0],
+                origin[1] - 0.5*nx[1] + 0.5*ny[1],
+                origin[2] - 0.5*nx[2] + 0.5*ny[2]
         };
 
         int[] connections = {
@@ -235,6 +244,12 @@ public class BinaryMeshGenerator {
 
         return new DeformableMesh3D(positions, connections, triangles);
     }
+    static boolean closeEnough(double[] a, double[] b){
+        double dx = a[0] - b[0];
+        double dy = a[1] - b[1];
+        double dz = a[2] - b[2];
+        return dx*dx + dy*dy + dz*dz < 1e-6;
+    }
     static public DeformableMesh3D mergeOverlappingVertexes(DeformableMesh3D mesh){
         int[] map = new int[mesh.nodes.size()];
         List<double[]> added = new ArrayList<>();
@@ -244,7 +259,7 @@ public class BinaryMeshGenerator {
             boolean found = false;
             for(int i = 0; i<added.size(); i++){
                 double[] a = added.get(i);
-                if( a[0] == x0[0] && a[1] == x0[1] && a[2] == x0[2]){
+                if( closeEnough(a, x0)){
                     map[node.index] = i;
                     found = true;
                     break;
@@ -357,6 +372,46 @@ public class BinaryMeshGenerator {
         }
         return false;
     }
+
+    /**
+     * This assumes a binary image that needs to be labelled with connected
+     * components then meshed with an exact mesh, not a prediction.
+     *
+     * @param mis
+     * @return
+     */
+    public static List<DeformableMesh3D> generateVoxelMeshes(MeshImageStack mis){
+        ImagePlus frame = mis.getCurrentFrame();
+        ImageStack old = frame.getStack();
+        ImageStack stack = new ImageStack(frame.getWidth(), frame.getHeight());
+        List<DeformableMesh3D> meshes = new ArrayList<>();
+        for(int j = 1; j<=old.size(); j++){
+            ImageProcessor p = old.getProcessor(j).convertToShort(false).duplicate();
+            p.threshold(0);
+            stack.addSlice(p);
+        }
+        List<Region> regions = ConnectedComponents3D.getRegions(stack);
+
+        ImagePlus regionPlus = mis.getOriginalPlus().createImagePlus();
+        regionPlus.setStack(stack);
+
+        MeshImageStack labeledMis = new MeshImageStack(regionPlus);
+        for(Region r: regions){
+            DeformableMesh3D mesh = voxelMesh(r.getPoints(), labeledMis, r.getLabel());
+            meshes.add(mesh);
+        }
+        return meshes;
+    }
+
+    /**
+     * This assumes that the mis contains a distance transform. It will perform a
+     * threshold, connected components, watershed, the erode/dilate.
+     *
+     * Then it will attempt to repair the generated meshes.
+     *
+     * @param mis distance transform
+     * @return List of meshes that were found within the image.
+     */
     public static List<DeformableMesh3D> predictMeshes(MeshImageStack mis){
         ImagePlus frame = mis.getCurrentFrame();
 
@@ -364,15 +419,15 @@ public class BinaryMeshGenerator {
         ImageStack stack = new ImageStack(frame.getWidth(), frame.getHeight());
 
         List<DeformableMesh3D> meshes = new ArrayList<>();
-        for(int j = 1; j<old.size(); j++){
+        for(int j = 1; j<=old.size(); j++){
             ImageProcessor p = old.getProcessor(j).convertToShort(false).duplicate();
-            p.threshold(3);
+            p.threshold(0);
             stack.addSlice(p);
         }
         List<Region> regions = ConnectedComponents3D.getRegions(stack);
 
         ImageStack space = new ImageStack(frame.getWidth(), frame.getHeight());
-        for(int j = 1; j<old.size(); j++){
+        for(int j = 1; j<=old.size(); j++){
             ImageProcessor p = old.getProcessor(j).convertToShort(false).duplicate();
             p.threshold(0);
             space.addSlice(p);
@@ -388,14 +443,27 @@ public class BinaryMeshGenerator {
         //Removes topological errors that cannot be handled.
         rg.erode();
         rg.dilate();
+
         ImagePlus regionPlus = mis.getOriginalPlus().createImagePlus();
         regionPlus.setStack(stack);
         MeshImageStack regionStack = new MeshImageStack(regionPlus);
         for(Region r: regions){
             r.validate();
 
-            DeformableMesh3D mesh = voxelMesh(r.getPoints(), mis, r.getLabel());
-            meshes.add(mesh);
+            DeformableMesh3D mesh = voxelMesh(r.getPoints(), regionStack, r.getLabel());
+            //meshes.add(mesh); //adds original
+            try {
+                TopoCheck checkers = new TopoCheck(mesh);
+                List<DeformableMesh3D> checkedMeshes = checkers.repairMesh();
+
+                for(DeformableMesh3D checked : checkedMeshes) {
+                    meshes.add(checked);
+                }
+            } catch(Exception e){
+                meshes.add(mesh);
+                e.printStackTrace();
+            }
+
 
         }
 
@@ -404,6 +472,8 @@ public class BinaryMeshGenerator {
     public static void main(String[] args){
         new ImageJ();
         ImagePlus plus = FileInfoVirtualStack.openVirtual(new File(args[0]).getAbsolutePath());
+        //ImagePlus plus = ImageJFunctions.wrap(MCBroken.image(), "3x3x3-blob");
+        //plus.setDimensions(1, 9, 1);
         MeshImageStack mis = new MeshImageStack(plus);
 
         MeshFrame3D mf3d = new MeshFrame3D();
@@ -413,7 +483,7 @@ public class BinaryMeshGenerator {
         List<DeformableMesh3D> broken = new ArrayList<>();
 
 
-        for(int i = 0; i < 2; i++){
+        for(int i = 0; i < 1; i++){
             mis.setFrame(i);
             long start = System.currentTimeMillis();
             List<DeformableMesh3D> meshes = predictMeshes(mis);
@@ -421,6 +491,9 @@ public class BinaryMeshGenerator {
             System.out.println(System.currentTimeMillis() - start);
 
             for(DeformableMesh3D dm3d : meshes){
+                if(dm3d.nodes.size() == 0){
+                    continue;
+                }
                 Color c = ColorSuggestions.getSuggestion();
 
                 dm3d.setShowSurface(false);
