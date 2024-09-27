@@ -356,6 +356,19 @@ public class Imglib2Mesh {
         try {
             m2.addAll(tc.repairMesh());
         } catch(Exception e){
+
+            Track t = new Track("special");
+            t.addMesh(0, mesh);
+            List<Track> temp = new ArrayList<>();
+            temp.add(t);
+            try {
+                MeshWriter.saveMeshes(new File("topo-exeception.bmf"), temp);
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+            TopoCheck top2 = new TopoCheck(mesh);
+            top2.repairMesh();
+
             e.printStackTrace();
         }
         return m2;

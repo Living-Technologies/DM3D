@@ -22,6 +22,9 @@ public class NodeSplitting {
         return split.containsKey(node);
     }
     void split(Node3D node, List<Triangle3D> triangles){
+        if(triangles.size() == 0){
+            System.out.println("wtf");
+        }
         split.put(node, triangles);
         int adex = positions.size();
         double[] pos1 = node.getCoordinates();
@@ -39,6 +42,7 @@ public class NodeSplitting {
         if(wasSplit(neighbor)){
             List<Triangle3D> separated = split.get(neighbor);
             List<Triangle3D> next = regroupTriangles(separated, partitions);
+            if(next.size() == 0) return;
             split(node, next);
         } else{
             //free to choose!
@@ -75,7 +79,10 @@ public class NodeSplitting {
             intersection.addAll(inter);
 
         }
-
+        if (grouped.size() == 0) {
+            //How do these have no intersection!
+            System.out.println("broken!");
+        }
         return grouped;
     }
 

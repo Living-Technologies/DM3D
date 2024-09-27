@@ -679,6 +679,7 @@ public class TopoCheck {
             if(m2 != null){
                 mesh = m2;
                 resetMappings();
+                disjointNodes();
             }
         }
 
@@ -686,6 +687,7 @@ public class TopoCheck {
         while(fourBy.size() > 0) {
             mesh = splitFourByConnections();
             resetMappings();
+            disjointNodes();
         }
 
         DeformableMesh3D next = splitDisjointNodes();
@@ -761,7 +763,7 @@ public class TopoCheck {
     }
 
     public static void main(String[] args) throws IOException {
-        List<Track> tracks = MeshReader.loadMeshes(new File("working.bmf"));
+        List<Track> tracks = MeshReader.loadMeshes(new File("topo-exeception.bmf"));
         MeshFrame3D mf3d;
         mf3d = new MeshFrame3D();
         mf3d.showFrame(true);
@@ -769,6 +771,7 @@ public class TopoCheck {
         mf3d.setBackgroundColor(new Color(200, 200, 200));
         for(Track t: tracks){
             System.out.println("fixing: " + t.getName());
+
             TopoCheck tc = new TopoCheck(t.getMesh(t.getFirstFrame()));
             try {
                 List<DeformableMesh3D> checked = tc.repairMesh();
