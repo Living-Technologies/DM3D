@@ -5,6 +5,7 @@ import deformablemesh.MeshDetector;
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.*;
 import deformablemesh.geometry.topology.TopoCheck;
+import deformablemesh.geometry.topology.TopologyValidationError;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.track.Track;
@@ -16,6 +17,7 @@ import ij.ImageJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.plugin.FileInfoVirtualStack;
+import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import net.imglib2.RandomAccess;
@@ -38,6 +40,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Imglib2Mesh {
 
@@ -337,14 +340,8 @@ public class Imglib2Mesh {
                 for(Mesh bm : MeshConnectedComponents.iterable(mesh)){
                     DeformableMesh3D dm3d = convertMesh(bm, ist);
                     if(dm3d.calculateVolume() > 0){
-                        try {
-                            List<DeformableMesh3D> checked = topoCheck(dm3d);
-                            meshes.addAll(checked);
-                        } catch(Exception e){
-                            Track t = new Track("red-" + e.getMessage());
-                            t.addMesh(mis.CURRENT, dm3d);
-                            broken.add(t);
-                        }
+                        List<DeformableMesh3D> checked = topoCheck(dm3d);
+                        meshes.addAll(checked);
                     }
                 }
             }
@@ -355,12 +352,15 @@ public class Imglib2Mesh {
 
     public static List<DeformableMesh3D> topoCheck(DeformableMesh3D mesh){
         TopoCheck tc = new TopoCheck(mesh);
-        List<DeformableMesh3D> m2;
-        m2 = tc.repairMesh();
+        List<DeformableMesh3D> m2 = new ArrayList<>();
+        try {
+            m2.addAll(tc.repairMesh());
+        } catch(Exception e){
+            e.printStackTrace();
+        }
         return m2;
     }
 
-    static List<Track> broken = new ArrayList<>();
 
     public static void main(String[] args) throws IOException {
         new ImageJ();
@@ -373,15 +373,36 @@ public class Imglib2Mesh {
         mf3d.setBackgroundColor(new Color(200, 200, 200));
 
 
+        List<Track> broken = new ArrayList<>();
+        ImageStack stack = null;
 
         for(int i = 0; i < mis.getNFrames(); i++){
             mis.setFrame(i);
             long start = System.currentTimeMillis();
             List<DeformableMesh3D> meshes = Imglib2Mesh.guessMeshes(mis);
             mf3d.clearTransients();
-            System.out.println(System.currentTimeMillis() - start);
+            System.out.println("first pass: " + (System.currentTimeMillis() - start));
 
             for(DeformableMesh3D dm3d : meshes){
+                List<TopologyValidationError> errors = TopoCheck.validate(dm3d);
+                if(errors.size() > 0){
+                    String name = errors.stream().map(Object::toString).collect(Collectors.joining(" "));
+                    Track t = new Track(name);
+                    t.addMesh(i, dm3d);
+                    broken.add(t);
+                } else{
+                    try {
+                        ConnectionRemesher remedy = new ConnectionRemesher();
+                        remedy.setMinAndMaxLengths(0.005, 0.01);
+                        dm3d = remedy.remesh(dm3d);
+                    } catch(Exception e){
+                        String name = "Passed TOPOCHECK" + e.getMessage();
+                        Track t = new Track(name);
+                        t.addMesh(i, dm3d);
+                        broken.add(t);
+                    }
+                }
+
                 Color c = ColorSuggestions.getSuggestion();
 
                 dm3d.setShowSurface(false);
@@ -392,8 +413,16 @@ public class Imglib2Mesh {
                 mf3d.addTransientObject(dm3d.data_object);
 
             }
-
+            ImageProcessor proc = new ColorProcessor(mf3d.snapShot());
+            if(stack == null){
+                stack = new ImageStack(proc.getWidth(), proc.getHeight());
+            }
+            stack.addSlice(proc);
         }
+
+        new ImagePlus("Snapshots", stack).show();
+
+
         if(broken.size() > 0){
             System.out.println(broken.size() + " broken meshes saved to broken.bmf");
             MeshWriter.saveMeshes(new File("broken.bmf"), broken);
