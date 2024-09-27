@@ -11,7 +11,7 @@ import java.util.Map;
 class FourByConnectionMapper {
     //maps lets us determine the type of connection.
     Map<Connection3D, List<TopoCheck.SortedT>> maps = new HashMap<>();
-    Map<Node3D, Map<Integer, List<List<Triangle3D>>>> split;
+    Map<Node3D, Map<Integer, List<List<Triangle3D>>>> split = new HashMap<>();
 
 
 }

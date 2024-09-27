@@ -17,6 +17,10 @@ import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * This thing is loaded with state! It's used for finding local Topological errors
+ * that prevent a deformable mesh from properly being deformed/remeshed.
+ */
 public class TopoCheck {
     Map<Node3D, List<Triangle3D>> nodeToTriangle = new HashMap<>();
     Map<Connection3D, List<Triangle3D>> connectionToTriangle = new HashMap<>();
@@ -55,7 +59,7 @@ public class TopoCheck {
 
     void intersectingSurfaceError(int i){
         Connection3D c = mesh.connections.get(i);
-        String message = "Connection " + i + "joins too many surfaces.";
+        String message = "Connection " + i + " joins too many surfaces.";
         errors.add( new TopologyValidationError(TopologyValidationError.INTERSECTING_SURFACE, message));
     }
 
@@ -133,15 +137,12 @@ public class TopoCheck {
         }
     }
 
-
     static class SortedT{
         double angle;
         boolean cw;
         Triangle3D triangle3D;
         double getAngle(){return angle;};
     }
-
-
 
 
     List<List<Triangle3D>> regroupTriangles(List<List<Triangle3D>> small, List<List<Triangle3D>> big){
@@ -160,9 +161,9 @@ public class TopoCheck {
         big.add(grouped.get(1));
         return big;
     }
+
     public DeformableMesh3D splitFourByConnections(){
         System.out.println(fourBy.size() + " connections to fix");
-        int added = 0;
 
         NodeSplitting nodeSplitter = new NodeSplitting(mesh);
 
@@ -685,18 +686,7 @@ public class TopoCheck {
             resetMappings();
         }
 
-        List<DeformableMesh3D> meshes = Imglib2MeshBenchMark.connectedComponents(mesh);
-
-
-        return meshes.stream().filter(m->m.triangles.size()>20).map(m ->{
-            ConnectionRemesher cr = new ConnectionRemesher();
-            cr.setMinAndMaxLengths(0.005, 0.01);
-            DeformableMesh3D rmed = cr.remesh(m);
-            if(cr.isOpenSurface()){
-                throw new RuntimeException("No open surfaces!");
-            }
-            return rmed;
-        }).collect(Collectors.toList());
+        return Imglib2MeshBenchMark.connectedComponents(mesh);
     }
 
     /**
@@ -717,14 +707,23 @@ public class TopoCheck {
         }
         for(DeformableMesh3D m : splits){
             TopoCheck checker = new TopoCheck(m);
-            checker.populateNodeToTriangle();
-            checker.populatedConnectionMappings();
+            checker.disjointNodes();
+
             errors.addAll(checker.errors);
-            List<Node3D> dis = checker.disjointNodes();
 
         }
         return errors;
     }
+
+    public List<TopologyValidationError> validate(){
+        List<DeformableMesh3D> splits = Imglib2MeshBenchMark.connectedComponents(mesh);
+        if(splits.size() > 1){
+            errors.add(new TopologyValidationError("multiple disconnected meshes: " + splits.size()));
+        }
+        disjointNodes();
+        return errors;
+    }
+
     public static void main(String[] args) throws IOException {
         List<Track> tracks = MeshReader.loadMeshes(new File("working.bmf"));
         MeshFrame3D mf3d;

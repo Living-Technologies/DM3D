@@ -1,5 +1,6 @@
-package deformablemesh.geometry.interceptable;
+package deformablemesh.geometry;
 
+import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
 import deformablemesh.experimental.Imglib2MeshBenchMark;
 import deformablemesh.geometry.topology.TopoCheck;
@@ -219,13 +220,15 @@ public class BinaryMeshGenerationTests {
     public static ImagePlus kissFault(){
         ImagePlus plus = space();
         ImageStack stack = plus.getStack();
+        stack.getProcessor(5).set(6, 7, 1);
         stack.getProcessor(5).set(7, 7, 1);
         stack.getProcessor(5).set(8, 7, 1);
         stack.getProcessor(6).set(8, 7, 1);
         stack.getProcessor(6).set(8, 8, 1);
         stack.getProcessor(6).set(8, 9, 1);
         stack.getProcessor(6).set(7, 9, 1);
-        stack.getProcessor(6).set(7, 8, 1);
+        stack.getProcessor(6).set(6, 9, 1);
+        stack.getProcessor(6).set(6, 8, 1);
 
         return plus;
     }
@@ -233,11 +236,42 @@ public class BinaryMeshGenerationTests {
     public static ImagePlus pinchFault(){
         ImagePlus plus = space();
         ImageStack stack = plus.getStack();
-
+        stack.getProcessor(5).set(6, 7, 1);
+        stack.getProcessor(5).set(7, 7, 1);
+        stack.getProcessor(5).set(8, 7, 1);
+        stack.getProcessor(6).set(6, 7, 1);
+        stack.getProcessor(6).set(7, 8, 1);
+        stack.getProcessor(6).set(8, 7, 1);
+        stack.getProcessor(6).set(8, 8, 1);
+        stack.getProcessor(6).set(6, 8, 1);
 
         return plus;
     }
 
+    public static ImagePlus openPinchFault(){
+        ImagePlus plus = space();
+        ImageStack stack = plus.getStack();
+        stack.getProcessor(5).set(6, 7, 1);
+        stack.getProcessor(5).set(7, 7, 1);
+        stack.getProcessor(5).set(8, 7, 1);
+        stack.getProcessor(6).set(7, 8, 1);
+        stack.getProcessor(6).set(8, 7, 1);
+        stack.getProcessor(6).set(8, 8, 1);
+        stack.getProcessor(6).set(6, 8, 1);
+
+        return plus;
+    }
+
+    static void smooth(DeformableMesh3D mesh){
+        mesh.ALPHA = 1;
+        mesh.BETA = 0.5;
+        mesh.GAMMA = 100;
+        mesh.update();
+    }
+
+    interface PlusMaker{
+        ImagePlus getPlus();
+    }
     public static void main(String[] args){
 
         MeshFrame3D mf3d = new MeshFrame3D();
@@ -246,8 +280,7 @@ public class BinaryMeshGenerationTests {
         mf3d.setBackgroundColor(new Color(200, 200, 200));
 
         long start = System.currentTimeMillis();
-        System.out.println("kissing fault");
-        ImagePlus volume = singlePointFault();
+        ImagePlus volume = o();
         List<DeformableMesh3D> meshes = getMeshes(volume);
         System.out.println(System.currentTimeMillis() - start);
         MeshImageStack mis = new MeshImageStack(volume);
@@ -255,8 +288,22 @@ public class BinaryMeshGenerationTests {
         vdo.setTextureData(mis);
         mf3d.addDataObject(vdo);
         for(DeformableMesh3D dm3d : meshes){
-            List<TopologyValidationError> errors = TopoCheck.validate(dm3d);
-            if(errors.size()>0) System.out.println(errors);
+            ImagePlus plus = DeformableMesh3DTools.createBinaryRepresentation(mis, dm3d);
+            VolumeDataObject vdo2 = new VolumeDataObject(Color.ORANGE);
+            vdo2.setTextureData(new MeshImageStack(plus));
+            vdo2.setMinMaxRange(0, 1);
+            vdo2.setTransparencyTrim(0, 0.0);
+            mf3d.addDataObject(vdo2);
+            TopoCheck checkers = new TopoCheck(dm3d);
+            List<TopologyValidationError> errors = checkers.validate();
+            if(errors.size()>0){
+                System.out.println(errors);
+                DeformableMesh3D dm3d2 = checkers.repairMesh().get(0);
+                smooth(dm3d2);
+                dm3d2.create3DObject();
+                mf3d.addDataObject(dm3d2.data_object);
+                System.out.println(TopoCheck.validate(dm3d2));
+            }
             System.out.println("checked");
             Color c = ColorSuggestions.getSuggestion();
             if(dm3d.nodes.size() == 0){
