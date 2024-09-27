@@ -9,6 +9,7 @@ import deformablemesh.track.Track;
 import deformablemesh.util.ColorSuggestions;
 import deformablemesh.util.Vector3DOps;
 import edu.mines.jtk.mesh.TriMesh;
+import org.checkerframework.checker.units.qual.N;
 
 import java.awt.*;
 import java.io.File;
@@ -669,6 +670,7 @@ public class TopoCheck {
     }
 
     public List<DeformableMesh3D> repairMesh(){
+
         DeformableMesh3D m2 = mesh;
         int iterations = 0;
         while(m2 != null){
@@ -686,7 +688,41 @@ public class TopoCheck {
             resetMappings();
         }
 
+        DeformableMesh3D next = splitDisjointNodes();
+        if(next != null){
+            this.mesh = next;
+            resetMappings();
+        }
+
+
         return Imglib2MeshBenchMark.connectedComponents(mesh);
+    }
+
+    private DeformableMesh3D splitDisjointNodes() {
+        boolean split = false;
+        NodeSplitting splitting = new NodeSplitting(mesh);
+        for(Node3D node: mesh.nodes){
+            List<List<Triangle3D>> party = freePartitionTriangles(node);
+            if(party.size() > 1){
+                //split it.
+                if(party.size() == 2){
+                    splitting.split(node, party.get(0));
+                    split = true;
+                } else{
+                    throw new RuntimeException("not implemented");
+                }
+            }
+        }
+        if(split){
+            List<double[]> positions = splitting.positions;
+            List<int[]> triIndexes = splitting.triIndexes;
+            List<int[]> connections = DeformableMesh3DTools.reconnect(triIndexes);
+
+            return new DeformableMesh3D(positions, connections, triIndexes);
+        }
+        return null;
+
+
     }
 
     /**

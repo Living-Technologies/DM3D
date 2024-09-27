@@ -21,7 +21,7 @@ public class NodeSplitting {
     public boolean wasSplit(Node3D node){
         return split.containsKey(node);
     }
-    private void split(Node3D node, List<Triangle3D> triangles){
+    void split(Node3D node, List<Triangle3D> triangles){
         split.put(node, triangles);
         int adex = positions.size();
         double[] pos1 = node.getCoordinates();
