@@ -280,19 +280,18 @@ public class BinaryMeshGenerationTests {
         mf3d.setBackgroundColor(new Color(200, 200, 200));
 
         long start = System.currentTimeMillis();
-        ImagePlus volume = o();
+        ImagePlus volume = blob();
         List<DeformableMesh3D> meshes = getMeshes(volume);
         System.out.println(System.currentTimeMillis() - start);
         MeshImageStack mis = new MeshImageStack(volume);
-        VolumeDataObject vdo = new VolumeDataObject(Color.WHITE);
-        vdo.setTextureData(mis);
-        mf3d.addDataObject(vdo);
+        //VolumeDataObject vdo = new VolumeDataObject(Color.WHITE);
+        //vdo.setTextureData(mis);
+        //mf3d.addDataObject(vdo);
         for(DeformableMesh3D dm3d : meshes){
             ImagePlus plus = DeformableMesh3DTools.createBinaryRepresentation(mis, dm3d);
             VolumeDataObject vdo2 = new VolumeDataObject(Color.ORANGE);
             vdo2.setTextureData(new MeshImageStack(plus));
-            vdo2.setMinMaxRange(0, 1);
-            vdo2.setTransparencyTrim(0, 0.0);
+            vdo2.setMinMaxRange(0, 0.1);
             mf3d.addDataObject(vdo2);
             TopoCheck checkers = new TopoCheck(dm3d);
             List<TopologyValidationError> errors = checkers.validate();
