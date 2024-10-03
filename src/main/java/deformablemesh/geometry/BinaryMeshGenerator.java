@@ -55,6 +55,7 @@ import java.util.stream.Collectors;
  * Generates a mesh by creating a binary image, and meshing that at scale.
  */
 public class BinaryMeshGenerator {
+    static double tolerance = 1e-9;
     public static DeformableMesh3D voxelMesh(List<int[]> points, MeshImageStack stack, int label){
         List<DeformableMesh3D> meshes = new ArrayList<>();
         int w = stack.getWidthPx();
@@ -62,7 +63,10 @@ public class BinaryMeshGenerator {
         int d = stack.getNSlices();
         double[] a = stack.getNormalizedCoordinate(new double[]{1, 0, 0});
         double[] b = stack.getNormalizedCoordinate(new double[]{0, 0, 0});
-        System.out.println("nominal separation" + Vector3DOps.distance(a, b));
+        double nominalDistance = Vector3DOps.distance(a, b);
+        if(nominalDistance*nominalDistance < tolerance){
+            System.out.println("pixel difference is smaller than tolerance");
+        }
         for(int[] pt: points){
             List<DeformableMesh3D> voxel = new ArrayList<>();
             for(int i = 0; i<2; i++){
@@ -100,82 +104,11 @@ public class BinaryMeshGenerator {
 
         DeformableMesh3D combined = DeformableMesh3DTools.mergeMeshes(meshes);
         DeformableMesh3D merged = mergeOverlappingVertexes(combined);
-        System.out.println(merged.calculateVolume() + " // " + combined.calculateVolume());
+        if(Math.sqrt(Math.pow(merged.calculateVolume() - combined.calculateVolume(), 2)) > tolerance){
+            throw new RuntimeException("voxel mesh accuracy compromised.");
+        }
+        //System.out.println(merged.calculateVolume() + " // " + combined.calculateVolume());
         return merged;
-    }
-
-    static DeformableMesh3D mergeMeshes(DeformableMesh3D a, DeformableMesh3D b){
-
-        if(!a.getBoundingBox().intersects(b.getBoundingBox())){
-            return DeformableMesh3DTools.mergeMeshes(Arrays.asList(b));
-        }
-        List<Node3D> aNodes = a.nodes;
-        List<Node3D> bNodes = b.nodes;
-        Map<Integer, Integer> map = new HashMap<>();
-
-        for(Node3D nb: bNodes){
-
-            for(Node3D na: aNodes){
-                double d = Vector3DOps.distance(na.getCoordinates(), nb.getCoordinates());
-                if(d<1e-10){
-                    map.put( nb.getIndex(), na.getIndex());
-                }
-            }
-        }
-
-        if(map.size()==0){
-            return DeformableMesh3DTools.mergeMeshes(Arrays.asList(a,b));
-        }
-
-        int newNodes = bNodes.size() - map.size();
-
-        double[] positions = new double[3*(newNodes) + a.positions.length];
-        int[] connections = new int[b.connection_index.length + a.connection_index.length];
-        int[] triangles = new int[b.triangle_index.length + a.triangle_index.length];
-
-        System.arraycopy(a.positions, 0, positions, 0, a.positions.length);
-        System.arraycopy(a.triangle_index, 0, triangles, 0, a.triangle_index.length);
-        System.arraycopy(a.connection_index, 0, connections, 0, a.connection_index.length);
-
-        int offset = aNodes.size();
-        for(Node3D bnode: bNodes){
-            if(!map.containsKey(bnode.index)){
-
-                map.put(bnode.index, offset);
-                double[] pos = bnode.getCoordinates();
-                System.arraycopy(pos, 0, positions, 3*offset, 3);
-                offset++;
-
-            }
-        }
-
-        int toffset = a.triangle_index.length;
-        for(int i = 0; i<b.triangle_index.length; i++){
-            triangles[i+toffset] = map.get(b.triangle_index[i]);
-        }
-        int coffset = a.connection_index.length;
-        for(int i = 0; i<b.connection_index.length; i++){
-            connections[i+coffset] = map.get(b.connection_index[i]);
-        }
-
-        Set<DummyConnection> c3D = new HashSet<>();
-        for(int i = 0; i<connections.length/2; i++){
-            c3D.add(new DummyConnection(connections[2*i], connections[2*i+1]));
-        }
-        if(c3D.size()*2!=connections.length){
-            //some connections were redundant.
-            connections = new int[c3D.size()*2];
-            int index = 0;
-            for(DummyConnection d: c3D){
-                connections[index++] = d.a;
-                connections[index++] = d.b;
-            }
-        }
-
-        return new DeformableMesh3D(positions, connections, triangles);
-
-
-
     }
 
     static class DummyConnection{
@@ -254,7 +187,7 @@ public class BinaryMeshGenerator {
         double dx = a[0] - b[0];
         double dy = a[1] - b[1];
         double dz = a[2] - b[2];
-        return dx*dx + dy*dy + dz*dz < 1e-6;
+        return dx*dx + dy*dy + dz*dz < tolerance;
     }
     static public DeformableMesh3D mergeOverlappingVertexes(DeformableMesh3D mesh){
         int[] map = new int[mesh.nodes.size()];
@@ -457,7 +390,7 @@ public class BinaryMeshGenerator {
             r.validate();
 
             DeformableMesh3D mesh = voxelMesh(r.getPoints(), regionStack, r.getLabel());
-            //meshes.add(mesh); //adds original
+
             try {
                 TopoCheck checkers = new TopoCheck(mesh);
                 List<DeformableMesh3D> checkedMeshes = checkers.repairMesh();
@@ -497,7 +430,11 @@ public class BinaryMeshGenerator {
         for(int i = 0; i < 1; i++){
             mis.setFrame(i);
             long start = System.currentTimeMillis();
+            System.out.println("meshing");
             List<DeformableMesh3D> meshes = predictMeshes(mis);
+            System.out.println(System.currentTimeMillis() - start + " meshed");
+            start = System.currentTimeMillis();
+            System.out.println("smoothing");
             List<DeformableMesh3D> smoothed = new ArrayList<>(meshes.size());
             for(DeformableMesh3D mesh: meshes){
                 List<TopologyValidationError> err = TopoCheck.validate(mesh);
@@ -519,7 +456,7 @@ public class BinaryMeshGenerator {
                 }
             }
             mf3d.clearTransients();
-            System.out.println(System.currentTimeMillis() - start);
+            System.out.println(System.currentTimeMillis() - start + " smoothed");
 
 
             smoothed.addAll(broken.stream().map(t->t.getMesh(t.getFirstFrame())).collect(Collectors.toList()));
@@ -548,6 +485,8 @@ public class BinaryMeshGenerator {
         if(broken.size() > 0) {
             System.out.println("saving: " + broken.size()  + " broken meshes");
             MeshWriter.saveMeshes(new File("voxel-mesh-errors.bmf"), broken);
+        } else{
+            System.out.println("no broken meshes!");
         }
 
         new ImagePlus("Snapshots", stack).show();

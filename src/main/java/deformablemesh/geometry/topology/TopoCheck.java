@@ -27,6 +27,7 @@ public class TopoCheck {
     Map<Connection3D, List<Triangle3D>> connectionToTriangle = new HashMap<>();
     Map<Triangle3D, List<Connection3D>> triangleToConnection = new HashMap<>();
     List<Connection3D> fourBy = new ArrayList<>();
+    List<Node3D> disjoint = new ArrayList<>();
     FourByConnectionMapper mapper = new FourByConnectionMapper();
 
     List<TopologyValidationError> errors = new ArrayList<>();
@@ -35,8 +36,7 @@ public class TopoCheck {
     DeformableMesh3D mesh;
     public TopoCheck(DeformableMesh3D mesh){
         this.mesh = mesh;
-        populateNodeToTriangle();
-        populatedConnectionMappings();
+        resetMappings();
     }
 
     /**
@@ -164,7 +164,7 @@ public class TopoCheck {
     }
 
     public DeformableMesh3D splitFourByConnections(){
-        System.out.println(fourBy.size() + " connections to fix");
+        //System.out.println(fourBy.size() + " connections to fix");
 
         NodeSplitting nodeSplitter = new NodeSplitting(mesh);
 
@@ -176,16 +176,16 @@ public class TopoCheck {
         List<List<Connection3D>> chainedConnections = ConnectionChain.chainFourByConnections(fourBy);
 
         for(List<Connection3D> chain : chainedConnections){
-            System.out.print("chain: " );
+            //System.out.print("chain: " );
             for(Connection3D con : chain){
                 List<List<Triangle3D>> pa = partitionTriangles(con.A);
                 List<List<Triangle3D>> pb = partitionTriangles(con.B);
                 boolean na = pa.size() == 2 ? pinched(mapper.maps.get(con), pa): false;
                 boolean nb = pb.size() == 2 ? pinched(mapper.maps.get(con), pb): false;
 
-                System.out.print(":" + na + " " + pa.size() + " -- " + nb + " " + pb.size());
+                //System.out.print(":" + na + " " + pa.size() + " -- " + nb + " " + pb.size());
             }
-            System.out.println("-->");
+            //System.out.println("-->");
             Deque<Connection3D> stack = new ArrayDeque<>(chain.size());
             Deque<Connection3D> unfinished = new ArrayDeque<>(chain);
             Set<Connection3D> processed = new HashSet<>();
@@ -229,9 +229,6 @@ public class TopoCheck {
                         List<List<Triangle3D>> parti2 = partitionTriangles(con.B);
                         if(parti2.size() == 2 && pinched(mapper.maps.get(con), parti2) == processingPinch ){
                             nodeSplitter.split(con.B, con.A, parti2);
-                            if(!processingPinch) {
-                                stack.add(con);
-                            }
                         } else{
                             //we cannot split the nodes on this connection, put it back.
                             visited.add(con);
@@ -251,7 +248,8 @@ public class TopoCheck {
                 }
 
             }
-            System.out.println("unfinished: " + unfinished.size() + " processed: " + processed.size() + " starting: " + chain.size());
+            //This could be good, but the collections are not true yet.
+            //System.out.println("unfinished: " + unfinished.size() + " processed: " + processed.size() + " starting: " + chain.size());
         }
 
         List<double[]> positions = nodeSplitter.positions;
@@ -410,8 +408,6 @@ public class TopoCheck {
             }
         }
 
-        //This worked! That is amazing.
-        System.out.println(st.stream().map(s -> s.cw).collect(Collectors.toList()));
         return st;
     }
 
@@ -625,8 +621,8 @@ public class TopoCheck {
         return null;
     }
 
-    public List<Node3D> disjointNodes(){
-        List<Node3D> disjoint = new ArrayList<>();
+   private void disjointNodes(){
+
         for(Node3D node: mesh.nodes){
             List<List<Triangle3D>> party = freePartitionTriangles(node);
             if(party.size() > 1){
@@ -651,7 +647,6 @@ public class TopoCheck {
                 }
             }
         }
-        return disjoint;
     }
 
     /**
@@ -665,20 +660,28 @@ public class TopoCheck {
         errors.clear();
         mapper.maps.clear();
         mapper.split.clear();
+        disjoint.clear();
         populateNodeToTriangle();
         populatedConnectionMappings();
+        disjointNodes();
     }
 
     public List<DeformableMesh3D> repairMesh(){
 
-        DeformableMesh3D m2 = mesh;
         int iterations = 0;
-
-        repairLoop:
-
-        while(errors.size() > 0){
+        DeformableMesh3D old = mesh;
+        repairLoop: while(errors.size() > 0) {
+            int[] nonRepairable = {TopologyValidationError.OPEN_SURFACE, TopologyValidationError.UNKNOWN};
             errors.sort(Comparator.comparingInt(TopologyValidationError::getType));
+            if( Arrays.binarySearch(nonRepairable, errors.get(errors.size() - 1).type) >= 0 ) {
+                    System.out.println("Non-reparable error " + iterations);
+                    mesh = old;
+                    resetMappings();
+                    break repairLoop;
+            }
 
+
+            old = mesh; //last repairable mesh;
             TopologyValidationError err = errors.get(0);
             switch(err.type){
                 case TopologyValidationError.FOLDED_TRIANGLE:
@@ -698,11 +701,9 @@ public class TopoCheck {
                     break repairLoop;
             }
             resetMappings();
-            disjointNodes();
-
             iterations++;
         }
-        System.out.println("iterations: " + iterations);
+        //System.out.println("iterations: " + iterations );
 
         return Imglib2MeshBenchMark.connectedComponents(mesh);
     }
@@ -752,7 +753,6 @@ public class TopoCheck {
         }
         for(DeformableMesh3D m : splits){
             TopoCheck checker = new TopoCheck(m);
-            checker.disjointNodes();
 
             errors.addAll(checker.errors);
 
@@ -765,7 +765,6 @@ public class TopoCheck {
         if(splits.size() > 1){
             errors.add(new TopologyValidationError("multiple disconnected meshes: " + splits.size()));
         }
-        disjointNodes();
         return errors;
     }
 
@@ -779,22 +778,22 @@ public class TopoCheck {
         for(Track t: tracks){
             DeformableMesh3D mesh = t.getMesh(t.getFirstFrame());
             List<DeformableMesh3D> meshes = Imglib2MeshBenchMark.connectedComponents(mesh);
-            meshes.add(mesh);
+            int s = 0;
             for(DeformableMesh3D splits : meshes){
                 splits.create3DObject();
                 splits.data_object.setWireColor(ColorSuggestions.getSuggestion());
                 mf3d.addDataObject(splits.data_object);
-                System.out.println("testing");
+                System.out.println("testing " + ++s + "/"+ meshes.size() + " " + t.getName());
                 try {
                     TopoCheck tc = new TopoCheck(splits);
                     List<DeformableMesh3D> checked = tc.repairMesh();
-                    checked.forEach(m ->{
+                    for(DeformableMesh3D m : checked){
                         TopoCheck check = new TopoCheck(m);
                         List<TopologyValidationError> errs = check.validate();
                         if(errs.size()>0){
-                            System.out.println("errors: ");
+                            System.out.println("errors: " + errs);
                         }
-                    });
+                    }
                 } catch(Exception e){
                     e.printStackTrace();
                     break;

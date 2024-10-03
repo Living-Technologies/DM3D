@@ -86,7 +86,7 @@ public class ConnectionChain {
                 }
             }
         }
-        System.out.println(chainedConnections);
+        //System.out.println(chainedConnections);
         List<ConnectionChain> chains = new ArrayList<>();
         for(List<Connection3D> cons : chainedConnections){
             ConnectionChain c = new ConnectionChain();

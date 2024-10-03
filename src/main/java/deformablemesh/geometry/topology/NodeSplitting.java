@@ -80,8 +80,8 @@ public class NodeSplitting {
 
         }
         if (grouped.size() == 0) {
-            //How do these have no intersection!
-            System.out.println("broken!");
+            //TODO How do these have no intersection!
+            System.out.println("Regrouped triangles share no common groups!");
         }
         return grouped;
     }
