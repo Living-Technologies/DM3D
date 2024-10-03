@@ -673,29 +673,36 @@ public class TopoCheck {
 
         DeformableMesh3D m2 = mesh;
         int iterations = 0;
-        while(m2 != null){
-            m2 = removeFoldedTriangles();
-            iterations++;
-            if(m2 != null){
-                mesh = m2;
-                resetMappings();
-                disjointNodes();
+
+        repairLoop:
+
+        while(errors.size() > 0){
+            errors.sort(Comparator.comparingInt(TopologyValidationError::getType));
+
+            TopologyValidationError err = errors.get(0);
+            switch(err.type){
+                case TopologyValidationError.FOLDED_TRIANGLE:
+                    mesh = removeFoldedTriangles();
+                    if(mesh == null){
+                        //non-repairable folded triangles.
+                        break repairLoop;
+                    }
+                    break;
+                case TopologyValidationError.INTERSECTING_SURFACE:
+                    mesh = splitFourByConnections();
+                    break;
+                case TopologyValidationError.DISJOINT_NODE:
+                    mesh = splitDisjointNodes();
+                    break;
+                default:
+                    break repairLoop;
             }
-        }
-
-
-        while(fourBy.size() > 0) {
-            mesh = splitFourByConnections();
             resetMappings();
             disjointNodes();
-        }
 
-        DeformableMesh3D next = splitDisjointNodes();
-        if(next != null){
-            this.mesh = next;
-            resetMappings();
+            iterations++;
         }
-
+        System.out.println("iterations: " + iterations);
 
         return Imglib2MeshBenchMark.connectedComponents(mesh);
     }
@@ -763,22 +770,38 @@ public class TopoCheck {
     }
 
     public static void main(String[] args) throws IOException {
-        List<Track> tracks = MeshReader.loadMeshes(new File("topo-exeception.bmf"));
+        List<Track> tracks = MeshReader.loadMeshes(new File("voxel-mesh-errors.bmf"));
         MeshFrame3D mf3d;
         mf3d = new MeshFrame3D();
         mf3d.showFrame(true);
         mf3d.addLights();
         mf3d.setBackgroundColor(new Color(200, 200, 200));
         for(Track t: tracks){
-            System.out.println("fixing: " + t.getName());
+            DeformableMesh3D mesh = t.getMesh(t.getFirstFrame());
+            List<DeformableMesh3D> meshes = Imglib2MeshBenchMark.connectedComponents(mesh);
+            meshes.add(mesh);
+            for(DeformableMesh3D splits : meshes){
+                splits.create3DObject();
+                splits.data_object.setWireColor(ColorSuggestions.getSuggestion());
+                mf3d.addDataObject(splits.data_object);
+                System.out.println("testing");
+                try {
+                    TopoCheck tc = new TopoCheck(splits);
+                    List<DeformableMesh3D> checked = tc.repairMesh();
+                    checked.forEach(m ->{
+                        TopoCheck check = new TopoCheck(m);
+                        List<TopologyValidationError> errs = check.validate();
+                        if(errs.size()>0){
+                            System.out.println("errors: ");
+                        }
+                    });
+                } catch(Exception e){
+                    e.printStackTrace();
+                    break;
+                }
 
-            TopoCheck tc = new TopoCheck(t.getMesh(t.getFirstFrame()));
-            try {
-                List<DeformableMesh3D> checked = tc.repairMesh();
-            } catch(Exception e){
-                e.printStackTrace();
-                break;
             }
+
 
         }
 

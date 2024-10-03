@@ -28,7 +28,10 @@ package deformablemesh.geometry;
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.topology.TopoCheck;
+import deformablemesh.geometry.topology.TopologyValidationError;
+import deformablemesh.io.MeshWriter;
 import deformablemesh.meshview.MeshFrame3D;
+import deformablemesh.track.Track;
 import deformablemesh.util.ColorSuggestions;
 import deformablemesh.util.Vector3DOps;
 import deformablemesh.util.connectedcomponents.ConnectedComponents3D;
@@ -38,12 +41,15 @@ import ij.ImageJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.plugin.FileInfoVirtualStack;
+import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 
 import java.awt.*;
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Generates a mesh by creating a binary image, and meshing that at scale.
@@ -441,8 +447,8 @@ public class BinaryMeshGenerator {
         }
 
         //Removes topological errors that cannot be handled.
-        rg.erode();
-        rg.dilate();
+        //rg.erode();
+        //rg.dilate();
 
         ImagePlus regionPlus = mis.getOriginalPlus().createImagePlus();
         regionPlus.setStack(stack);
@@ -457,6 +463,11 @@ public class BinaryMeshGenerator {
                 List<DeformableMesh3D> checkedMeshes = checkers.repairMesh();
 
                 for(DeformableMesh3D checked : checkedMeshes) {
+                    List<TopologyValidationError> errors = TopoCheck.validate(checked);
+                    if(errors.size() > 0){
+                        meshes.add(mesh);
+                        break;
+                    }
                     meshes.add(checked);
                 }
             } catch(Exception e){
@@ -469,7 +480,7 @@ public class BinaryMeshGenerator {
 
         return meshes;
     }
-    public static void main(String[] args){
+    public static void main(String[] args) throws IOException {
         new ImageJ();
         ImagePlus plus = FileInfoVirtualStack.openVirtual(new File(args[0]).getAbsolutePath());
         //ImagePlus plus = ImageJFunctions.wrap(MCBroken.image(), "3x3x3-blob");
@@ -480,17 +491,39 @@ public class BinaryMeshGenerator {
         mf3d.showFrame(true);
         mf3d.addLights();
         mf3d.setBackgroundColor(new Color(200, 200, 200));
-        List<DeformableMesh3D> broken = new ArrayList<>();
+        List<Track> broken = new ArrayList<>();
 
-
+        ImageStack stack = null;
         for(int i = 0; i < 1; i++){
             mis.setFrame(i);
             long start = System.currentTimeMillis();
             List<DeformableMesh3D> meshes = predictMeshes(mis);
+            List<DeformableMesh3D> smoothed = new ArrayList<>(meshes.size());
+            for(DeformableMesh3D mesh: meshes){
+                List<TopologyValidationError> err = TopoCheck.validate(mesh);
+                if(err.size() > 0){
+                    Track t = new Track("red- " + err.size() + " " + err.stream().map(Object::toString).collect(Collectors.joining("-")));
+                    t.addMesh(i, mesh);
+                    broken.add(t);
+                } else{
+                    try{
+                        ConnectionRemesher remesher = new ConnectionRemesher();
+                        remesher.setMinAndMaxLengths(0.005, 0.01);
+                        DeformableMesh3D m2 = remesher.remesh(mesh);
+                        smoothed.add(m2);
+                    } catch(Exception e){
+                        Track t = new Track("blue-" + e.getMessage());
+                        t.addMesh(i, mesh);
+                        broken.add(t);
+                    }
+                }
+            }
             mf3d.clearTransients();
             System.out.println(System.currentTimeMillis() - start);
 
-            for(DeformableMesh3D dm3d : meshes){
+
+            smoothed.addAll(broken.stream().map(t->t.getMesh(t.getFirstFrame())).collect(Collectors.toList()));
+            for(DeformableMesh3D dm3d : smoothed){
                 if(dm3d.nodes.size() == 0){
                     continue;
                 }
@@ -504,7 +537,19 @@ public class BinaryMeshGenerator {
                 mf3d.addTransientObject(dm3d.data_object);
 
             }
+            ImageProcessor proc = new ColorProcessor(mf3d.snapShot());
+            if(stack == null){
+                stack = new ImageStack(proc.getWidth(), proc.getHeight());
+            }
+            stack.addSlice(proc);
 
         }
+
+        if(broken.size() > 0) {
+            System.out.println("saving: " + broken.size()  + " broken meshes");
+            MeshWriter.saveMeshes(new File("voxel-mesh-errors.bmf"), broken);
+        }
+
+        new ImagePlus("Snapshots", stack).show();
     }
 }

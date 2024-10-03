@@ -21,8 +21,8 @@ public class MeshVolumeToBinary {
     }
 
     /**
-     * This puts topographical constraints on the intersections. When an intersection is 'dirty' it means it was
-     * decided at a region of low confidence.
+     * This puts topographical constraints on the intersections. When an intersection is 'dirty'
+     * it means it was decided at a region of low confidence, eg near the edge of a triangle.
      *
      * @param sections a list of intersections that will be scanned
      */
@@ -43,9 +43,6 @@ public class MeshVolumeToBinary {
                         min = m;
                     }
                     if (m < Math.abs(section.dirty)) {
-                        System.out.println("should take it: " + other.dirty);
-                        //System.out.println("removing: " + i + ", " + m + " < " + section.dirty);
-                        //System.out.println("\t by: " + j  + " , " + other.dirty);
                         if (startI > i) {
                             continue;
                         }
@@ -53,11 +50,6 @@ public class MeshVolumeToBinary {
                         i--;
                         j--;
                     }
-                }
-                if (startI > i) {
-                    System.out.println("removed");
-                } else {
-                    System.out.println("left");
                 }
             }
         }

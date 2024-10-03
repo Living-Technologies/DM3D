@@ -438,7 +438,7 @@ public class Imglib2Mesh {
 
         if(broken.size() > 0){
             System.out.println(broken.size() + " broken meshes saved to broken.bmf");
-            MeshWriter.saveMeshes(new File("broken.bmf"), broken);
+            MeshWriter.saveMeshes(new File("marching-cubes-broken.bmf"), broken);
         } else{
             System.out.println("File successfully converted!");
         }
