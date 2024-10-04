@@ -56,31 +56,49 @@ import java.util.stream.Collectors;
  */
 public class BinaryMeshGenerator {
     static double tolerance = 1e-9;
-    public static DeformableMesh3D voxelMesh(List<int[]> points, MeshImageStack stack, int label){
-        List<DeformableMesh3D> meshes = new ArrayList<>();
+    public static DeformableMesh3D voxelMesh(Region r, MeshImageStack stack){
+
         int w = stack.getWidthPx();
         int h = stack.getHeightPx();
         int d = stack.getNSlices();
-        double[] a = stack.getNormalizedCoordinate(new double[]{1, 0, 0});
-        double[] b = stack.getNormalizedCoordinate(new double[]{0, 0, 0});
-        double nominalDistance = Vector3DOps.distance(a, b);
-        if(nominalDistance*nominalDistance < tolerance){
-            System.out.println("pixel difference is smaller than tolerance");
-        }
+        List<int[]> points = r.getPoints();
+        int label = r.getLabel();
+        List<long[]> triangles = new ArrayList<>(points.size()*3);
+
+        long tw = stack.getWidthPx() + 1;
+        long th = stack.getHeightPx() + 1;
+        long td = stack.getNSlices() + 1;
+        long start = System.currentTimeMillis();
         for(int[] pt: points){
-            List<DeformableMesh3D> voxel = new ArrayList<>();
             for(int i = 0; i<2; i++){
                 int xi = pt[0] + 2*i - 1;
+
                 if(xi == w || xi < 0 || stack.getValue(xi, pt[1], pt[2]) != label){
-                    voxel.add(generateVoxelPlane(stack, pt, new double[]{2*i -1, 0, 0}));
+                    long delta = i;
+
+                    long ia = (th*tw)*pt[2] + tw*pt[1] + pt[0] + delta;
+                    long ib = (th*tw)*pt[2] + tw*(pt[1] + 1) + pt[0] + delta;
+                    long ic = (th*tw)*(pt[2] + 1) + tw*(pt[1] + 1) + pt[0] + delta;
+                    long id = (th*tw)*(pt[2] + 1) + tw*pt[1] + pt[0] + delta;
+
+                    long[][] pair = getQuadTriangles(ia, ib, ic, id, delta==0);
+                    triangles.add(pair[0]);
+                    triangles.add(pair[1]);
                 }
             }
 
             for(int j = 0; j<2; j++){
                 int yi = pt[1] + 2*j - 1;
-
                 if(yi == h || yi < 0 || stack.getValue(pt[0], yi, pt[2]) != label){
-                    voxel.add(generateVoxelPlane(stack, pt, new double[]{0, 2*j -1, 0}));
+                    long delta = j;
+                    long ia = ( th * tw ) * pt[2] + tw * ( pt[1]  + delta ) + pt[0];
+                    long ib = ( th * tw ) * ( pt[2] + 1 ) + tw*( pt[1]  + delta ) + pt[0];
+                    long ic = ( th * tw ) * ( pt[2] + 1 ) + tw * ( pt[1] + delta ) + pt[0] + 1;
+                    long id = (th*tw) * pt[2] + tw * ( pt[1] + delta ) + pt[0] + 1;
+
+                    long[][] pair = getQuadTriangles(ia, ib, ic, id, delta == 0);
+                    triangles.add(pair[0]);
+                    triangles.add(pair[1]);
                 }
 
             }
@@ -88,52 +106,51 @@ public class BinaryMeshGenerator {
             for(int k = 0; k<2; k++){
                 int zdex = pt[2] + 2*k - 1;
                 if( zdex<0 || zdex == d || stack.getValue(pt[0], pt[1], zdex) != label){
-                    voxel.add(generateVoxelPlane(stack, pt, new double[]{0, 0, 2*k - 1}));
+                    //voxel.add(generateVoxelPlane(stack, pt, new double[]{0, 0, 2*k - 1}));
+                    long delta = k;
+                    long ia = ( th * tw )*(pt[2] + delta) + tw * ( pt[1] ) + pt[0];
+                    long ib = ( th * tw )*(pt[2] + delta) + tw * ( pt[1] ) + pt[0] + 1;
+                    long ic = ( th * tw )*(pt[2] + delta) + tw * ( pt[1] + 1 ) + pt[0] + 1;
+                    long id = ( th * tw )*(pt[2] + delta) + tw * ( pt[1] + 1 ) + pt[0];
+
+                    long[][] pair = getQuadTriangles(ia, ib, ic, id, delta == 0);
+                    triangles.add(pair[0]);
+                    triangles.add(pair[1]);
                 }
 
             }
-            if(voxel.size()>0){
+        }
 
-                DeformableMesh3D mesh = DeformableMesh3DTools.mergeMeshes(voxel);
-                DeformableMesh3D merged = mergeOverlappingVertexes(mesh, new DistanceMerging());
-                meshes.add(merged);
+        List<double[]> meshPoints = new ArrayList<>();
+        int[] map = new int[(int)(tw*th*td)];
 
+        for(long[] ta : triangles){
+            for(long l : ta) {
+                if (map[(int) l] == 0) {
+                    int x = (int) (l % tw);
+                    int y = (int) ((l / tw) % th);
+                    int z = (int) (l / (tw * th));
+                    meshPoints.add(stack.getNormalizedCoordinate(new double[]{x, y, z}));
+                    map[(int) l] = meshPoints.size();
+                }
             }
         }
+        List<int[]> prepped = triangles.stream().map(
+                ta -> new int[]{ map[(int)ta[0]] - 1,map[(int)ta[1]] - 1,map[(int)ta[2]] - 1 }
+        ).collect(Collectors.toList());
 
-
-        DeformableMesh3D combined = DeformableMesh3DTools.mergeMeshes(meshes);
-        DeformableMesh3D merged = mergeOverlappingVertexes(combined, new MappingMerger(stack));
-        if(Math.sqrt(Math.pow(merged.calculateVolume() - combined.calculateVolume(), 2)) > tolerance){
-            throw new RuntimeException("voxel mesh accuracy compromised.");
-        }
-        //System.out.println(merged.calculateVolume() + " // " + combined.calculateVolume());
-        return merged;
+        DeformableMesh3D mesh = DeformableMesh3DTools.fromTriangles(flatten(meshPoints), prepped);
+        return mesh;
     }
-
-    static class DummyConnection{
-        final int a;
-        final int b;
-        DummyConnection(int a, int b){
-            this.a = a;
-            this.b = b;
+    static double[] flatten(List<double[]> pts){
+        double[] array = new double[pts.size()*3];
+        int dex = 0;
+        for(double[] pt : pts){
+            System.arraycopy(pt, 0, array, dex, 3);
+            dex += 3;
         }
-        @Override
-        public int hashCode(){
-            return a+b;
-        }
-        @Override
-        public boolean equals(Object c){
-            if(c instanceof DummyConnection){
-                DummyConnection o = (DummyConnection)c;
-                return o.a==a ?
-                        o.b==b:
-                        o.a==b && o.b==a;
-            }
-            return false;
-        }
+        return array;
     }
-
     static public DeformableMesh3D generateVoxelPlane(MeshImageStack stack, int[] px, double[] normal) {
         double[] up = Vector3DOps.zhat;
         if(normal[2]!=0){
@@ -147,6 +164,17 @@ public class BinaryMeshGenerator {
         double[] offset = stack.scaleToNormalizedLength(normal);
         return getQuad(Vector3DOps.add( nc, offset, 0.5), nx, ny);
 
+    }
+    static public long[][] getQuadTriangles(long a, long b, long c, long d, boolean sign){
+        long[] t1, t2;
+        if(sign){
+            t1 = new long[]{a, c, b};
+            t2 = new long[]{a, d, c};
+        } else{
+            t1 = new long[]{a, b, c};
+            t2 = new long[]{a, c, d};
+        }
+        return new long[][]{t1, t2};
     }
 
     static public DeformableMesh3D getQuad(double[] origin, double[] nx, double[] ny){
@@ -279,8 +307,9 @@ public class BinaryMeshGenerator {
         MeshImageStack binstack = new MeshImageStack(binaryBlob);
         long start = System.currentTimeMillis();
         List<int[]> points = getPoints(binaryBlob);
+        Region r = new Region(255, points);
         System.out.println(System.currentTimeMillis() - start);
-        return voxelMesh(points, binstack, 255);
+        return voxelMesh(r, binstack);
 
     }
 
@@ -383,7 +412,7 @@ public class BinaryMeshGenerator {
 
         MeshImageStack labeledMis = new MeshImageStack(regionPlus);
         for(Region r: regions){
-            DeformableMesh3D mesh = voxelMesh(r.getPoints(), labeledMis, r.getLabel());
+            DeformableMesh3D mesh = voxelMesh(r, labeledMis);
             meshes.add(mesh);
         }
         return meshes;
@@ -436,7 +465,7 @@ public class BinaryMeshGenerator {
         for(Region r: regions){
             r.validate();
 
-            DeformableMesh3D mesh = voxelMesh(r.getPoints(), regionStack, r.getLabel());
+            DeformableMesh3D mesh = voxelMesh(r, regionStack);
 
             try {
                 TopoCheck checkers = new TopoCheck(mesh);
@@ -454,10 +483,8 @@ public class BinaryMeshGenerator {
                 meshes.add(mesh);
                 e.printStackTrace();
             }
-
-
+            meshes.add(mesh);
         }
-
         return meshes;
     }
     public static void main(String[] args) throws IOException {
@@ -472,14 +499,14 @@ public class BinaryMeshGenerator {
         mf3d.addLights();
         mf3d.setBackgroundColor(new Color(200, 200, 200));
         List<Track> broken = new ArrayList<>();
-
+        int saved = 0;
         ImageStack stack = null;
-        for(int i = 0; i < 1; i++){
+        for(int i = 0; i < mis.getNFrames(); i++){
             mis.setFrame(i);
             long start = System.currentTimeMillis();
-            System.out.println("meshing");
             List<DeformableMesh3D> meshes = predictMeshes(mis);
-            System.out.println(System.currentTimeMillis() - start + " meshed");
+            int triangles = meshes.stream().mapToInt(m -> m.triangles.size()).sum();
+            System.out.println(System.currentTimeMillis() - start + " meshed + " + triangles);
             start = System.currentTimeMillis();
             System.out.println("smoothing");
             List<DeformableMesh3D> smoothed = new ArrayList<>(meshes.size());
@@ -492,10 +519,10 @@ public class BinaryMeshGenerator {
                     broken.add(t);
                 } else{
                     try{
-                        //ConnectionRemesher remesher = new ConnectionRemesher();
-                        //remesher.setMinAndMaxLengths(0.005, 0.01);
-                        //DeformableMesh3D m2 = remesher.remesh(mesh);
-                        smoothed.add(mesh);
+                        ConnectionRemesher remesher = new ConnectionRemesher();
+                        remesher.setMinAndMaxLengths(0.005, 0.01);
+                        DeformableMesh3D m2 = remesher.remesh(mesh);
+                        smoothed.add(m2);
                     } catch(Exception e){
                         Track t = new Track("blue-" + e.getMessage());
                         t.addMesh(i, mesh);
@@ -528,14 +555,17 @@ public class BinaryMeshGenerator {
             }
             stack.addSlice(proc);
 
+            if(broken.size() > saved) {
+                System.out.println("saving: " + broken.size()  + " broken meshes after " + i + " frames.");
+                MeshWriter.saveMeshes(new File("voxel-mesh-errors.bmf"), broken);
+                saved = broken.size();
+            } else{
+                System.out.println("no more broken meshes!");
+            }
+
         }
 
-        if(broken.size() > 0) {
-            System.out.println("saving: " + broken.size()  + " broken meshes");
-            MeshWriter.saveMeshes(new File("voxel-mesh-errors.bmf"), broken);
-        } else{
-            System.out.println("no broken meshes!");
-        }
+
 
         new ImagePlus("Snapshots", stack).show();
     }

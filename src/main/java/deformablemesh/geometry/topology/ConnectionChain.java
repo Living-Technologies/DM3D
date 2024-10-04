@@ -9,10 +9,29 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class ConnectionChain {
+    public int size() {
+        return links.size();
+    }
+
+    static class ChainLink{
+        final Connection3D item;
+        List<ChainLink> back = new ArrayList<>();
+        List<ChainLink> front = new ArrayList<>();
+        final Node3D backNode;
+        final Node3D frontNode;
+        public ChainLink(Connection3D item){
+            this.item = item;
+            backNode = item.A;
+            frontNode = item.B;
+        }
+        public Connection3D getConnection(){
+            return item;
+        }
+    }
 
     List<ChainLink> links = new ArrayList<>();
     void addEdge(Connection3D con){
-        ChainLink next = new ChainLink(con, null, null);
+        ChainLink next = new ChainLink(con);
         for(ChainLink link : links){
             if( next.backNode == link.frontNode){
                 link.front.add(next);
@@ -38,20 +57,12 @@ public class ConnectionChain {
         list.addAll(partitions.get(false).stream().map(cl->cl.item).collect(Collectors.toList()));
         return list;
     }
-    static class ChainLink{
-        final Connection3D item;
-        List<ChainLink> back = new ArrayList<>();
-        List<ChainLink> front = new ArrayList<>();
-        final Node3D backNode;
-        final Node3D frontNode;
-        public ChainLink(Connection3D item, ChainLink prev, ChainLink next){
-            this.item = item;
-            backNode = item.A;
-            frontNode = item.B;
-        }
+    public List<Connection3D> getEnds(){
+        return links.stream().filter(
+                cl -> cl.front.isEmpty() || cl.back.isEmpty()
+        ).map(ChainLink::getConnection).collect(Collectors.toList());
     }
-
-    static public List<List<Connection3D>> chainFourByConnections(List<Connection3D> connections){
+    static public List<ConnectionChain> chainFourByConnections(List<Connection3D> connections){
         List<List<Connection3D>> chainedConnections = new ArrayList<>();
         for(int i = 0; i<connections.size(); i++){
             Connection3D c0 = connections.get(i);
@@ -95,7 +106,7 @@ public class ConnectionChain {
             }
             chains.add(c);
         }
-        return chains.stream().map(ConnectionChain::getList).collect(Collectors.toList());
+        return chains;
     }
 
 }

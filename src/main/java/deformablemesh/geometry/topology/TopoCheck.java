@@ -173,80 +173,101 @@ public class TopoCheck {
             mapper.maps.put(con, st);
         }
 
-        List<List<Connection3D>> chainedConnections = ConnectionChain.chainFourByConnections(fourBy);
-
-        for(List<Connection3D> chain : chainedConnections){
+        List<ConnectionChain> chainedConnections = ConnectionChain.chainFourByConnections(fourBy);
+        for(ConnectionChain chain : chainedConnections){
             //System.out.print("chain: " );
-            for(Connection3D con : chain){
+            List<Connection3D> ends = chain.getEnds();
+            List<Integer> type = new ArrayList<>(ends.size());
+            boolean pinch = false;
+            //System.out.print("ends: " + ends.size() + "=");
+            for(Connection3D con : ends){
                 List<List<Triangle3D>> pa = partitionTriangles(con.A);
                 List<List<Triangle3D>> pb = partitionTriangles(con.B);
-                boolean na = pa.size() == 2 ? pinched(mapper.maps.get(con), pa): false;
-                boolean nb = pb.size() == 2 ? pinched(mapper.maps.get(con), pb): false;
-
-                //System.out.print(":" + na + " " + pa.size() + " -- " + nb + " " + pb.size());
+                boolean na = pa.size() == 2 && pinched(mapper.maps.get(con), pa);
+                boolean nb = pb.size() == 2 && pinched(mapper.maps.get(con), pb);
+                type.add( (na ? 1 : 0) + (nb ? 2: 0) );
+                //System.out.print(" " + na + ":" + pa.size() + ", " + nb + ":" + pb.size());
+                pinch = pinch || na || nb;
             }
-            //System.out.println("-->");
-            Deque<Connection3D> stack = new ArrayDeque<>(chain.size());
-            Deque<Connection3D> unfinished = new ArrayDeque<>(chain);
-            Set<Connection3D> processed = new HashSet<>();
-            stack.add(unfinished.pop());
-            boolean processingPinch = true;
-            List<Connection3D> visited = new ArrayList<>();
-            while(stack.size() > 0){
-                Connection3D con = stack.pop();
-                if(nodeSplitter.wasSplit(con.A) && nodeSplitter.wasSplit(con.B)){
-                    throw new RuntimeException("Unnecessary check!");
-                }else if(nodeSplitter.wasSplit(con.A) || nodeSplitter.wasSplit(con.B)){
-                    //finishing.
-                    Node3D toSplit = nodeSplitter.wasSplit(con.A) ? con.B : con.A;
-                    List<List<Triangle3D>> parti = partitionTriangles(toSplit);
-                    if(parti.size()==2){
-                        if( pinched(mapper.maps.get(con), parti) != processingPinch ) {
-                            processed.add(con);
-                            //leave it!
-                            continue;
-                        }
+            //System.out.println("--> " + pinch);
+            if(ends.size() == 1){
+                Connection3D con = ends.get(0);
+                if(pinch){
+                    int tp = type.get(0);
+                    if( ( tp & 1 ) > 0){
+                        nodeSplitter.split(con.A, con.B, partitionTriangles(con.A));
                     }
-                    Node3D alreadySplit = toSplit == con.A ? con.B : con.A;
-                    nodeSplitter.split(toSplit, alreadySplit, parti);
-                    processed.add(con);
-                    Iterator<Connection3D> citer = unfinished.iterator();
-                    while(citer.hasNext()){
-                        Connection3D prospect = citer.next();
-                        if(prospect.A == toSplit || prospect.B == toSplit){
-                            if(! processed.contains(prospect)) {
-                                stack.add(prospect);
-                                citer.remove();
-                            }
-                        }
+                    if( ( tp & 2 ) > 0 ){
+                        nodeSplitter.split(con.B, con.A, partitionTriangles(con.B));
                     }
                 } else{
-                    List<List<Triangle3D>> parti = partitionTriangles(con.A);
-                    if(parti.size() == 2 && pinched(mapper.maps.get(con), parti) == processingPinch ){
-                        nodeSplitter.split(con.A, con.B, parti);
-                        stack.add(con);
-                    } else{
-                        List<List<Triangle3D>> parti2 = partitionTriangles(con.B);
-                        if(parti2.size() == 2 && pinched(mapper.maps.get(con), parti2) == processingPinch ){
-                            nodeSplitter.split(con.B, con.A, parti2);
-                        } else{
-                            //we cannot split the nodes on this connection, put it back.
-                            visited.add(con);
-                            unfinished.add(con);
-                            Connection3D candidate = unfinished.pop();
-                            stack.add(candidate);
-                            if(visited.contains(candidate)){
-                                if(!processingPinch){
-                                    throw new RuntimeException("Looped through 2 times!");
-                                }
-                                visited.clear();
-                                processingPinch = false;
+                    nodeSplitter.split(con.A, con.B, partitionTriangles(con.A));
+                    nodeSplitter.split(con.B, con.A, partitionTriangles(con.B));
+                }
+            } else {
+
+                Deque<Connection3D> stack = new ArrayDeque<>(chain.size());
+                Deque<Connection3D> unfinished = new ArrayDeque<>(ends);
+                Set<Connection3D> processed = new HashSet<>();
+                stack.add(unfinished.pop());
+                boolean processingPinch = true;
+                List<Connection3D> visited = new ArrayList<>();
+                while (stack.size() > 0) {
+                    Connection3D con = stack.pop();
+                    if (nodeSplitter.wasSplit(con.A) && nodeSplitter.wasSplit(con.B)) {
+                        throw new RuntimeException("Unnecessary check!");
+                    } else if (nodeSplitter.wasSplit(con.A) || nodeSplitter.wasSplit(con.B)) {
+                        //finishing.
+                        Node3D toSplit = nodeSplitter.wasSplit(con.A) ? con.B : con.A;
+                        List<List<Triangle3D>> parti = partitionTriangles(toSplit);
+                        if (parti.size() == 2) {
+                            if (pinched(mapper.maps.get(con), parti) != processingPinch) {
+                                processed.add(con);
+                                //leave it!
+                                continue;
                             }
                         }
+                        Node3D alreadySplit = toSplit == con.A ? con.B : con.A;
+                        nodeSplitter.split(toSplit, alreadySplit, parti);
+                        processed.add(con);
+                        Iterator<Connection3D> citer = unfinished.iterator();
+                        while (citer.hasNext()) {
+                            Connection3D prospect = citer.next();
+                            if (prospect.A == toSplit || prospect.B == toSplit) {
+                                if (!processed.contains(prospect)) {
+                                    stack.add(prospect);
+                                    citer.remove();
+                                }
+                            }
+                        }
+                    } else {
+                        List<List<Triangle3D>> parti = partitionTriangles(con.A);
+                        if (parti.size() == 2 && pinched(mapper.maps.get(con), parti) == processingPinch) {
+                            nodeSplitter.split(con.A, con.B, parti);
+                            stack.add(con);
+                        } else {
+                            List<List<Triangle3D>> parti2 = partitionTriangles(con.B);
+                            if (parti2.size() == 2 && pinched(mapper.maps.get(con), parti2) == processingPinch) {
+                                nodeSplitter.split(con.B, con.A, parti2);
+                            } else {
+                                //we cannot split the nodes on this connection, put it back.
+                                visited.add(con);
+                                unfinished.add(con);
+                                Connection3D candidate = unfinished.pop();
+                                stack.add(candidate);
+                                if (visited.contains(candidate)) {
+                                    if (!processingPinch) {
+                                        throw new RuntimeException("Looped through 2 times!");
+                                    }
+                                    visited.clear();
+                                    processingPinch = false;
+                                }
+                            }
+                        }
+
                     }
 
                 }
-
             }
             //This could be good, but the collections are not true yet.
             //System.out.println("unfinished: " + unfinished.size() + " processed: " + processed.size() + " starting: " + chain.size());
@@ -746,18 +767,19 @@ public class TopoCheck {
      * @return a list of topology errors.
      */
     static public List<TopologyValidationError> validate(DeformableMesh3D mesh){
-        List<DeformableMesh3D> splits = Imglib2MeshBenchMark.connectedComponents(mesh);
-        List<TopologyValidationError> errors = new ArrayList<>();
-        if(splits.size() > 1){
-            errors.add(new TopologyValidationError("multiple disconnected meshes: " + splits.size()));
-        }
-        for(DeformableMesh3D m : splits){
-            TopoCheck checker = new TopoCheck(m);
+        //List<DeformableMesh3D> splits = Imglib2MeshBenchMark.connectedComponents(mesh);
+        //List<TopologyValidationError> errors = new ArrayList<>();
+        //if(splits.size() > 1){
+        //    errors.add(new TopologyValidationError("multiple disconnected meshes: " + splits.size()));
+        //}
+        //for(DeformableMesh3D m : splits){
+        //    TopoCheck checker = new TopoCheck(m);
+        //    errors.addAll(checker.errors);
 
-            errors.addAll(checker.errors);
+        //}
+        TopoCheck checker = new TopoCheck(mesh);
 
-        }
-        return errors;
+        return checker.errors;
     }
 
     public List<TopologyValidationError> validate(){

@@ -340,8 +340,14 @@ public class Imglib2Mesh {
                 for(Mesh bm : MeshConnectedComponents.iterable(mesh)){
                     DeformableMesh3D dm3d = convertMesh(bm, ist);
                     if(dm3d.calculateVolume() > 0){
-                        List<DeformableMesh3D> checked = topoCheck(dm3d);
-                        meshes.addAll(checked);
+                        /*try {
+                            List<DeformableMesh3D> checked = topoCheck(dm3d);
+                            meshes.addAll(checked);
+                        }  catch(Exception e){
+                            e.printStackTrace();
+                            meshes.add(dm3d);
+                        }*/
+                        meshes.add(dm3d);
                     }
                 }
             }
@@ -394,7 +400,8 @@ public class Imglib2Mesh {
             long start = System.currentTimeMillis();
             List<DeformableMesh3D> meshes = Imglib2Mesh.guessMeshes(mis);
             mf3d.clearTransients();
-            System.out.println("first pass: " + (System.currentTimeMillis() - start));
+            int triangles = meshes.stream().mapToInt(m -> m.triangles.size()).sum();
+            System.out.println("first pass: " + (System.currentTimeMillis() - start) + "with " + triangles + " triangles!");
 
             for(DeformableMesh3D dm3d : meshes){
                 List<TopologyValidationError> errors = TopoCheck.validate(dm3d);

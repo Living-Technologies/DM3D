@@ -69,7 +69,7 @@ public class MCBroken {
         mf3d.addDataObject(cv.getVolumeDataObject());
 
         List<Region> r = new MeshDetector(mis).getRegionsFromLabelledImage();
-        DeformableMesh3D voxel = BinaryMeshGenerator.voxelMesh(r.get(0).getPoints(), mis, 1);
+        DeformableMesh3D voxel = BinaryMeshGenerator.voxelMesh(r.get(0), mis);
         voxel.create3DObject();
         voxel.setColor(Color.BLUE);
         mf3d.addDataObject(voxel.data_object);

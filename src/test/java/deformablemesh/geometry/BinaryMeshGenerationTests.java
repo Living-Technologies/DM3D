@@ -280,13 +280,13 @@ public class BinaryMeshGenerationTests {
         mf3d.setBackgroundColor(new Color(200, 200, 200));
 
         long start = System.currentTimeMillis();
-        ImagePlus volume = blob();
+        ImagePlus volume = spot();
         List<DeformableMesh3D> meshes = getMeshes(volume);
         System.out.println(System.currentTimeMillis() - start);
         MeshImageStack mis = new MeshImageStack(volume);
-        //VolumeDataObject vdo = new VolumeDataObject(Color.WHITE);
-        //vdo.setTextureData(mis);
-        //mf3d.addDataObject(vdo);
+        VolumeDataObject vdo = new VolumeDataObject(Color.BLACK);
+        vdo.setTextureData(mis);
+        mf3d.addDataObject(vdo);
         for(DeformableMesh3D dm3d : meshes){
             ImagePlus plus = DeformableMesh3DTools.createBinaryRepresentation(mis, dm3d);
             VolumeDataObject vdo2 = new VolumeDataObject(Color.ORANGE);
@@ -295,14 +295,14 @@ public class BinaryMeshGenerationTests {
             mf3d.addDataObject(vdo2);
             TopoCheck checkers = new TopoCheck(dm3d);
             List<TopologyValidationError> errors = checkers.validate();
-            if(errors.size()>0){
+            /*if(errors.size()>=0){
                 System.out.println(errors);
                 DeformableMesh3D dm3d2 = checkers.repairMesh().get(0);
                 smooth(dm3d2);
                 dm3d2.create3DObject();
                 mf3d.addDataObject(dm3d2.data_object);
                 System.out.println(TopoCheck.validate(dm3d2));
-            }
+            }*/
             System.out.println("checked");
             Color c = ColorSuggestions.getSuggestion();
             if(dm3d.nodes.size() == 0){
@@ -311,7 +311,7 @@ public class BinaryMeshGenerationTests {
             dm3d.setShowSurface(false);
             dm3d.create3DObject();
             dm3d.data_object.setShowSurface(true);
-            dm3d.data_object.setColor(ColorSuggestions.addTransparency(c, 0.25f));
+            //dm3d.data_object.setColor(ColorSuggestions.addTransparency(c, 0.25f));
             dm3d.data_object.setWireColor(c);
             mf3d.addTransientObject(dm3d.data_object);
 
