@@ -37,7 +37,6 @@ import deformablemesh.track.Track;
 import deformablemesh.util.IntensitySurfacePlot;
 import deformablemesh.util.MeshAnalysis;
 import deformablemesh.util.MeshFaceObscuring;
-import deformablemesh.util.Vector3DOps;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.FloatProcessor;
@@ -675,8 +674,13 @@ public class SegmentationModel {
         return normalize;
     }
 
+    /**
+     * Creates a binary representation of the select mesh for all of the frames it exists in.
+     *
+     *
+     */
     public void createBinaryImage() {
-        ImagePlus plus = DeformableMesh3DTools.createBinaryRepresentation(stack, original_plus, tracker.getSelectedTrack().getTrack());
+        ImagePlus plus = DeformableMesh3DTools.createBinaryRepresentation(stack, tracker.getSelectedTrack().getTrack());
         plus.show();
     }
     public void createEnergyImage(){
@@ -711,7 +715,7 @@ public class SegmentationModel {
     }
 
     public void createLabelImage() {
-        ImagePlus plus = DeformableMesh3DTools.createUniqueLabelsRepresentation(stack, tracker.getAllMeshTracks());
+        ImagePlus plus = DeformableMesh3DTools.asUniqueLabels(stack, tracker.getAllMeshTracks());
         plus.setTitle(original_plus.getShortTitle() + "-labels.tif");
         plus.setOpenAsHyperStack(true);
         plus.show();

@@ -1,15 +1,10 @@
 package deformablemesh.experimental;
 
-import Jama.EigenvalueDecomposition;
-import Jama.Matrix;
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshDetector;
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.DeformableMesh3D;
-import deformablemesh.geometry.Node3D;
-import deformablemesh.geometry.RayCastMesh;
 import deformablemesh.io.MeshReader;
-import deformablemesh.meshview.ChannelVolume;
 import deformablemesh.meshview.DeformableMeshDataObject;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.meshview.VolumeDataObject;
@@ -21,11 +16,9 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class LabelQuality {
     MeshImageStack labels;
@@ -38,7 +31,7 @@ public class LabelQuality {
         List<Track> tracks = MeshReader.loadMeshes(new File("quality-sample.bmf"));
         LabelQuality quality = new LabelQuality();
         quality.labels = labels;
-        ImagePlus meshLabels = DeformableMesh3DTools.createUniqueLabelsRepresentation( labels, tracks );
+        ImagePlus meshLabels = DeformableMesh3DTools.asUniqueLabels( labels, tracks );
         List<Region> meshRegions = ( new MeshDetector( new MeshImageStack(meshLabels) ) ).getRegionsFromLabelledImage();
         List<Region> labelRegions = ( new MeshDetector(labels) ).getRegionsFromLabelledImage();
 

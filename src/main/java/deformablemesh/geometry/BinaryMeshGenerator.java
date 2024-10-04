@@ -95,7 +95,7 @@ public class BinaryMeshGenerator {
             if(voxel.size()>0){
 
                 DeformableMesh3D mesh = DeformableMesh3DTools.mergeMeshes(voxel);
-                DeformableMesh3D merged = mergeOverlappingVertexes(mesh);
+                DeformableMesh3D merged = mergeOverlappingVertexes(mesh, new DistanceMerging());
                 meshes.add(merged);
 
             }
@@ -103,7 +103,7 @@ public class BinaryMeshGenerator {
 
 
         DeformableMesh3D combined = DeformableMesh3DTools.mergeMeshes(meshes);
-        DeformableMesh3D merged = mergeOverlappingVertexes(combined);
+        DeformableMesh3D merged = mergeOverlappingVertexes(combined, new MappingMerger(stack));
         if(Math.sqrt(Math.pow(merged.calculateVolume() - combined.calculateVolume(), 2)) > tolerance){
             throw new RuntimeException("voxel mesh accuracy compromised.");
         }
@@ -189,26 +189,75 @@ public class BinaryMeshGenerator {
         double dz = a[2] - b[2];
         return dx*dx + dy*dy + dz*dz < tolerance;
     }
-    static public DeformableMesh3D mergeOverlappingVertexes(DeformableMesh3D mesh){
-        int[] map = new int[mesh.nodes.size()];
+
+    interface Merger{
+        int addPoint(double[] xyz);
+        List<double[]> getPoints();
+    }
+
+    static class MappingMerger implements Merger{
+        List<double[]> pts = new ArrayList<>();
+        int[][] map;
+        MeshImageStack stack;
+        int w;
+        public MappingMerger(MeshImageStack stack){
+            map = new int[stack.getNSlices()+1][(stack.getHeightPx() + 1)*(stack.getWidthPx() + 1)];
+            this.stack  = stack;
+            w = stack.getWidthPx() + 1;
+        }
+        public int addPoint(double[] xyz){
+            double[] imgc = stack.getImageCoordinates(xyz);
+            int i = (int)Math.round(imgc[0]);
+            int j = (int)Math.round(imgc[1]);
+            int k = (int)Math.round(imgc[2]);
+            int s = map[k][j*w + i];
+            if(s == 0){
+                int dex = pts.size();
+                map[k][j*w + i] =  dex + 1;
+                pts.add(xyz);
+                return dex;
+            } else{
+                return s - 1;
+
+            }
+        }
+
+        public List<double[]> getPoints(){
+            return pts;
+        }
+    }
+
+    static class DistanceMerging implements Merger{
         List<double[]> added = new ArrayList<>();
+
+
+        @Override
+        public int addPoint(double[] xyz) {
+            for(int i = 0; i<added.size(); i++){
+                double[] a = added.get(i);
+                if( closeEnough(a, xyz)){
+                    return i;
+                }
+            }
+            added.add(xyz);
+            return added.size()-1;
+        }
+
+        @Override
+        public List<double[]> getPoints() {
+            return added;
+        }
+    }
+
+    static public DeformableMesh3D mergeOverlappingVertexes(DeformableMesh3D mesh, Merger merger){
+        int[] map = new int[mesh.nodes.size()];
 
         for(Node3D node: mesh.nodes){
             double[] x0 = node.getCoordinates();
-            boolean found = false;
-            for(int i = 0; i<added.size(); i++){
-                double[] a = added.get(i);
-                if( closeEnough(a, x0)){
-                    map[node.index] = i;
-                    found = true;
-                    break;
-                }
-            }
-            if( !found ){
-                map[node.index] = added.size();
-                added.add(x0);
-            }
+            map[node.index] = merger.addPoint(x0);
+
         }
+        List<double[]> added = merger.getPoints();
 
         double[] positions = new double[3*added.size()];
         int i = 0;
@@ -232,8 +281,6 @@ public class BinaryMeshGenerator {
         List<int[]> points = getPoints(binaryBlob);
         System.out.println(System.currentTimeMillis() - start);
         return voxelMesh(points, binstack, 255);
-
-
 
     }
 
@@ -436,6 +483,7 @@ public class BinaryMeshGenerator {
             start = System.currentTimeMillis();
             System.out.println("smoothing");
             List<DeformableMesh3D> smoothed = new ArrayList<>(meshes.size());
+
             for(DeformableMesh3D mesh: meshes){
                 List<TopologyValidationError> err = TopoCheck.validate(mesh);
                 if(err.size() > 0){
@@ -444,10 +492,10 @@ public class BinaryMeshGenerator {
                     broken.add(t);
                 } else{
                     try{
-                        ConnectionRemesher remesher = new ConnectionRemesher();
-                        remesher.setMinAndMaxLengths(0.005, 0.01);
-                        DeformableMesh3D m2 = remesher.remesh(mesh);
-                        smoothed.add(m2);
+                        //ConnectionRemesher remesher = new ConnectionRemesher();
+                        //remesher.setMinAndMaxLengths(0.005, 0.01);
+                        //DeformableMesh3D m2 = remesher.remesh(mesh);
+                        smoothed.add(mesh);
                     } catch(Exception e){
                         Track t = new Track("blue-" + e.getMessage());
                         t.addMesh(i, mesh);

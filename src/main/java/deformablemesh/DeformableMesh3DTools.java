@@ -26,7 +26,6 @@
 package deformablemesh;
 
 import deformablemesh.geometry.*;
-import deformablemesh.geometry.interceptable.InterceptingMesh3D;
 import deformablemesh.io.MeshReader;
 import deformablemesh.track.Track;
 import deformablemesh.util.MeshVolumeToBinary;
@@ -35,7 +34,6 @@ import deformablemesh.util.astar.*;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.ImageStack;
-import ij.measure.Calibration;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
@@ -1325,7 +1323,8 @@ public class DeformableMesh3DTools {
         return basic.findPath(starting).getPath();
     }
 
-    static public ImagePlus createBinaryRepresentation(MeshImageStack stack, ImagePlus original, Map<Integer, DeformableMesh3D> meshes){
+    static public ImagePlus createBinaryRepresentation(MeshImageStack stack, Map<Integer, DeformableMesh3D> meshes){
+        ImagePlus original = stack.getOriginalPlus();
         int w = original.getWidth();
         int h = original.getHeight();
 
@@ -1354,13 +1353,8 @@ public class DeformableMesh3DTools {
 
 
         ImagePlus ret = original.createImagePlus();
-        ret.setStack(stacked);
         ret.setTitle("bined-" + original.getTitle());
-        ret.setDimensions(original.getNChannels(), original.getNSlices(), original.getNFrames());
-        int dims = 0;
-        if(original.getNChannels()>1) dims++;
-        if(original.getNSlices()>1) dims++;
-        if(original.getNFrames()>1) dims++;
+        ret.setStack(stacked, original.getNChannels(), original.getNSlices(), original.getNFrames());
 
         return ret;
     }
@@ -1444,7 +1438,7 @@ public class DeformableMesh3DTools {
         return plus;
     }
 
-    public static ImagePlus createUniqueLabelsRepresentation(MeshImageStack stack, List<Track> allMeshTracks) {
+    public static ImagePlus asUniqueLabels(MeshImageStack stack, List<Track> allMeshTracks) {
         ImagePlus plus = stack.original.createImagePlus();
         Set<Integer> frames = new TreeSet<>();
         for(Integer i = 0; i<stack.FRAMES; i++){
