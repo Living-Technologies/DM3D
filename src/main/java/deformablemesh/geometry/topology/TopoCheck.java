@@ -783,6 +783,7 @@ public class TopoCheck {
     }
 
     public List<TopologyValidationError> validate(){
+        resetMappings();
         List<DeformableMesh3D> splits = Imglib2MeshBenchMark.connectedComponents(mesh);
         if(splits.size() > 1){
             errors.add(new TopologyValidationError("multiple disconnected meshes: " + splits.size()));
@@ -799,31 +800,32 @@ public class TopoCheck {
         mf3d.setBackgroundColor(new Color(200, 200, 200));
         for(Track t: tracks){
             DeformableMesh3D mesh = t.getMesh(t.getFirstFrame());
-            List<DeformableMesh3D> meshes = Imglib2MeshBenchMark.connectedComponents(mesh);
-            int s = 0;
-            for(DeformableMesh3D splits : meshes){
-                splits.create3DObject();
-                splits.data_object.setWireColor(ColorSuggestions.getSuggestion());
-                mf3d.addDataObject(splits.data_object);
-                System.out.println("testing " + ++s + "/"+ meshes.size() + " " + t.getName());
-                try {
-                    TopoCheck tc = new TopoCheck(splits);
-                    List<DeformableMesh3D> checked = tc.repairMesh();
-                    for(DeformableMesh3D m : checked){
-                        TopoCheck check = new TopoCheck(m);
-                        List<TopologyValidationError> errs = check.validate();
-                        if(errs.size()>0){
-                            System.out.println("errors: " + errs);
-                        }
-                    }
-                } catch(Exception e){
-                    e.printStackTrace();
-                    break;
-                }
-
+            mesh.create3DObject();
+            mesh.setColor(Color.WHITE);
+            mesh.setShowSurface(false);
+            mesh.create3DObject();
+            mesh.data_object.setWireColor(Color.WHITE);
+            mf3d.addDataObject(mesh.data_object);
+            TopoCheck checker = new TopoCheck(mesh);
+            List<TopologyValidationError> errors = checker.validate();
+            List<Connection3D> fourby = checker.fourBy;
+            List<Node3D> nodes = checker.disjoint;
+            Set<Node3D> all = new HashSet<>();
+            for(Connection3D furby : fourby){
+                all.add(furby.A);
+                all.add(furby.B);
+            }
+            for(Node3D n : nodes){
+                all.add(n);
             }
 
 
+            DeformableMesh3D error = mesh.createSubMesh(new ArrayList<>(all));
+            error.create3DObject();
+            error.data_object.setWireColor(Color.BLACK);
+            error.setShowSurface(true);
+            error.setColor(ColorSuggestions.addTransparency(Color.BLUE, 0.8f));
+            mf3d.addDataObject(error.data_object);
         }
 
     }

@@ -470,20 +470,19 @@ public class BinaryMeshGenerator {
             try {
                 TopoCheck checkers = new TopoCheck(mesh);
                 List<DeformableMesh3D> checkedMeshes = checkers.repairMesh();
-
-                for(DeformableMesh3D checked : checkedMeshes) {
+                meshes.addAll(checkedMeshes);
+                /*for(DeformableMesh3D checked : checkedMeshes) {
                     List<TopologyValidationError> errors = TopoCheck.validate(checked);
                     if(errors.size() > 0){
                         meshes.add(mesh);
                         break;
                     }
                     meshes.add(checked);
-                }
+                }*/
             } catch(Exception e){
                 meshes.add(mesh);
                 e.printStackTrace();
             }
-            meshes.add(mesh);
         }
         return meshes;
     }
@@ -517,7 +516,7 @@ public class BinaryMeshGenerator {
                     Track t = new Track("red- " + err.size() + " " + err.stream().map(Object::toString).collect(Collectors.joining("-")));
                     t.addMesh(i, mesh);
                     broken.add(t);
-                } else{
+                } /*else{
                     try{
                         ConnectionRemesher remesher = new ConnectionRemesher();
                         remesher.setMinAndMaxLengths(0.005, 0.01);
@@ -528,7 +527,7 @@ public class BinaryMeshGenerator {
                         t.addMesh(i, mesh);
                         broken.add(t);
                     }
-                }
+                }*/
             }
             mf3d.clearTransients();
             System.out.println(System.currentTimeMillis() - start + " smoothed");
