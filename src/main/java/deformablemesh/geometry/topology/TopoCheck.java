@@ -811,6 +811,8 @@ public class TopoCheck {
                 checker.repairMesh();
                 List<TopologyValidationError> errors = checker.validate();
                 if(errors.size() > 0){
+                    System.out.println("failed with: " + errors.size());
+                    System.out.println(errors);
                     List<Connection3D> fourby = checker.fourBy;
                     List<Node3D> nodes = checker.disjoint;
                     Set<Node3D> all = new HashSet<>();
@@ -838,6 +840,8 @@ public class TopoCheck {
                         mf3d.addDataObject(error.data_object);
                     }
 
+                } else{
+                    System.out.println("Mesh was repairable!");
                 }
             } catch(Exception e){
                 e.printStackTrace();

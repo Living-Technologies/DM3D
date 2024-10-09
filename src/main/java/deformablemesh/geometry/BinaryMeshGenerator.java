@@ -43,6 +43,7 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.plugin.FileInfoVirtualStack;
 import ij.process.ColorProcessor;
+import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 
 import java.awt.*;
@@ -65,13 +66,17 @@ public class BinaryMeshGenerator {
         int h = stack.getHeightPx();
         int d = stack.getNSlices();
         List<int[]> points = r.getPoints();
-        int label = r.getLabel();
+        int[] samplePoint = points.get(0);
+        double label = stack.getValue(samplePoint[0], samplePoint[1], samplePoint[2]);
+        //if(stack.getCurrentFrame().getStack().getProcessor(1) instanceof FloatProcessor){
+        //    label = Float.intBitsToFloat(r.getLabel());
+        //}
         List<long[]> triangles = new ArrayList<>(points.size()*3);
 
         long tw = stack.getWidthPx() + 1;
         long th = stack.getHeightPx() + 1;
         long td = stack.getNSlices() + 1;
-        long start = System.currentTimeMillis();
+
         for(int[] pt: points){
             for(int i = 0; i<2; i++){
                 int xi = pt[0] + 2*i - 1;
@@ -430,6 +435,12 @@ public class BinaryMeshGenerator {
         try {
             TopoCheck checkers = new TopoCheck(mesh);
             List<DeformableMesh3D> checkedMeshes = checkers.repairMesh();
+            for(DeformableMesh3D debug : checkedMeshes){
+                List<TopologyValidationError> errs = TopoCheck.validate(debug);
+                if(errs.size() > 0){
+                    System.out.println("borked!" + checkedMeshes.size() + "//" + errs.size() + " " + errs);
+                }
+            }
             meshes.addAll(checkedMeshes);
         } catch(Exception e){
             meshes.add(mesh);
@@ -534,7 +545,7 @@ public class BinaryMeshGenerator {
         List<Track> broken = new ArrayList<>();
         int saved = 0;
         ImageStack stack = null;
-        for(int i = 0; i < mis.getNFrames(); i++){
+        for(int i = 5; i < mis.getNFrames(); i++){
             mis.setFrame(i);
             long start = System.currentTimeMillis();
             List<DeformableMesh3D> meshes = predictMeshes(mis);
