@@ -55,6 +55,13 @@ public class NodeSplitting {
         if(partitions.size() == 2){
             return partitions.get(0);
         }
+        System.out.println("warning:");
+        if(partitions.size() == 0){
+            return new ArrayList<>();
+        } else if(partitions.size() >2){
+            partitions.sort(Comparator.comparingInt(List::size));
+            return partitions.get(partitions.size() - 1);
+        }
         throw new RuntimeException("Working on it!!! NodeSplitting.class");
     }
     /**

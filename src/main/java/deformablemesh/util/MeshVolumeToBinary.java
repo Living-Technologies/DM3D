@@ -192,7 +192,7 @@ public class MeshVolumeToBinary {
 
 
                 for (int p = 0; p < w; p++) {
-                    if (p == boundaries[current]) {
+                    if (p + 0.5 >= boundaries[current]) {
                         //switch.
                         current++;
                         inside = !inside;

@@ -26,6 +26,7 @@
 package deformablemesh.geometry;
 
 import deformablemesh.DeformableMesh3DTools;
+import deformablemesh.MeshDetector;
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.topology.TopoCheck;
 import deformablemesh.geometry.topology.TopologyValidationError;
@@ -49,12 +50,14 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 /**
  * Generates a mesh by creating a binary image, and meshing that at scale.
  */
 public class BinaryMeshGenerator {
+    static private ExecutorService es = null;
     static double tolerance = 1e-9;
     public static DeformableMesh3D voxelMesh(Region r, MeshImageStack stack){
 
@@ -418,6 +421,24 @@ public class BinaryMeshGenerator {
         return meshes;
     }
 
+    private static List<DeformableMesh3D> processRegion(Region r, MeshImageStack regionStack){
+        List<DeformableMesh3D> meshes = new ArrayList<>();
+        r.validate();
+
+        DeformableMesh3D mesh = voxelMesh(r, regionStack);
+
+        try {
+            TopoCheck checkers = new TopoCheck(mesh);
+            List<DeformableMesh3D> checkedMeshes = checkers.repairMesh();
+            meshes.addAll(checkedMeshes);
+        } catch(Exception e){
+            meshes.add(mesh);
+            e.printStackTrace();
+        }
+
+        return meshes;
+    }
+
     /**
      * This assumes that the mis contains a distance transform. It will perform a
      * threshold, connected components, watershed, the erode/dilate.
@@ -433,7 +454,6 @@ public class BinaryMeshGenerator {
         ImageStack old = frame.getStack();
         ImageStack stack = new ImageStack(frame.getWidth(), frame.getHeight());
 
-        List<DeformableMesh3D> meshes = new ArrayList<>();
         for(int j = 1; j<=old.size(); j++){
             ImageProcessor p = old.getProcessor(j).convertToShort(false).duplicate();
             p.threshold(0);
@@ -456,37 +476,51 @@ public class BinaryMeshGenerator {
         }
 
         //Removes topological errors that cannot be handled.
-        //rg.erode();
-        //rg.dilate();
+        rg.erode();
+        rg.dilate();
 
         ImagePlus regionPlus = mis.getOriginalPlus().createImagePlus();
         regionPlus.setStack(stack);
         MeshImageStack regionStack = new MeshImageStack(regionPlus);
-        for(Region r: regions){
-            r.validate();
 
-            DeformableMesh3D mesh = voxelMesh(r, regionStack);
+        List<DeformableMesh3D> meshes = new ArrayList<>();
 
-            try {
-                TopoCheck checkers = new TopoCheck(mesh);
-                List<DeformableMesh3D> checkedMeshes = checkers.repairMesh();
-                meshes.addAll(checkedMeshes);
-                /*for(DeformableMesh3D checked : checkedMeshes) {
-                    List<TopologyValidationError> errors = TopoCheck.validate(checked);
-                    if(errors.size() > 0){
-                        meshes.add(mesh);
-                        break;
-                    }
-                    meshes.add(checked);
-                }*/
-            } catch(Exception e){
-                meshes.add(mesh);
-                e.printStackTrace();
-            }
+        List<Callable<List<DeformableMesh3D>>> callables = regions.stream().map(
+                r -> (Callable<List<DeformableMesh3D>> )() -> processRegion(r, regionStack)
+            ).collect(Collectors.toList());
+        if(es == null){
+            es = ForkJoinPool.commonPool();
         }
+        List<Future<List<DeformableMesh3D>>> working = null;
+        try {
+            working = es.invokeAll( callables );
+            for(Future<List<DeformableMesh3D>> f : working){
+                try {
+                    meshes.addAll(f.get());
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                } catch (ExecutionException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
         return meshes;
     }
+
+    public static List<DeformableMesh3D> meshesFromLabels(MeshImageStack stack){
+        List<Region> regions = null;
+        MeshDetector detects = new MeshDetector(stack);
+        regions = detects.getRegionsFromLabelledImage();
+        return regions.stream().map(
+                r->processRegion(r, stack)
+            ).flatMap(List::stream).collect(Collectors.toList());
+    }
+
     public static void main(String[] args) throws IOException {
+        es = Executors.newFixedThreadPool(10);
         new ImageJ();
         ImagePlus plus = FileInfoVirtualStack.openVirtual(new File(args[0]).getAbsolutePath());
         //ImagePlus plus = ImageJFunctions.wrap(MCBroken.image(), "3x3x3-blob");
@@ -510,13 +544,19 @@ public class BinaryMeshGenerator {
             System.out.println("smoothing");
             List<DeformableMesh3D> smoothed = new ArrayList<>(meshes.size());
 
+            List<Future<List<TopologyValidationError>>> futureErrors = new ArrayList<>();
             for(DeformableMesh3D mesh: meshes){
-                List<TopologyValidationError> err = TopoCheck.validate(mesh);
-                if(err.size() > 0){
-                    Track t = new Track("red- " + err.size() + " " + err.stream().map(Object::toString).collect(Collectors.joining("-")));
-                    t.addMesh(i, mesh);
-                    broken.add(t);
-                } /*else{
+                final int frame = i;
+                futureErrors.add(es.submit( ()->{
+                    List<TopologyValidationError> err = TopoCheck.validate(mesh);
+                    if(err.size() > 0){
+                        Track t = new Track("red- " + err.size() + " " + err.stream().map(Object::toString).collect(Collectors.joining("-")));
+                        t.addMesh(frame, mesh);
+                        broken.add(t);
+                    }
+                    return err;
+                } ) );
+                     /*else{
                     try{
                         ConnectionRemesher remesher = new ConnectionRemesher();
                         remesher.setMinAndMaxLengths(0.005, 0.01);
@@ -528,6 +568,16 @@ public class BinaryMeshGenerator {
                         broken.add(t);
                     }
                 }*/
+
+            }
+            for (Future<List<TopologyValidationError>> futureError : futureErrors) {
+                try {
+                    futureError.get();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                } catch (ExecutionException e) {
+                    throw new RuntimeException(e);
+                }
             }
             mf3d.clearTransients();
             System.out.println(System.currentTimeMillis() - start + " smoothed");
@@ -564,7 +614,7 @@ public class BinaryMeshGenerator {
 
         }
 
-
+        es.shutdown();
 
         new ImagePlus("Snapshots", stack).show();
     }

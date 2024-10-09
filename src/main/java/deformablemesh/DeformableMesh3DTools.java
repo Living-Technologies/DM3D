@@ -1353,8 +1353,8 @@ public class DeformableMesh3DTools {
 
 
         ImagePlus ret = original.createImagePlus();
-        ret.setTitle("bined-" + original.getTitle());
-        ret.setStack(stacked, original.getNChannels(), original.getNSlices(), original.getNFrames());
+        ret.setTitle("binned-" + original.getTitle());
+        ret.setStack(stacked, original.getNChannels(), original.getNSlices(), keys.size());
 
         return ret;
     }

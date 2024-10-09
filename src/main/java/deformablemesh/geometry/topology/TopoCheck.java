@@ -724,7 +724,6 @@ public class TopoCheck {
             resetMappings();
             iterations++;
         }
-        //System.out.println("iterations: " + iterations );
 
         return Imglib2MeshBenchMark.connectedComponents(mesh);
     }
@@ -799,6 +798,7 @@ public class TopoCheck {
         mf3d.addLights();
         mf3d.setBackgroundColor(new Color(200, 200, 200));
         for(Track t: tracks){
+            System.out.println(t.getName());
             DeformableMesh3D mesh = t.getMesh(t.getFirstFrame());
             mesh.create3DObject();
             mesh.setColor(Color.WHITE);
@@ -807,25 +807,43 @@ public class TopoCheck {
             mesh.data_object.setWireColor(Color.WHITE);
             mf3d.addDataObject(mesh.data_object);
             TopoCheck checker = new TopoCheck(mesh);
-            List<TopologyValidationError> errors = checker.validate();
-            List<Connection3D> fourby = checker.fourBy;
-            List<Node3D> nodes = checker.disjoint;
-            Set<Node3D> all = new HashSet<>();
-            for(Connection3D furby : fourby){
-                all.add(furby.A);
-                all.add(furby.B);
-            }
-            for(Node3D n : nodes){
-                all.add(n);
+            try{
+                checker.repairMesh();
+                List<TopologyValidationError> errors = checker.validate();
+                if(errors.size() > 0){
+                    List<Connection3D> fourby = checker.fourBy;
+                    List<Node3D> nodes = checker.disjoint;
+                    Set<Node3D> all = new HashSet<>();
+                    for(Connection3D furby : fourby){
+                        all.add(furby.A);
+                        all.add(furby.B);
+                    }
+                    for(Node3D n : nodes){
+                        all.add(n);
+                    }
+
+                    if(all.size() > 0) {
+
+                        DeformableMesh3D error = mesh.createSubMesh(new ArrayList<>(all));
+                        System.out.println("n: " + error.nodes.size() + "/\\" +  error.triangles.size() + "|" + error.connections.size());
+                        if(error.triangles.size() == 0){
+                            continue;
+                        }
+                        double[] cm = error.getBoundingBox().getCenter();
+                        mf3d.centerView(cm);
+                        error.create3DObject();
+                        error.data_object.setWireColor(Color.BLACK);
+                        error.setShowSurface(true);
+                        error.setColor(ColorSuggestions.addTransparency(Color.BLUE, 0.8f));
+                        mf3d.addDataObject(error.data_object);
+                    }
+
+                }
+            } catch(Exception e){
+                e.printStackTrace();
             }
 
 
-            DeformableMesh3D error = mesh.createSubMesh(new ArrayList<>(all));
-            error.create3DObject();
-            error.data_object.setWireColor(Color.BLACK);
-            error.setShowSurface(true);
-            error.setColor(ColorSuggestions.addTransparency(Color.BLUE, 0.8f));
-            mf3d.addDataObject(error.data_object);
         }
 
     }
