@@ -1,7 +1,6 @@
 package deformablemesh.geometry.topology;
 
 import deformablemesh.geometry.Connection3D;
-import deformablemesh.geometry.Node3D;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,22 +10,6 @@ import java.util.stream.Collectors;
 public class ConnectionChain {
     public int size() {
         return links.size();
-    }
-
-    static class ChainLink{
-        final Connection3D item;
-        List<ChainLink> back = new ArrayList<>();
-        List<ChainLink> front = new ArrayList<>();
-        final Node3D backNode;
-        final Node3D frontNode;
-        public ChainLink(Connection3D item){
-            this.item = item;
-            backNode = item.A;
-            frontNode = item.B;
-        }
-        public Connection3D getConnection(){
-            return item;
-        }
     }
 
     List<ChainLink> links = new ArrayList<>();
@@ -50,6 +33,10 @@ public class ConnectionChain {
         }
         links.add(next);
     }
+    public ChainLink get(int i){
+        return links.get(i);
+    }
+
     List<Connection3D> getList(){
         List<Connection3D> list = new ArrayList<>();
         Map<Boolean, List<ChainLink>> partitions = links.stream().collect(Collectors.partitioningBy(cl -> cl.front.isEmpty() || cl.back.isEmpty()));

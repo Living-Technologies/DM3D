@@ -46,6 +46,71 @@ public class BinaryMeshGenerationTests {
         return plus;
     }
 
+    public static ImagePlus loopFault(){
+        ImagePlus plus = space();
+        ImageStack stack = plus.getStack();
+        for(int i = 0; i<3; i++){
+
+            stack.getProcessor(8).set(8 + i, 8, 1);
+            stack.getProcessor(   8).set(8 + i, 10, 1);
+
+            stack.getProcessor(6 + i).set(11, 9, 1);
+        }
+
+        stack.getProcessor(8).set(8, 9, 1);
+        stack.getProcessor(8).set(10, 9, 1);
+
+        stack.getProcessor(7).set(9, 9, 1);
+        stack.getProcessor(6).set(9, 9, 1);
+        stack.getProcessor(6).set(10, 9, 1);
+
+        return plus;
+
+    }
+
+    public static ImagePlus tailLoopFault(){
+        ImagePlus plus = space();
+        ImageStack stack = plus.getStack();
+        for(int i = 0; i<3; i++){
+
+            stack.getProcessor(8).set(8 + i, 8, 1);
+            stack.getProcessor(   8).set(8 + i, 10, 1);
+
+            stack.getProcessor(6 + i).set(11, 9, 1);
+        }
+        stack.getProcessor(7).set(8, 8, 1);
+
+        stack.getProcessor(8).set(8, 9, 1);
+        stack.getProcessor(8).set(10, 9, 1);
+
+        stack.getProcessor(7).set(9, 9, 1);
+        stack.getProcessor(6).set(9, 9, 1);
+        stack.getProcessor(6).set(10, 9, 1);
+
+        return plus;
+
+    }
+    public static ImagePlus doubleLoopFault(){
+        ImagePlus plus = space();
+        ImageStack stack = plus.getStack();
+        for(int i = 0; i<3; i++){
+
+            stack.getProcessor(8).set(8 + i, 8, 1);
+            stack.getProcessor(   8).set(8 + i, 10, 1);
+
+            stack.getProcessor(6 + i).set(11, 9, 1);
+        }
+        stack.getProcessor(7).set(10, 10, 1);
+        stack.getProcessor(8).set(8, 9, 1);
+        stack.getProcessor(8).set(10, 9, 1);
+
+        stack.getProcessor(7).set(9, 9, 1);
+        stack.getProcessor(6).set(9, 9, 1);
+        stack.getProcessor(6).set(10, 9, 1);
+
+        return plus;
+
+    }
     public static ImagePlus blob(){
         ImagePlus plus = space();
         ImageStack stack = plus.getStack();
@@ -280,7 +345,7 @@ public class BinaryMeshGenerationTests {
         mf3d.setBackgroundColor(new Color(200, 200, 200));
 
         long start = System.currentTimeMillis();
-        ImagePlus volume = spot();
+        ImagePlus volume = loopFault();
         List<DeformableMesh3D> meshes = getMeshes(volume);
         System.out.println(System.currentTimeMillis() - start);
         MeshImageStack mis = new MeshImageStack(volume);
@@ -295,6 +360,9 @@ public class BinaryMeshGenerationTests {
             mf3d.addDataObject(vdo2);
             TopoCheck checkers = new TopoCheck(dm3d);
             List<TopologyValidationError> errors = checkers.validate();
+            System.out.println(errors);
+            checkers.repairMesh();
+            System.out.println(checkers.validate());
             /*if(errors.size()>=0){
                 System.out.println(errors);
                 DeformableMesh3D dm3d2 = checkers.repairMesh().get(0);

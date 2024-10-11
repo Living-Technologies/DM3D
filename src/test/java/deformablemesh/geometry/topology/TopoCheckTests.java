@@ -1,6 +1,8 @@
 package deformablemesh.geometry.topology;
 
+import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.BinaryMeshGenerationTests;
+import deformablemesh.geometry.BinaryMeshGenerator;
 import deformablemesh.geometry.ConnectionRemesher;
 import deformablemesh.geometry.DeformableMesh3D;
 import ij.ImagePlus;
@@ -47,6 +49,20 @@ public class TopoCheckTests {
         remesh(fixed.get(0));
     }
 
+    /**
+     * Can the topo repair fix a loop
+     */
+    @Test
+    public void loopFaultTest(){
+        ImagePlus plus = BinaryMeshGenerationTests.loopFault();
+        List<DeformableMesh3D> meshes = BinaryMeshGenerator.generateVoxelMeshes(new MeshImageStack(plus));
+        Assert.assertEquals(1, meshes.size());
+        List<TopologyValidationError> errors = TopoCheck.validate(meshes.get(0));
+        Assert.assertEquals(4, errors.size());
+        TopoCheck tc = new TopoCheck(meshes.get(0));
+        tc.repairMesh();
+        Assert.assertEquals(0, tc.validate().size());
+    }
     @Test
     public void openPinchFaultTest(){
         ImagePlus plus = BinaryMeshGenerationTests.openPinchFault();
@@ -64,6 +80,8 @@ public class TopoCheckTests {
         remesh(fixed.get(0));
     }
 
+
+
     @Test
     public void kissFaultTest(){
         ImagePlus plus = BinaryMeshGenerationTests.kissFault();
@@ -78,5 +96,35 @@ public class TopoCheckTests {
         List<TopologyValidationError> e2 = tc2.validate();
         Assert.assertEquals(0, e2.size());
         remesh(fixed.get(0));
+    }
+
+    /**
+     * Can the topo repair fix a loop
+     */
+    @Test
+    public void tailLoopFaultTest(){
+        ImagePlus plus = BinaryMeshGenerationTests.tailLoopFault();
+        List<DeformableMesh3D> meshes = BinaryMeshGenerator.generateVoxelMeshes(new MeshImageStack(plus));
+        Assert.assertEquals(1, meshes.size());
+        List<TopologyValidationError> errors = TopoCheck.validate(meshes.get(0));
+        Assert.assertEquals(5, errors.size());
+        TopoCheck tc = new TopoCheck(meshes.get(0));
+        tc.repairMesh();
+        Assert.assertEquals(0, tc.validate().size());
+    }
+
+    /**
+     * Can the topo repair fix a loop
+     */
+    @Test
+    public void doubleLoopFaultTest(){
+        ImagePlus plus = BinaryMeshGenerationTests.doubleLoopFault();
+        List<DeformableMesh3D> meshes = BinaryMeshGenerator.generateVoxelMeshes(new MeshImageStack(plus));
+        Assert.assertEquals(1, meshes.size());
+        List<TopologyValidationError> errors = TopoCheck.validate(meshes.get(0));
+        Assert.assertEquals(7, errors.size());
+        TopoCheck tc = new TopoCheck(meshes.get(0));
+        tc.repairMesh();
+        Assert.assertEquals(0, tc.validate().size());
     }
 }

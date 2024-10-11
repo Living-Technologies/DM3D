@@ -68,9 +68,7 @@ public class BinaryMeshGenerator {
         List<int[]> points = r.getPoints();
         int[] samplePoint = points.get(0);
         double label = stack.getValue(samplePoint[0], samplePoint[1], samplePoint[2]);
-        //if(stack.getCurrentFrame().getStack().getProcessor(1) instanceof FloatProcessor){
-        //    label = Float.intBitsToFloat(r.getLabel());
-        //}
+
         List<long[]> triangles = new ArrayList<>(points.size()*3);
 
         long tw = stack.getWidthPx() + 1;
@@ -428,6 +426,10 @@ public class BinaryMeshGenerator {
 
     private static List<DeformableMesh3D> processRegion(Region r, MeshImageStack regionStack){
         List<DeformableMesh3D> meshes = new ArrayList<>();
+        if(r.getPoints().size() == 0){
+            System.out.println(r.getLabel() + " is empty!?");
+            return meshes;
+        }
         r.validate();
 
         DeformableMesh3D mesh = voxelMesh(r, regionStack);

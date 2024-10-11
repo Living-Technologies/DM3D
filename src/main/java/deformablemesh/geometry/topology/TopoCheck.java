@@ -8,8 +8,6 @@ import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.track.Track;
 import deformablemesh.util.ColorSuggestions;
 import deformablemesh.util.Vector3DOps;
-import edu.mines.jtk.mesh.TriMesh;
-import org.checkerframework.checker.units.qual.N;
 
 import java.awt.*;
 import java.io.File;
@@ -163,6 +161,92 @@ public class TopoCheck {
         return big;
     }
 
+    static Node3D common(Connection3D a, Connection3D b){
+        Node3D c;
+        if( a.A == b.A ){
+            return a.A;
+        } else if(a.B == b.A){
+            return a.B;
+        } else if (a.A == b.B) {
+            return a.A;
+        } else if( a.B == b.B){
+            return a.B;
+        } else{
+            throw new RuntimeException("Poorly Sorted Chain!");
+        }
+    }
+    static List<List<Triangle3D>> splitOnKiss( List<SortedT> star ){
+        List<List<Triangle3D>> ret = new ArrayList<>(2);
+        List<Triangle3D> a = new ArrayList<>(2);
+        List<Triangle3D> b = new ArrayList<>(2);
+        int i = 0;
+        SortedT first = star.get(0);
+        if(first.cw ){
+            i = i+1;
+            first = star.get(i);
+        }
+        a.add(first.triangle3D);
+        a.add(star.get(i+1).triangle3D);
+
+        b.add(star.get(i + 2).triangle3D);
+        b.add(star.get((i + 3)%4).triangle3D);
+        ret.add(a);
+        ret.add(b);
+
+        return ret;
+    }
+    private void fixLoopsAsKiss(ConnectionChain chain, NodeSplitting splitter){
+        System.out.println("loop repair!");
+        //need to split one node, then the rest can follow.
+
+
+        Deque<ChainLink> working = new ArrayDeque<>(chain.size());
+        working.add(chain.get(0));
+        while(working.size() > 0){
+            ChainLink link = working.pop();
+            Node3D c = link.frontNode;
+
+            if( !splitter.wasSplit(c) ) {
+                List<SortedT> star = mapper.maps.get(link.getConnection());
+                List<List<Triangle3D>> split = splitOnKiss(star);
+                List<List<Triangle3D>> partitions = partitionTriangles(c);
+                List<List<Triangle3D>> both = new ArrayList<>(2);
+                both.add(new ArrayList<>()); //stay
+                both.add(new ArrayList<>()); //go
+                int party = 0;
+                for (List<Triangle3D> partition : partitions) {
+                    boolean added = false;
+                    for (int j = 0; j < 2; j++) {
+                        for (int k = 0; k < 2; k++) {
+                            if (partition.contains(split.get(j).get(k))) {
+                                System.out.println(party + " : " + j + " " + k);
+                                if (!added) {
+                                    both.get(j).addAll(partition);
+                                }
+                                added = true;
+                            }
+                        }
+                    }
+                    party++;
+
+                }
+                splitter.split(c, both.get(0));
+            }
+
+            for(ChainLink nextLink : link.front){
+                Node3D nextNode = nextLink.frontNode;
+                if( !splitter.wasSplit(nextLink.frontNode) ) {
+                    splitter.split(nextLink.frontNode, c, partitionTriangles(nextNode));
+                    working.add(nextLink);
+                } else{
+                    System.out.println("returned to end of loop. Should see once per loop");
+                }
+            }
+
+
+        }
+    }
+
     public DeformableMesh3D splitFourByConnections(){
         //System.out.println(fourBy.size() + " connections to fix");
 
@@ -179,18 +263,18 @@ public class TopoCheck {
             List<Connection3D> ends = chain.getEnds();
             List<Integer> type = new ArrayList<>(ends.size());
             boolean pinch = false;
-            //System.out.print("ends: " + ends.size() + "=");
+
             for(Connection3D con : ends){
                 List<List<Triangle3D>> pa = partitionTriangles(con.A);
                 List<List<Triangle3D>> pb = partitionTriangles(con.B);
                 boolean na = pa.size() == 2 && pinched(mapper.maps.get(con), pa);
                 boolean nb = pb.size() == 2 && pinched(mapper.maps.get(con), pb);
                 type.add( (na ? 1 : 0) + (nb ? 2: 0) );
-                //System.out.print(" " + na + ":" + pa.size() + ", " + nb + ":" + pb.size());
                 pinch = pinch || na || nb;
             }
-            //System.out.println("--> " + pinch);
-            if(ends.size() == 1){
+            //Are any ends pinched?
+
+            if(ends.size() == 1 && chain.getList().size() == 1){
                 Connection3D con = ends.get(0);
                 if(pinch){
                     int tp = type.get(0);
@@ -204,13 +288,14 @@ public class TopoCheck {
                     nodeSplitter.split(con.A, con.B, partitionTriangles(con.A));
                     nodeSplitter.split(con.B, con.A, partitionTriangles(con.B));
                 }
+            } else if(ends.size() == 0){
+                fixLoopsAsKiss(chain, nodeSplitter);
             } else {
-
                 Deque<Connection3D> stack = new ArrayDeque<>(chain.size());
                 Deque<Connection3D> unfinished = new ArrayDeque<>(ends);
                 Set<Connection3D> processed = new HashSet<>();
                 stack.add(unfinished.pop());
-                boolean processingPinch = true;
+                boolean processingPinch = pinch;
                 List<Connection3D> visited = new ArrayList<>();
                 while (stack.size() > 0) {
                     Connection3D con = stack.pop();
@@ -244,7 +329,7 @@ public class TopoCheck {
                         List<List<Triangle3D>> parti = partitionTriangles(con.A);
                         if (parti.size() == 2 && pinched(mapper.maps.get(con), parti) == processingPinch) {
                             nodeSplitter.split(con.A, con.B, parti);
-                            stack.add(con);
+                            //stack.add(con);
                         } else {
                             List<List<Triangle3D>> parti2 = partitionTriangles(con.B);
                             if (parti2.size() == 2 && pinched(mapper.maps.get(con), parti2) == processingPinch) {
@@ -695,7 +780,7 @@ public class TopoCheck {
             int[] nonRepairable = {TopologyValidationError.OPEN_SURFACE, TopologyValidationError.UNKNOWN};
             errors.sort(Comparator.comparingInt(TopologyValidationError::getType));
             if( Arrays.binarySearch(nonRepairable, errors.get(errors.size() - 1).type) >= 0 ) {
-                    System.out.println("Non-reparable error " + iterations);
+                    System.out.println("Non-reparable error " + iterations + "// " + errors);
                     mesh = old;
                     resetMappings();
                     break repairLoop;
