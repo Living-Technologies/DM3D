@@ -201,7 +201,16 @@ public class TopoCheck {
 
 
         Deque<ChainLink> working = new ArrayDeque<>(chain.size());
-        working.add(chain.get(0));
+        int z;
+        for(z = 0 ; z<chain.size(); z++){
+            ChainLink first = chain.get(z);
+            if(first.front.size() == 1 && first.back.size() == 1){
+                System.out.println(z);
+                working.add(first);
+                break;
+            }
+        }
+        linkLoop:
         while(working.size() > 0){
             ChainLink link = working.pop();
             Node3D c = link.frontNode;
@@ -214,6 +223,7 @@ public class TopoCheck {
                 both.add(new ArrayList<>()); //stay
                 both.add(new ArrayList<>()); //go
                 int party = 0;
+
                 for (List<Triangle3D> partition : partitions) {
                     boolean added = false;
                     for (int j = 0; j < 2; j++) {
@@ -222,20 +232,32 @@ public class TopoCheck {
                                 System.out.println(party + " : " + j + " " + k);
                                 if (!added) {
                                     both.get(j).addAll(partition);
+                                    added = true;
+                                } else{
+                                    z++;
+                                    working.add(chain.get(z));
+                                    continue linkLoop;
+                                    //throw new RuntimeException("partition contains multiple triangles from split");
                                 }
-                                added = true;
                             }
                         }
+                    }
+                    if(!added){
+                        System.out.println("not added.");
+                        z++;
+                        working.add(chain.get(z));
+                        continue linkLoop;
                     }
                     party++;
 
                 }
                 splitter.split(c, both.get(0));
+                if(party > 0) break;
             }
 
             for(ChainLink nextLink : link.front){
                 Node3D nextNode = nextLink.frontNode;
-                if( !splitter.wasSplit(nextLink.frontNode) ) {
+                if( !splitter.wasSplit(nextLink.frontNode)) {
                     splitter.split(nextLink.frontNode, c, partitionTriangles(nextNode));
                     working.add(nextLink);
                 } else{
@@ -779,7 +801,8 @@ public class TopoCheck {
         repairLoop: while(errors.size() > 0) {
             int[] nonRepairable = {TopologyValidationError.OPEN_SURFACE, TopologyValidationError.UNKNOWN};
             errors.sort(Comparator.comparingInt(TopologyValidationError::getType));
-            if( Arrays.binarySearch(nonRepairable, errors.get(errors.size() - 1).type) >= 0 ) {
+            int edex = -1;
+            if( ( Arrays.binarySearch(nonRepairable, errors.get(errors.size() - 1).type) ) >= 0 ) {
                     System.out.println("Non-reparable error " + iterations + "// " + errors);
                     mesh = old;
                     resetMappings();
@@ -893,8 +916,20 @@ public class TopoCheck {
             mf3d.addDataObject(mesh.data_object);
             TopoCheck checker = new TopoCheck(mesh);
             try{
-                checker.repairMesh();
-                List<TopologyValidationError> errors = checker.validate();
+                List<DeformableMesh3D> meshes = checker.repairMesh();
+                List<TopologyValidationError> errors = new ArrayList<>();
+                for(DeformableMesh3D fin: meshes){
+                    errors.addAll(TopoCheck.validate(fin));
+                    if(fin.triangles.size() < 20){
+                        fin.create3DObject();
+                        fin.setShowSurface(true);
+                        fin.setColor(Color.BLUE);
+                        mf3d.addDataObject(fin.data_object);
+                    }
+                    System.out.println(fin.triangles.size() + " triangles" );
+                }
+
+                //List<TopologyValidationError> errors = checker.validate();
                 if(errors.size() > 0){
                     System.out.println("failed with: " + errors.size());
                     System.out.println(errors);

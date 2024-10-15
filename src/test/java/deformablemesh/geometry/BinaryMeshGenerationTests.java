@@ -46,6 +46,23 @@ public class BinaryMeshGenerationTests {
         return plus;
     }
 
+    public static ImagePlus edgeCases(){
+        ImagePlus plus = space();
+        ImageStack stack = plus.getStack();
+
+        stack.getProcessor(1).set(stack.getWidth()/2, stack.getHeight()/2, 1);
+        stack.getProcessor(plus.getNSlices()).set(stack.getWidth()/2, stack.getHeight()/2, 1);
+
+        stack.getProcessor(plus.getNSlices()/2).set(stack.getWidth() - 1, stack.getHeight()/2, 1);
+        stack.getProcessor(plus.getNSlices()/2).set(0, stack.getHeight()/2, 1);
+
+        stack.getProcessor(plus.getNSlices()/2).set(stack.getWidth()/2, stack.getHeight()-1, 1);
+        stack.getProcessor(plus.getNSlices()/2).set(stack.getWidth()/2, 0, 1);
+
+        return plus;
+
+    }
+
     public static ImagePlus loopFault(){
         ImagePlus plus = space();
         ImageStack stack = plus.getStack();
@@ -330,7 +347,7 @@ public class BinaryMeshGenerationTests {
     static void smooth(DeformableMesh3D mesh){
         mesh.ALPHA = 1;
         mesh.BETA = 0.5;
-        mesh.GAMMA = 100;
+        mesh.GAMMA = 10;
         mesh.update();
     }
 
@@ -342,10 +359,11 @@ public class BinaryMeshGenerationTests {
         MeshFrame3D mf3d = new MeshFrame3D();
         mf3d.showFrame(true);
         mf3d.addLights();
+        mf3d.hideAxis();
         mf3d.setBackgroundColor(new Color(200, 200, 200));
 
         long start = System.currentTimeMillis();
-        ImagePlus volume = loopFault();
+        ImagePlus volume = doubleLoopFault();
         List<DeformableMesh3D> meshes = getMeshes(volume);
         System.out.println(System.currentTimeMillis() - start);
         MeshImageStack mis = new MeshImageStack(volume);
@@ -361,7 +379,11 @@ public class BinaryMeshGenerationTests {
             TopoCheck checkers = new TopoCheck(dm3d);
             List<TopologyValidationError> errors = checkers.validate();
             System.out.println(errors);
-            checkers.repairMesh();
+            DeformableMesh3D rep = checkers.repairMesh().get(0);
+            smooth( rep );
+            rep.setShowSurface(true);
+            rep.create3DObject();
+            mf3d.addDataObject(rep.data_object);
             System.out.println(checkers.validate());
             /*if(errors.size()>=0){
                 System.out.println(errors);
@@ -378,7 +400,7 @@ public class BinaryMeshGenerationTests {
             }
             dm3d.setShowSurface(false);
             dm3d.create3DObject();
-            dm3d.data_object.setShowSurface(true);
+            //dm3d.data_object.setShowSurface(true);
             //dm3d.data_object.setColor(ColorSuggestions.addTransparency(c, 0.25f));
             dm3d.data_object.setWireColor(c);
             mf3d.addTransientObject(dm3d.data_object);

@@ -48,6 +48,11 @@ public class BinaryImageGenerationTest {
         ImagePlus plus = BinaryMeshGenerationTests.singlePointFault();
         Assert.assertEquals(0, testHarness(plus));
     }
+    @Test
+    public void edgeCases(){
+        ImagePlus plus = BinaryMeshGenerationTests.edgeCases();
+        Assert.assertEquals(0, testHarness(plus));
+    }
 
     @Test
     public void oPinchFaultTest(){

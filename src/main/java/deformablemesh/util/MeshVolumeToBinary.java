@@ -71,10 +71,10 @@ public class MeshVolumeToBinary {
         double[] center = new double[3];
 
         int sliceLow = (int) lowI[2];
-        int sliceHigh = (int) highI[2];
+        int sliceHigh = (int) ( highI[2] + 0.5 );
         //verify
         sliceLow = sliceLow < 0 ? 0 : sliceLow;
-        sliceHigh = sliceHigh < slices ? sliceHigh : slices;
+        sliceHigh = sliceHigh <= slices ? sliceHigh : slices;
 
         int jlo = (int) lowI[1];
         int jhi = (int) highI[1];

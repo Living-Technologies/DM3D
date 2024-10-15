@@ -469,7 +469,7 @@ public class BinaryMeshGenerator {
 
         for(int j = 1; j<=old.size(); j++){
             ImageProcessor p = old.getProcessor(j).convertToShort(false).duplicate();
-            p.threshold(0);
+            p.threshold(2);
             stack.addSlice(p);
         }
         List<Region> regions = ConnectedComponents3D.getRegions(stack);
@@ -488,10 +488,15 @@ public class BinaryMeshGenerator {
             rg.step();
         }
 
+        int steps = 0;
         //Removes topological errors that cannot be handled.
-        rg.erode();
-        rg.dilate();
+        for(int i = 0; i<steps; i++) {
+            rg.erode();
+        }
 
+        for(int i = 0; i<steps; i++) {
+            rg.dilate();
+        }
         ImagePlus regionPlus = mis.getOriginalPlus().createImagePlus();
         regionPlus.setStack(stack);
         MeshImageStack regionStack = new MeshImageStack(regionPlus);
@@ -533,7 +538,7 @@ public class BinaryMeshGenerator {
     }
 
     public static void main(String[] args) throws IOException {
-        es = Executors.newFixedThreadPool(10);
+        es = Executors.newFixedThreadPool(20);
         new ImageJ();
         ImagePlus plus = FileInfoVirtualStack.openVirtual(new File(args[0]).getAbsolutePath());
         //ImagePlus plus = ImageJFunctions.wrap(MCBroken.image(), "3x3x3-blob");
@@ -547,7 +552,7 @@ public class BinaryMeshGenerator {
         List<Track> broken = new ArrayList<>();
         int saved = 0;
         ImageStack stack = null;
-        for(int i = 5; i < mis.getNFrames(); i++){
+        for(int i = 0; i < mis.getNFrames(); i++){
             mis.setFrame(i);
             long start = System.currentTimeMillis();
             List<DeformableMesh3D> meshes = predictMeshes(mis);
@@ -622,7 +627,7 @@ public class BinaryMeshGenerator {
                 MeshWriter.saveMeshes(new File("voxel-mesh-errors.bmf"), broken);
                 saved = broken.size();
             } else{
-                System.out.println("no more broken meshes!");
+                System.out.println("No more broken meshes! " + saved);
             }
 
         }

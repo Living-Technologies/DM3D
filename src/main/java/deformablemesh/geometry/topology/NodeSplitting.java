@@ -23,7 +23,7 @@ public class NodeSplitting {
     }
     void split(Node3D node, List<Triangle3D> triangles){
         if(triangles.size() == 0){
-            System.out.println("wtf");
+            System.out.println("Splitting no triangles from a node!");
         }
         split.put(node, triangles);
         int adex = positions.size();
