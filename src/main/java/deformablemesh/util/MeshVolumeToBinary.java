@@ -77,12 +77,12 @@ public class MeshVolumeToBinary {
         sliceHigh = sliceHigh <= slices ? sliceHigh : slices;
 
         int jlo = (int) lowI[1];
-        int jhi = (int) highI[1];
+        int jhi = (int) ( highI[1] + 0.5 );
         jlo = jlo < 0 ? 0 : jlo;
         jhi = jhi <= h ? jhi : h;
 
         int xlo = (int) lowI[0];
-        int xhi = (int) highI[0];
+        int xhi = (int) ( highI[0] + 0.5 );
         xlo = xlo < 0 ? 0 : xlo;
         xhi = xhi > w ? w : xhi;
         int n = (xhi - xlo)*(jhi - jlo)*(sliceHigh - sliceLow);

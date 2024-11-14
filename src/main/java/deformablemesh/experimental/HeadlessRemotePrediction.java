@@ -86,12 +86,13 @@ public class HeadlessRemotePrediction implements AutoCloseable{
     public static void main(String[] args) throws Exception {
         Path path = Paths.get(args[0]);
         MeshImageStack stack;
+        System.out.println("processing: " + path);
         if(Files.isDirectory(path)){
             stack = MeshImageStack.fromFolder(Paths.get(args[0]));
         }else{
             stack = new MeshImageStack(Paths.get(args[0]));
         }
-
+        System.out.println("loaded");
         Path volumeName = Paths.get(args[1]);
 
         try(HeadlessRemotePrediction hrp = new HeadlessRemotePrediction(stack)){

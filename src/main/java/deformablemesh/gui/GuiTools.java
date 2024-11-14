@@ -41,6 +41,7 @@ import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.util.stream.IntStream;
 
@@ -245,8 +246,8 @@ public class GuiTools {
     }
 
     private static String getFaqHTML(){
-        try {
-            BufferedReader r = new BufferedReader(new InputStreamReader(Thread.currentThread().getClass().getResourceAsStream("/help.html"), Charset.forName("UTF8")));
+        try (InputStream stream = GuiTools.class.getResourceAsStream("/help.html")) {
+            BufferedReader r = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8));
             StringBuilder b = new StringBuilder();
             String s;
 

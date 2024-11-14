@@ -799,8 +799,9 @@ public class MeshImageStack {
 
 
     /**
-     * This will get a multi-channel iso-tropic scaled version of the provided frame.
+     * This will get a multi-channel isotropic scaled version of the provided frame.
      *
+     * @param frame 0-index frame
      */
     public ImagePlus getStackIso(int frame){
         ImagePlus plus = getStack(frame);
@@ -821,7 +822,7 @@ public class MeshImageStack {
     /**
      * This will get an N channel version of the provided frame.
      *
-     * @param i
+     * @param i 0-index time.
      * @return
      */
     public ImagePlus getStack(int frame){

@@ -11,6 +11,7 @@ import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.plugin.FileInfoVirtualStack;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 
@@ -44,7 +45,7 @@ public class PredictFromDistanceTransform {
             level = Integer.parseInt(args[1]);
         }
 
-        ImagePlus distanceTransform = new ImagePlus(ip.toString());
+        ImagePlus distanceTransform = FileInfoVirtualStack.openVirtual(ip.toString());
         int minSize = 5;
 
         MeshImageStack mis = new MeshImageStack(distanceTransform);
@@ -141,6 +142,7 @@ public class PredictFromDistanceTransform {
             end = System.currentTimeMillis();
             System.out.println("DT regions grown: " + (end - start)/1000.0);
 
+
             boundary.setFrame(frame);
             ImageStack bd = boundary.getCurrentFrame().getStack();
 
@@ -161,6 +163,7 @@ public class PredictFromDistanceTransform {
             rg = new RegionGrowing(threshed, growing);
             rg.setRegions(regions);
             rg.step();
+
             System.out.println("Single boundary step. " + (System.currentTimeMillis() - end)/1000.0 );
             for(int i = 0; i<threshed.getSize(); i++){
                 stack.addSlice(threshed.getProcessor(i+1));

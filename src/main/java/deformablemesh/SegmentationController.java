@@ -27,6 +27,7 @@ package deformablemesh;
 
 import Jama.LUDecomposition;
 import Jama.Matrix;
+import deformablemesh.examples.CreateCellposeLabels;
 import deformablemesh.externalenergies.ImageEnergyType;
 import deformablemesh.geometry.*;
 import deformablemesh.geometry.interceptable.Interceptable;
@@ -688,6 +689,7 @@ public class SegmentationController {
         });
     }
 
+
     /**
      * Training data consists of two images. The original image, and a labelled image which is an a bit image.
      * The first bit represents the mesh, the second bit represents inside, or outside of the mesh and the last 6
@@ -702,7 +704,6 @@ public class SegmentationController {
         ImagePlus original = getMeshImageStack().original;
         List<Track> tracks = getAllTracks();
         Path baseFolder = Paths.get(IJ.getDirectory("Select root folder"));
-        Create3DTrainingData creator = new Create3DTrainingDataFromMeshes(tracks, original);
         Path labelPath = baseFolder.resolve("labels");
         Path imagePath = baseFolder.resolve("images");
         try {
@@ -721,18 +722,18 @@ public class SegmentationController {
         String name = original.getTitle().replace(".tif", "");
 
         for(int i = start; i<=finish; i++){
+            ImagePlus iso = getMeshImageStack().getStackIso(i);
+            Create3DTrainingData creator = new Create3DTrainingDataFromMeshes(tracks, iso);
             String sliceName = String.format("%s-t%04d.tif", name, i);
             creator.run(i);
-            ImagePlus maskPlus = original.createImagePlus();
+            ImagePlus maskPlus = iso.createImagePlus();
             maskPlus.setStack(creator.getLabeledStack());
             IJ.save(maskPlus, new File(labelFolder, sliceName).getAbsolutePath());
             System.out.println("finished frame: " + i);
             //maskPlus.show();
             try {
-                ImagePlus scaled = creator.getOriginalFrame(i);
-                //scaled.setOpenAsHyperStack(true);
-                scaled.setLut(LUT.createLutFromColor(Color.WHITE));
-                IJ.save(scaled, new File(imageFolder, sliceName).getAbsolutePath());
+                iso.setLut(LUT.createLutFromColor(Color.WHITE));
+                IJ.save(iso, new File(imageFolder, sliceName).getAbsolutePath());
 
             } catch(Exception e){
                 e.printStackTrace();
@@ -1081,6 +1082,22 @@ public class SegmentationController {
     public void meshesFromLabelledImage(){
         meshesFromLabelledImage(100, 3);
     }
+
+    /**
+     *
+     * Generates meshes from a labelled image by surrounding each voxel of
+     * a labelled component with a mesh.
+     *
+     * @see SegmentationController#meshesFromLabelledImage(int, int)
+     *
+     */
+    public void voxelMeshesFromLabelledImage(){
+        submit(()->{
+            List<DeformableMesh3D> meshes = BinaryMeshGenerator.generateVoxelMeshes(getMeshImageStack());
+            startNewMeshTracks(meshes);
+        });
+    }
+
 
     /**
      * Applies the connection remesh algorith to all meshes in the current frame.
@@ -3600,6 +3617,28 @@ public class SegmentationController {
     public void acceptModifier(){
         RingController rc = getRingController();
         rc.finishedClicked();
+    }
+
+    /**
+     * Creates a set of isotropic data for use with stardist3d training.
+     *
+     */
+    public void generateStardistTrainingData() {
+    }
+
+    public void generateActiveUnetTrainingData(){
+
+    }
+
+    public void generateCellposeTrainingData(){
+        CreateCellposeLabels cclbl = new CreateCellposeLabels(getMeshImageStack(), getAllTracks());
+        cclbl.process();
+    }
+
+
+    public void guessVoxelMeshes() {
+        List<DeformableMesh3D> meshes = BinaryMeshGenerator.predictMeshes(getMeshImageStack());
+        startNewMeshTracks(meshes);
     }
 
 }
