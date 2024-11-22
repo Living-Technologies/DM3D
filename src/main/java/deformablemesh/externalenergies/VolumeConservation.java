@@ -38,7 +38,7 @@ public class VolumeConservation  implements ExternalEnergy{
 
     public VolumeConservation(DeformableMesh3D mesh, double weight){
         this.mesh = mesh;
-        volume = mesh.calculateVolume(new double[]{0, 0, 1});
+        volume = mesh.calculateVolume();
         double area = DeformableMesh3DTools.calculateSurfaceArea(mesh);
 
         calculator = new CurvatureCalculator(mesh);
