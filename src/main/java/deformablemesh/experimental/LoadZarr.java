@@ -128,7 +128,7 @@ public class LoadZarr {
                         break;
                     case "x":
                         cb.pixelWidth = scales.get(i);
-                        cb.xOrigin = scales.get(i);
+                        cb.xOrigin = offsets.get(i);
                         cb.setXUnit(a.unit);
                         break;
                     case "c":
@@ -139,10 +139,10 @@ public class LoadZarr {
                 }
 
             }
+            System.out.println(channels + ", " + slices + ", " + frames);
 
 
-
-            //The order seems to be correct the the channels/slices labels if switched.
+            //The order seems to be correct the channels/slices labels if switched.
             img.setStack(img.getStack(), channels, slices, frames);
             pluses.add(img);
         }

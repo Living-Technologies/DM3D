@@ -29,6 +29,8 @@ import deformablemesh.BoundingBoxTransformer;
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
 import deformablemesh.SegmentationController;
+import deformablemesh.examples.SaveImageToZarr;
+import deformablemesh.experimental.LoadZarr;
 import deformablemesh.experimental.RemotePrediction;
 import deformablemesh.externalenergies.ImageEnergyType;
 import deformablemesh.geometry.DeformableMesh3D;
@@ -54,6 +56,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -1239,6 +1243,32 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         JMenu furrow = createMenuFurrows();
         tools.add(furrow);
 
+        JMenu zarr = new JMenu("ome-zarr");
+        JMenuItem load = new JMenuItem("load zarr");
+        zarr.add(load);
+        load.addActionListener(evt->{
+            Path folder = Paths.get(IJ.getDirectory("select zarr folder"));
+            try {
+                List<ImagePlus> pluses = LoadZarr.load3DStackFromZarrFile(folder.toString());
+                for(ImagePlus plus: pluses){
+                    plus.show();
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+        });
+        JMenuItem save = new JMenuItem("save-zarr");
+        zarr.add(save);
+        save.addActionListener(evt->{
+            String out = IJ.getFilePath("Select file to save zarr too.");
+            try {
+                SaveImageToZarr.saveToZarr(segmentationController.getMeshImageStack().getOriginalPlus(), Paths.get(out));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+        tools.add(zarr);
         return tools;
     }
 
