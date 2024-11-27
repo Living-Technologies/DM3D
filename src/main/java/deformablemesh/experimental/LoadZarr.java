@@ -6,15 +6,23 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
+import ij.ImageStack;
 import ij.measure.Calibration;
+import net.imglib2.Interval;
+import net.imglib2.RandomAccess;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.cache.img.CachedCellImg;
+import net.imglib2.img.display.imagej.ImageJFunctions;
 import org.janelia.saalfeldlab.n5.N5Reader;
 import org.janelia.saalfeldlab.n5.ij.N5IJUtils;
+import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
 import org.janelia.saalfeldlab.n5.universe.N5Factory;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class LoadZarr {
     static {
@@ -76,12 +84,10 @@ public class LoadZarr {
         List<ImagePlus> pluses = new ArrayList<>();
         for(String s: sets){
             Path attrs = Paths.get(location, s).getParent().resolve(".zattrs");
-            System.out.println(attrs);
             List<MultiScaleSpatial> things = getSpatialAttributes(attrs);
 
-            Map<String, Class<?>> ls = reader.listAttributes(s);
             long[] shape = reader.getAttribute(s, "shape", long[].class);
-            System.out.println(Arrays.toString(shape));
+            System.out.println("read shape: " + Arrays.toString(shape));
             ImagePlus img = N5IJUtils.load(reader, s);
             int n = shape.length;
             int frames = 1;
@@ -106,6 +112,9 @@ public class LoadZarr {
                         System.out.println("unknown transformation: " + t);
                 }
             }
+            int cIndex, zIndex;
+            String order = mss.axes.stream().map(a->a.name.toLowerCase()).collect(Collectors.joining());
+            System.out.println("zarr file order: " + order);
 
             for(int i = 0; i<mss.axes.size(); i++){
                 Axis a = mss.axes.get(i);
@@ -139,11 +148,22 @@ public class LoadZarr {
                 }
 
             }
-            System.out.println(channels + ", " + slices + ", " + frames);
 
+            ImageStack stack = img.getStack();
+            if(order.contains("cz")){
+                ImageStack temp = new ImageStack(stack.getWidth(), stack.getHeight());
+                //channels and z are backwards.
+                for(int i = 0; i<frames; i++){
+                    for(int k = 0; k<slices; k++){
+                        for(int j = 0; j<channels; j++){
+                            temp.addSlice(stack.getProcessor(1 + i*channels*slices + k + j*slices));
+                        }
+                    }
+                }
+                stack = temp;
+            }
 
-            //The order seems to be correct the channels/slices labels if switched.
-            img.setStack(img.getStack(), channels, slices, frames);
+            img.setStack(stack, channels, slices, frames);
             pluses.add(img);
         }
         return pluses;

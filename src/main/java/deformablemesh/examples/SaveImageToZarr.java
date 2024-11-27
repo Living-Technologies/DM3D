@@ -57,8 +57,13 @@ public class SaveImageToZarr {
         factory.zarrDimensionSeparator("/");
 
         try( N5Writer writer = factory.openWriter(op.toString()) ){
-            RandomAccessibleInterval<T> img = ImageJFunctions.wrap(plus);
-            //RandomAccessibleInterval<T> img2 = Views.moveAxis(img, 2, 0);
+            RandomAccessibleInterval<T> img;
+            if(plus.getNChannels() > 1){
+                img = Views.moveAxis((RandomAccessibleInterval<T>) ImageJFunctions.wrap(plus), 2, 3);
+            } else{
+                img = ImageJFunctions.wrap(plus);
+            }
+
             System.out.println("RAI shape: " + Arrays.toString(img.dimensionsAsLongArray()));
             //System.out.println("RAI shape: " + Arrays.toString(img2.dimensionsAsLongArray()));
             Calibration cb = plus.getCalibration();
@@ -85,19 +90,19 @@ public class SaveImageToZarr {
             translation[spatial+1] = cb.yOrigin;
             axes[spatial + 1] = new Axis(Axis.SPACE, "y", cb.getYUnit());
 
-            //c (if present.
-            if(plus.getNChannels()  > 1){
-                spatial++;
-                blocks[2] = 1;
-                scale[2] = 1;
-                translation[2] = 0;
-                axes[2] = new Axis(Axis.CHANNEL, "c", null, true);
-            }
-
             blocks[spatial + 2] = plus.getNSlices();
             scale[spatial+2] = cb.pixelDepth;
             translation[spatial+2] = cb.zOrigin;
             axes[spatial + 2] = new Axis(Axis.SPACE, "z", cb.getZUnit());
+
+            //c (if present.)
+            if(plus.getNChannels()  > 1){
+                spatial++;
+                blocks[3] = 1;
+                scale[3] = 1;
+                translation[3] = 0;
+                axes[3] = new Axis(Axis.CHANNEL, "c", null, true);
+            }
 
             if(plus.getNFrames() > 1){
                 blocks[spatial + 3] = 1;
@@ -145,8 +150,7 @@ public class SaveImageToZarr {
     }
     public static void main(String[] args) throws Exception {
         //Path p = Paths.get(IJ.getFilePath("select image to convert")).toAbsolutePath();
-        //Path p = Paths.get("D:\\working\\zarr-communications\\sample-crop.tif");
-        Path p = Paths.get("D:\\working\\zarr-communications\\xyz.tif");
+        Path p = Paths.get("D:\\working\\zarr-communications\\cxyz.tif");
 
         String name = p.getFileName().toString();
         String outName = name.replaceAll("\\.[^.]*$", ".zarr");

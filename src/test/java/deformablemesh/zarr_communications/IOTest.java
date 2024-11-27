@@ -7,7 +7,6 @@ import ij.ImageStack;
 import ij.measure.Calibration;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
-import org.checkerframework.checker.fenum.qual.SwingTextOrientation;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -26,6 +25,21 @@ public class IOTest {
     final static double fi = 60;
     final static String unit = "µm";
     final static String timeUnit = "sec";
+
+    /**
+     * Creates an image plus with the desired array dimensions. It will be
+     * calibrated to the global calibration values.
+     *
+     * Each slice has a pixel value corresponding to its location in the
+     * image stack.
+     *
+     * @param w width
+     * @param h height
+     * @param z slices
+     * @param t frames
+     * @param c channels
+     * @return A stack of ShortProcessors
+     */
     static ImagePlus generic(int w, int h, int z, int t, int c){
         Calibration cb = new Calibration();
         cb.zOrigin = oz;
@@ -59,6 +73,9 @@ public class IOTest {
     }
 
     /**
+     * Validates the provided image plus using the expected shape
+     * parameters and global calibration values.
+     *
      *
      * @param w
      * @param h
@@ -102,6 +119,12 @@ public class IOTest {
             Assert.assertEquals(i*h*w, sum);
         }
     }
+
+    /**
+     * Recursively deletes the provided path.
+     *
+     * @param p
+     */
     private static void deleteTempZarrFolder(Path p){
         try {
             if (Files.isDirectory(p)) {
