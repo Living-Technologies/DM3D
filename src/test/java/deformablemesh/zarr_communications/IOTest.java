@@ -182,7 +182,7 @@ public class IOTest {
         int w = 96;
         int h = 64;
         int z = 16;
-        int t = 2;
+        int t = 3;
         int c = 2;
 
         Path p = Files.createTempDirectory("xyzct");
