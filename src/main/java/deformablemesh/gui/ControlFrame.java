@@ -1262,6 +1262,9 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         zarr.add(save);
         save.addActionListener(evt->{
             String out = IJ.getFilePath("Select file to save zarr too.");
+            if(out == null || !segmentationController.hasOriginalPlus()  ){
+                return;
+            }
             try {
                 SaveImageToZarr.saveToZarr(segmentationController.getMeshImageStack().getOriginalPlus(), Paths.get(out));
             } catch (Exception e) {

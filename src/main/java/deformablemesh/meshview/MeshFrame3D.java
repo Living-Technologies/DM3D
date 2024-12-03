@@ -98,7 +98,7 @@ public class    MeshFrame3D {
     RingController ringController;
 
     DataObject lights;
-    float ambient = 0.6f;
+    float ambient = 0.75f;
     float directional = 0.25f;
 
     List<ChannelVolume> channelVolumes = new ArrayList<>();

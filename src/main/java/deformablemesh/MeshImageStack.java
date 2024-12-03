@@ -339,7 +339,7 @@ public class MeshImageStack {
         if(other.data.length != data.length
                 || other.data[0].length != data[0].length
                 || other.data[0][0].length != data[0][0].length ){
-            return;
+            throw new RuntimeException("Stack dimensions do not match");
         }
         for(int i = 0; i<data.length; i++){
             double[][] dest = data[i];
@@ -374,15 +374,6 @@ public class MeshImageStack {
             } else if(base[i]>max_dex[i]){
                 base[i] = max_dex[i];
             }
-            /*
-            outside of image is zero.
-            if(base[i]<0||base[i]>max_dex[i]){
-                //out of range
-                return 0;
-            }
-            */
-
-
             f[i] = base[i]==max_dex[i]?0:ndex[i] - base[i];
         }
 
