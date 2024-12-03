@@ -25,25 +25,19 @@
  */
 import com.formdev.flatlaf.FlatDarculaLaf;
 import com.formdev.flatlaf.FlatDarkLaf;
-import com.formdev.flatlaf.FlatLightLaf;
 import deformablemesh.SegmentationController;
 import deformablemesh.SegmentationModel;
-import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.gui.ControlFrame;
 import deformablemesh.gui.PropertySaver;
-import deformablemesh.gui.RingController;
 import deformablemesh.meshview.MeshFrame3D;
 import ij.ImageJ;
 import ij.ImagePlus;
 import jogamp.nativewindow.jawt.JAWTUtil;
 
-import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import java.awt.EventQueue;
-import java.awt.GraphicsEnvironment;
 import java.io.File;
-import java.util.Arrays;
 import java.util.concurrent.Executors;
 
 /**

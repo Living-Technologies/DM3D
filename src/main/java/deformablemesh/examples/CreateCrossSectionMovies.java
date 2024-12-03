@@ -33,7 +33,7 @@ import deformablemesh.gui.GuiTools;
 import deformablemesh.io.MeshReader;
 import deformablemesh.meshview.DeformableMeshDataObject;
 import deformablemesh.meshview.MeshFrame3D;
-import deformablemesh.ringdetection.FurrowTransformer;
+import deformablemesh.geometry.FurrowTransformer;
 import deformablemesh.track.Track;
 import deformablemesh.util.GroupDynamics;
 import deformablemesh.util.Vector3DOps;

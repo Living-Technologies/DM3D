@@ -29,7 +29,7 @@ import deformablemesh.externalenergies.*;
 import deformablemesh.geometry.*;
 import deformablemesh.gui.FrameListener;
 import deformablemesh.gui.GuiTools;
-import deformablemesh.gui.RingController;
+import deformablemesh.gui.FurrowController;
 import deformablemesh.io.FurrowWriter;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.track.MeshTracker;
@@ -76,7 +76,7 @@ public class SegmentationModel {
 
     private double image_weight;
     private int divisions = 2;
-    private RingController ringController;
+    private FurrowController ringController;
     public ImageEnergyType energyType;
 
     Color backgroundColor = Color.WHITE;
@@ -536,7 +536,7 @@ public class SegmentationModel {
     }
 
 
-    public void setRingController(RingController ringController) {
+    public void setRingController(FurrowController ringController) {
 
         this.ringController = ringController;
         frameListeners.add(
@@ -547,7 +547,7 @@ public class SegmentationModel {
         );
     }
 
-    public RingController getRingController() {
+    public FurrowController getRingController() {
         return ringController;
     }
 

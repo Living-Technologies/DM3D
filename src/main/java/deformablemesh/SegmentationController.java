@@ -35,13 +35,13 @@ import deformablemesh.geometry.interceptable.InterceptingMesh3D;
 import deformablemesh.gui.FrameListener;
 import deformablemesh.gui.GuiTools;
 import deformablemesh.gui.PropertySaver;
-import deformablemesh.gui.RingController;
+import deformablemesh.gui.FurrowController;
 import deformablemesh.gui.render2d.RenderFrame2D;
 import deformablemesh.io.ImportType;
 import deformablemesh.io.MeshReader;
 import deformablemesh.io.TrackMateAdapter;
 import deformablemesh.meshview.*;
-import deformablemesh.ringdetection.FurrowTransformer;
+import deformablemesh.geometry.FurrowTransformer;
 import deformablemesh.simulations.FillingBinaryImage;
 import deformablemesh.track.FrameToFrameDisplacement;
 import deformablemesh.track.Track;
@@ -101,9 +101,9 @@ public class SegmentationController {
     public SegmentationController(SegmentationModel model){
         this.model = model;
         try {
-            model.setRingController(new RingController(this));
+            model.setRingController(new FurrowController(this));
             actionStack.addStateListener(s->{
-                RingController rc = getRingController();
+                FurrowController rc = getRingController();
                 if(rc != null){
                     submit(()->rc.setFrame(getCurrentFrame()));
                 }
@@ -1214,52 +1214,6 @@ public class SegmentationController {
     }
 
     /**
-     * Shows the volume of the currently selected mesh by adding a voxel transient object, similar to the way
-     * show volume works, but the result is binary and colored.
-     *
-     */
-    public void showBinaryBlob(){
-        if(model.hasSelectedMesh()) {
-            main.submit(() -> {
-
-                int f = model.getCurrentFrame();
-                DeformableMesh3D mesh = model.getSelectedMesh(f);
-                ImagePlus plus = DeformableMesh3DTools.createBinaryRepresentation(model.stack, mesh);
-                List<int[]> pts = new ArrayList<>();
-                ImageStack stack = plus.getStack();
-                int lx = Integer.MAX_VALUE;
-                int ly = Integer.MAX_VALUE;
-                int lz = Integer.MAX_VALUE;
-
-                for(int j = 1; j<= plus.getNSlices(); j++){
-                    ImageProcessor proc = stack.getProcessor(j);
-                    final int w = proc.getWidth();
-                    final int h = proc.getHeight();
-                    for(int i = 0; i<w*h; i++){
-                        if(proc.get(i)!=0){
-                            int x = i%w;
-                            int y = i/w;
-                            int z = j-1;
-                            pts.add(new int[]{x, y, z});
-                            lx = x<lx?x:lx;
-                            ly = y<ly?y:ly;
-                            lz = z<lz?z:lz;
-                        }
-                    }
-                }
-                VolumeDataObject obj = new VolumeDataObject(model.getSelectedTrack().getColor());
-                obj.setTextureData(model.stack, pts);
-                double[] corner = model.stack.getNormalizedCoordinate(
-                        new double[]{
-                                lx-model.stack.offsets[0]*0.5, ly-model.stack.offsets[0]*0.5, lz-model.stack.offsets[0]*0.5
-                        });
-                obj.setPosition(corner[0], corner[1], corner[2]);
-                meshFrame3D.addTransientObject(obj);
-            });
-        }
-    }
-
-    /**
      * Clears ALL of the current meshes.
      *
      */
@@ -1628,18 +1582,6 @@ public class SegmentationController {
         }
     }
 
-
-    /**
-     * Shows the volume data in the meshframe. The program is much slower with the volume showing. It can be faster
-     * to adjust min/max (contrast) and set the frame with the volume hidden.
-     */
-    public void showVolume() {
-        submit(()->{
-            meshFrame3D.showVolume(model.stack);
-            meshFrame3D.setVisible(true);
-        });
-    }
-
     /**
      * The type of image energy that will be used.
      *
@@ -1731,14 +1673,6 @@ public class SegmentationController {
         BoundingBoxTransformer bbt = new BoundingBoxTransformer(current, next);
         dups.forEach(bbt::transformTrack);
         setMeshTracks(dups);
-    }
-    public void showVolumeClippingDialog(){
-        VolumeDataObject vdo = meshFrame3D.getVolumeDataObject();
-        if(vdo!=null){
-            VolumeContrastSetter setter = new VolumeContrastSetter(vdo);
-            setter.setPreviewBackgroundColor(meshFrame3D.getBackgroundColor());
-            setter.showDialog(meshFrame3D.getJFrame());
-        }
     }
 
     /**
@@ -2463,10 +2397,6 @@ public class SegmentationController {
                     if(f == null){
                         setFurrowForCurrentFrame(new double[]{0,0,0}, new double[]{0, 0, 1});
                     }
-
-                    if(volumeShowing) {
-                        showVolume();
-                    }
                 }
         );
     }
@@ -2920,16 +2850,6 @@ public class SegmentationController {
     }
 
     /**
-     * The color the image volume is display as, when the image volume is showing.
-     *
-     * @param color
-     */
-    public void setVolumeColor(Color color){
-        model.volumeColor = color;
-        showVolume();
-    }
-
-    /**
      *
      * @return the ration of distance between slices to the height of a pixel.
      */
@@ -2961,7 +2881,7 @@ public class SegmentationController {
      *
      * @return
      */
-    public RingController getRingController() {
+    public FurrowController getRingController() {
         return model.getRingController();
     }
 
@@ -3388,14 +3308,14 @@ public class SegmentationController {
     /**
      * Sets the position and normal of the furrow.
      *
-     * @see RingController
+     * @see FurrowController
      * @param center
      * @param normal
      */
     public void setFurrowForCurrentFrame(double[] center, double[] normal){
 
         submit(()->{
-            RingController rc = model.getRingController();
+            FurrowController rc = model.getRingController();
             rc.setFurrow(normal, center);
         });
 
@@ -3413,16 +3333,6 @@ public class SegmentationController {
         meshFrame3D.setSegmentationController(this);
         //for mesh only updates
         model.addMeshListener(meshFrame3D::syncMesh);
-
-
-        model.addFrameListener((i)->{
-            meshFrame3D.updateRingController();
-            if(meshFrame3D.volumeShowing()) {
-                meshFrame3D.showVolume(model.stack);
-            }
-            meshFrame3D.syncMesh(i);
-
-        });
 
         meshFrame3D.addPickListener(new PickSelector(this));
 
@@ -3600,22 +3510,22 @@ public class SegmentationController {
     }
 
     public void startModifierTranslate(){
-        RingController rc = getRingController();
+        FurrowController rc = getRingController();
         rc.translateClicked();
     }
 
     public void startModifierSculpt(){
-        RingController rc = getRingController();
+        FurrowController rc = getRingController();
         rc.sculptClicked();
     }
 
     public void cancelModifier(){
-        RingController rc = getRingController();
+        FurrowController rc = getRingController();
         rc.cancel();
     }
 
     public void acceptModifier(){
-        RingController rc = getRingController();
+        FurrowController rc = getRingController();
         rc.finishedClicked();
     }
 

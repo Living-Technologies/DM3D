@@ -25,17 +25,10 @@
  */
 package deformablemesh.geometry;
 
-import deformablemesh.geometry.interceptable.AxisPlane;
 import deformablemesh.geometry.interceptable.Box3DInterceptable;
-import deformablemesh.ringdetection.FurrowTransformer;
 import deformablemesh.util.Vector3DOps;
 
-import java.awt.*;
-import java.awt.geom.Path2D;
 import java.util.*;
-import java.util.List;
-
-import static deformablemesh.util.Vector3DOps.TOL;
 
 /**
  * A 3D box, with edges along x-y-z axis.

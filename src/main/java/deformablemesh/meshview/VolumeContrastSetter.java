@@ -40,7 +40,6 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class VolumeContrastSetter{
-    VolumeSamplerPanel preview;
     IntensityRanges range;
     VolumeDataObject vdo;
     JDialog dialog;
@@ -51,37 +50,20 @@ public class VolumeContrastSetter{
         this.vdo = vdo;
     }
 
-    public void setPreviewBackgroundColor(Color c){
-        previewBackgroundColor = c;
-        if(preview != null){
-            preview.mf3d.setBackgroundColor(previewBackgroundColor);
-        }
-    }
-
     public void showDialog(Frame parent){
         dialog = new JDialog(parent, "adjust volume contrast");
         dialog.setModal(true);
         JPanel content = new JPanel(new BorderLayout());
         content.setBackground(Color.BLACK);
         content.setOpaque(true);
-        range = new IntensityRanges(vdo.texture_data);
-
+        range = new IntensityRanges(vdo.textureProducer, vdo.sizes);
 
         JPanel flow = new JPanel();
         flow.setOpaque(false);
         flow.add(range.getPanel());
 
         content.add(flow, BorderLayout.NORTH);
-
-
-        //Component comp = create3DPreviewer(dialog);
-
-        //content.add(comp, BorderLayout.CENTER);
         content.add(createButtons(), BorderLayout.SOUTH);
-
-        if(preview != null){
-            range.addContrastableListener(preview::setMinMaxClipping);
-        }
 
         range.setClipValues(vdo.min, vdo.max);
         dialog.setContentPane(content);
@@ -111,34 +93,11 @@ public class VolumeContrastSetter{
             dialog.dispose();
         });
 
-        JCheckBox oscillateView = new JCheckBox("oscillate preview");
-        oscillateView.setBackground(Color.BLACK);
-        oscillateView.setForeground(Color.WHITE);
-        oscillateView.setSelected(true);
-
-        oscillateView.addActionListener(evt->{
-            if(preview != null){
-                if(oscillateView.isSelected()){
-                    preview.oscillate();
-                } else{
-                    preview.stopOscillation();
-                }
-            }
-        });
-
-        panel.add(oscillateView);
         panel.add(Box.createHorizontalGlue());
         panel.add(accept);
         panel.add(cancel);
         panel.setOpaque(false);
         return panel;
-    }
-
-    public Component create3DPreviewer(Window frame) {
-        System.out.println("to here!");
-        preview = new VolumeSamplerPanel(frame);
-        preview.showSubSample(vdo);
-        return preview.panel;
     }
 
     class VolumeSamplerPanel{
@@ -193,32 +152,6 @@ public class VolumeContrastSetter{
             return new int[]{arr.length, arr[0].length, arr[0][0].length};
 
         }
-        void showSubSample(VolumeDataObject full){
-            previewVdo = new VolumeDataObject(volumeColor);
-            int[] whd = {64, 64, 64};
-            int[] shape = getShape(full.texture_data);
-
-
-            int[] low = new int[3];
-            int[] high = new int[3];
-
-            for(int i = 0; i<3; i++){
-
-                if(whd[i]>=shape[i]){
-                    whd[i] = shape[i]/2;
-                }
-
-                int remain = shape[i] - whd[i];
-                low[i] = remain/2;
-                high[i] = low[i] + whd[i];
-
-            }
-            previewVdo.setColor(full.color);
-            previewVdo.setTextureData(full, low, high);
-            previewVdo.setMinMaxRange(full.min, full.max);
-            mf3d.addDataObject(previewVdo);
-        }
-
 
         void setMinMaxClipping(double min, double max){
             previewVdo.setMinMaxRange(min, max);

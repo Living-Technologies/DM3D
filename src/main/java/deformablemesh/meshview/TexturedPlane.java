@@ -3,8 +3,6 @@ package deformablemesh.meshview;
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.AngleGenerator;
 import deformablemesh.geometry.Box3D;
-import deformablemesh.geometry.Furrow3D;
-import deformablemesh.ringdetection.FurrowTransformer;
 import deformablemesh.util.Vector3DOps;
 import ij.ImagePlus;
 import org.jogamp.java3d.*;

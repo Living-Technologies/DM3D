@@ -28,7 +28,6 @@ package deformablemesh.geometry;
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.interceptable.Interceptable;
 import deformablemesh.meshview.*;
-import deformablemesh.ringdetection.FurrowTransformer;
 import deformablemesh.util.Vector3DOps;
 import org.jogamp.java3d.Shape3D;
 

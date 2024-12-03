@@ -26,8 +26,7 @@
 package deformablemesh.geometry.projectable;
 
 import deformablemesh.geometry.*;
-import deformablemesh.geometry.projectable.Projectable;
-import deformablemesh.ringdetection.FurrowTransformer;
+import deformablemesh.geometry.FurrowTransformer;
 import deformablemesh.util.Vector3DOps;
 
 import java.awt.Color;

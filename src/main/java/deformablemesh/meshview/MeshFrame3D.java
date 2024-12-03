@@ -31,11 +31,10 @@ import deformablemesh.externalenergies.ExternalEnergy;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Furrow3D;
 import deformablemesh.gui.GuiTools;
-import deformablemesh.gui.RingController;
+import deformablemesh.gui.FurrowController;
 import deformablemesh.track.Track;
 import deformablemesh.util.Vector3DOps;
 import ij.ImagePlus;
-import jogamp.opengl.awt.AWTUtil;
 import org.jogamp.java3d.*;
 import org.jogamp.java3d.utils.picking.PickResult;
 import org.jogamp.vecmath.Color3f;
@@ -82,6 +81,7 @@ public class    MeshFrame3D {
     public DataCanvas getCanvas() {
         return canvas;
     }
+    MultiChannelVolumeTexture texture;
 
     @FunctionalInterface
     public static interface HudDisplay{
@@ -95,7 +95,7 @@ public class    MeshFrame3D {
     boolean showingVolume = false;
     VolumeDataObject vdo;
 
-    RingController ringController;
+    FurrowController ringController;
 
     DataObject lights;
     float ambient = 0.75f;
@@ -156,10 +156,18 @@ public class    MeshFrame3D {
             MeshImageStack stack = new MeshImageStack(plus);
             stack.setChannel(channel);
             stack.setFrame(segmentationController.getCurrentFrame());
-            ChannelVolume cv = new ChannelVolume(stack, c);
+            texture = getMultiChannelVolumeTexture(stack);
+            ChannelVolume cv = new ChannelVolume(stack, c, texture);
+
             addChannelVolume(cv);
         }
 
+    }
+
+    public MultiChannelVolumeTexture getMultiChannelVolumeTexture(MeshImageStack stack){
+        if( texture != null ) return texture;
+        int[] dims = new int[]{stack.getWidthPx(), stack.getHeightPx(), stack.getNSlices()};
+        return new MultiChannelVolumeTexture(dims);
     }
 
     public void chooseToremoveChannelVolume(){
@@ -204,7 +212,6 @@ public class    MeshFrame3D {
                 volume.getVolumeDataObject().showAsLabeledVolume();
             } else{
                 VolumeContrastSetter setter = new VolumeContrastSetter(volume.vdo);
-                setter.setPreviewBackgroundColor(getBackgroundColor());
                 setter.showDialog(getJFrame());
             }
         });
@@ -642,62 +649,6 @@ public class    MeshFrame3D {
 
     }
 
-    /**
-     * Backs the volume texture date with the supplied image stack.
-     * TODO qualify whether the stack/texture data has changed.
-     * @param stack
-     */
-    public void showVolume(MeshImageStack stack){
-        if(stack.getWidthPx()==0 || stack.getHeightPx()==0 || stack.getNSlices()==0){
-            //no volume data ignore request.
-            return;
-        }
-
-        if(showingVolume==false){
-            showingVolume=true;
-            if(vdo==null){
-                vdo = new VolumeDataObject(segmentationController.getVolumeColor());
-            }
-            vdo.setTextureData(stack);
-            addDataObject(vdo);
-        } else{
-            vdo.setTextureData(stack);
-        }
-
-
-    }
-
-
-
-    public void showEnergy(MeshImageStack stack, ExternalEnergy erg) {
-        showingVolume = true;
-        int d = stack.getNSlices();
-        int h = stack.getHeightPx();
-        int w = stack.getWidthPx();
-
-        if(vdo==null){
-            vdo = new VolumeDataObject(segmentationController.getVolumeColor());
-            vdo.setTextureData(stack);
-        }
-
-        for(int i = 0; i<d; i++){
-            for(int j = 0; j<h; j++){
-                for(int k = 0; k<w; k++){
-
-                    //double v = stack.data[i][j][k];
-                    double v = erg.getEnergy(stack.getNormalizedCoordinate(new double[]{k,j,i}));
-                    vdo.texture_data[k][h-j-1][i] = v;
-
-
-                }
-            }
-        }
-
-        vdo.updateVolume();
-
-    }
-
-
     public JFrame getJFrame() {
         return frame;
     }
@@ -725,7 +676,7 @@ public class    MeshFrame3D {
 
 
     public void updateRingController(){
-        RingController rc = segmentationController.getRingController();
+        FurrowController rc = segmentationController.getRingController();
         if(rc!=ringController){
             ringController=rc;
             ringController.addFrameListener((i)->{
@@ -763,10 +714,12 @@ public class    MeshFrame3D {
         MeshFrame3D frame = new MeshFrame3D();
         frame.showFrame(true);
         MeshImageStack stack = new MeshImageStack(Paths.get("quality-sample.tif"));
-        VolumeDataObject vdo = new VolumeDataObject(Color.RED);
+
+        MultiChannelVolumeTexture texture = new MultiChannelVolumeTexture(new int[]{stack.getWidthPx(), stack.getHeightPx(), stack.getNFrames()});
+        VolumeDataObject vdo = new VolumeDataObject(Color.RED, texture);
         vdo.setTextureData(stack);
         frame.addDataObject(vdo);
-        VolumeDataObject vdo2 = new VolumeDataObject(Color.YELLOW);
+        VolumeDataObject vdo2 = new VolumeDataObject(Color.YELLOW, texture);
         vdo2.setTextureData(stack);
         vdo2.showAsLabeledVolume();
         VolumeDataObject tmp;

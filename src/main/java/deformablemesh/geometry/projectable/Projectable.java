@@ -25,7 +25,7 @@
  */
 package deformablemesh.geometry.projectable;
 
-import deformablemesh.ringdetection.FurrowTransformer;
+import deformablemesh.geometry.FurrowTransformer;
 
 import java.awt.Shape;
 

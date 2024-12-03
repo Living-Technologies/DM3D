@@ -2,7 +2,7 @@ package deformablemesh.geometry.projectable;
 
 import deformablemesh.geometry.Box3D;
 import deformablemesh.geometry.Furrow3D;
-import deformablemesh.ringdetection.FurrowTransformer;
+import deformablemesh.geometry.FurrowTransformer;
 import deformablemesh.util.Vector3DOps;
 
 import java.awt.Shape;

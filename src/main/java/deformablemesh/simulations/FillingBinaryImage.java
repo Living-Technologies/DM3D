@@ -33,10 +33,7 @@ import deformablemesh.geometry.interceptable.BinaryInterceptible;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.RayCastMesh;
 import deformablemesh.io.MeshReader;
-import deformablemesh.meshview.CanvasView;
-import deformablemesh.meshview.DeformableMeshDataObject;
-import deformablemesh.meshview.MeshFrame3D;
-import deformablemesh.meshview.VolumeDataObject;
+import deformablemesh.meshview.*;
 import deformablemesh.track.Track;
 import deformablemesh.util.ColorSuggestions;
 import deformablemesh.util.connectedcomponents.Region;
@@ -110,17 +107,17 @@ public class FillingBinaryImage {
             }
         }
 
-
-
+        int[] dims = {mis.getWidthPx(), mis.getHeightPx(), mis.getNSlices()};
+        MultiChannelVolumeTexture texture = new MultiChannelVolumeTexture(dims);
         ImagePlus p2 = plus.createImagePlus();
         p2.setStack(blobs);
 
         MeshImageStack mis2 = new MeshImageStack(p2);
-        VolumeDataObject vdo = new VolumeDataObject(Color.WHITE);
+        VolumeDataObject vdo = new VolumeDataObject(Color.WHITE, texture);
         vdo.setTextureData(mis2);
         vdo.setMinMaxRange(0, 1);
 
-        VolumeDataObject vdo2 = new VolumeDataObject(Color.RED);
+        VolumeDataObject vdo2 = new VolumeDataObject(Color.RED, texture);
         vdo2.setTextureData(mis);
         vdo2.setMinMaxRange(0, 1);
         //vdo2.setTransparencyTrim(0, 100);

@@ -29,8 +29,8 @@ import deformablemesh.SegmentationController;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.projectable.Projectable;
 import deformablemesh.geometry.projectable.ProjectableMesh;
-import deformablemesh.gui.RingController;
-import deformablemesh.ringdetection.FurrowTransformer;
+import deformablemesh.gui.FurrowController;
+import deformablemesh.geometry.FurrowTransformer;
 import deformablemesh.util.Vector3DOps;
 
 import javax.swing.*;
@@ -49,7 +49,7 @@ public class FurrowInitializer extends JDialog {
 
 
     SegmentationController segmentationController;
-    RingController rings;
+    FurrowController rings;
 
     Initializer initializer;
     Runnable callback;

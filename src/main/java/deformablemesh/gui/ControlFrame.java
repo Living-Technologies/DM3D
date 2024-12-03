@@ -90,7 +90,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
     SwingJSTerm terminal;
     JLabel message = new JLabel("");
     HotKeyDelegate mf3DInterface;
-    RingController ringController;
+    FurrowController ringController;
 
     static String showPlane = "show plane";
     static String hidePlane = "hide plane";

@@ -6,6 +6,7 @@ import deformablemesh.geometry.BinaryMeshGenerator;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.meshview.ChannelVolume;
 import deformablemesh.meshview.MeshFrame3D;
+import deformablemesh.meshview.MultiChannelVolumeTexture;
 import deformablemesh.meshview.VolumeDataObject;
 import deformablemesh.util.connectedcomponents.Region;
 import ij.ImagePlus;
@@ -62,7 +63,9 @@ public class MCBroken {
         dm3d.create3DObject();
         dm3d.data_object.setWireColor(Color.BLUE);
         mf3d.addDataObject(dm3d.data_object);
-        ChannelVolume cv = new ChannelVolume(mis, Color.BLACK);
+        int[] dims = {mis.getWidthPx(), mis.getHeightPx(), mis.getNFrames()};
+        MultiChannelVolumeTexture texture = new MultiChannelVolumeTexture(dims);
+        ChannelVolume cv = new ChannelVolume(mis, Color.BLACK, texture);
         VolumeDataObject vdo = cv.getVolumeDataObject();
         vdo.setMinMaxRange(0, 1);
         vdo.setTransparencyTrim(0, 10);

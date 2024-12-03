@@ -23,7 +23,7 @@
  * THE SOFTWARE.
  * #L%
  */
-package deformablemesh.ringdetection;
+package deformablemesh.geometry;
 
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.Furrow3D;

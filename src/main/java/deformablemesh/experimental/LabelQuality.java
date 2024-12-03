@@ -7,6 +7,7 @@ import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.io.MeshReader;
 import deformablemesh.meshview.DeformableMeshDataObject;
 import deformablemesh.meshview.MeshFrame3D;
+import deformablemesh.meshview.MultiChannelVolumeTexture;
 import deformablemesh.meshview.VolumeDataObject;
 import deformablemesh.track.Track;
 import deformablemesh.util.connectedcomponents.Region;
@@ -38,7 +39,9 @@ public class LabelQuality {
         MeshFrame3D frame = new MeshFrame3D();
         frame.showFrame(true);
 
-        VolumeDataObject vdo = new VolumeDataObject(new Color(255, 255, 100));
+        int[] dims = {labels.getWidthPx(), labels.getHeightPx(), labels.getNSlices()};
+        MultiChannelVolumeTexture texture = new MultiChannelVolumeTexture(dims);
+        VolumeDataObject vdo = new VolumeDataObject(new Color(255, 255, 100), texture);
         vdo.setTextureData(labels);
         vdo.setMinMaxRange(0, 0.001);
         vdo.setTransparencyTrim(0, 1);

@@ -32,7 +32,7 @@ import deformablemesh.geometry.projectable.ProjectableMesh;
 import deformablemesh.gui.Drawable;
 import deformablemesh.gui.GuiTools;
 import deformablemesh.gui.Slice3DView;
-import deformablemesh.ringdetection.FurrowTransformer;
+import deformablemesh.geometry.FurrowTransformer;
 
 import javax.swing.*;
 import java.awt.*;

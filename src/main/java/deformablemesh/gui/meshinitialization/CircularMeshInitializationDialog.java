@@ -511,7 +511,6 @@ public class CircularMeshInitializationDialog implements FrameListener {
             MeshFrame3D mf3 = new MeshFrame3D();
             mf3.showFrame(true);
             controls.setMeshFrame3D(mf3);
-            controls.showVolume();
             JFrame frame = new JFrame("test");
             JButton d = new JButton("dialog");
             d.addActionListener((evt)->new CircularMeshInitializationDialog(new SegmentationController(model)).start());

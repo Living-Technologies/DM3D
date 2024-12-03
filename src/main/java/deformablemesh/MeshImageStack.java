@@ -27,7 +27,7 @@ package deformablemesh;
 
 import deformablemesh.geometry.Box3D;
 import deformablemesh.geometry.Furrow3D;
-import deformablemesh.ringdetection.FurrowTransformer;
+import deformablemesh.geometry.FurrowTransformer;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.io.FileInfo;
@@ -38,14 +38,11 @@ import ij.plugin.Resizer;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 
-import javax.swing.*;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.nio.FloatBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 

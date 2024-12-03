@@ -33,7 +33,7 @@ import deformablemesh.geometry.Furrow3D;
 import deformablemesh.geometry.projectable.ProjectableMesh;
 import deformablemesh.gui.FrameListener;
 import deformablemesh.io.MeshReader;
-import deformablemesh.ringdetection.FurrowTransformer;
+import deformablemesh.geometry.FurrowTransformer;
 import deformablemesh.util.ColorSuggestions;
 import deformablemesh.util.actions.StateListener;
 

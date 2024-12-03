@@ -27,7 +27,7 @@ package deformablemesh.io;
 
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.Furrow3D;
-import deformablemesh.ringdetection.ContractileRingDetector;
+import deformablemesh.geometry.FurrowManageModel;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -43,7 +43,7 @@ import java.util.Map;
  * Created by msmith on 4/5/16.
  */
 public class FurrowWriter {
-    public static void writeFurrows(File f, MeshImageStack stack, ContractileRingDetector detector) {
+    public static void writeFurrows(File f, MeshImageStack stack, FurrowManageModel detector) {
         try( BufferedWriter br = Files.newBufferedWriter(Paths.get(f.toString()), Charset.forName("utf-8"))  ) {
             br.write("#furrow3d - ver 0.2\n");
             br.write("#center of mass in image coordinates, normal - normalized vector\n");

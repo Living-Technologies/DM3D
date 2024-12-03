@@ -37,8 +37,8 @@ public class ChannelVolume implements FrameListener {
     VolumeDataObject vdo;
     MeshImageStack stack;
     String name;
-    public ChannelVolume(MeshImageStack stack, Color c){
-        vdo = new VolumeDataObject(c);
+    public ChannelVolume(MeshImageStack stack, Color c, MultiChannelVolumeTexture tex){
+        vdo = new VolumeDataObject(c, tex );
 
         this.stack = stack;
         vdo.setTextureData(stack);

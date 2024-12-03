@@ -39,7 +39,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MultiChannelVolumeTexture extends Texture3D{
-    private List<double[][][]> textures = new ArrayList<>();
+    private List<TextureProducer> textures = new ArrayList<>();
 
     //image indecies
     private int xDim,yDim,zDim;
@@ -131,36 +131,23 @@ public class MultiChannelVolumeTexture extends Texture3D{
         };
     }
 
-    public boolean matchesShape(double[][][] data){
-        return xDim == data.length && yDim == data[0].length && zDim == data[0][0].length;
-    }
 
     /**
      * Creates a MultiChannelVolumeTexture with a single channel.
      *
-     * @param double3d
+     * @param xyz desired size of Texture3D backing data.
      * @param cl_min
      * @param cl_max
      * @param c
      */
-    public MultiChannelVolumeTexture(double[][][] double3d, double cl_min, double cl_max, Color3f c){
-        super(Texture.BASE_LEVEL, Texture.RGBA, double3d.length, double3d[0].length, double3d[0][0].length);
+    public MultiChannelVolumeTexture(int[] xyz){
+        super(Texture.BASE_LEVEL, Texture.RGBA, xyz[0], xyz[1], xyz[2]);
         setCapability(ALLOW_IMAGE_WRITE);
-        textures.add(double3d);
 
-        this.xDim = double3d.length;
-        this.yDim = double3d[0].length;
-        this.zDim = double3d[0][0].length;
+        this.xDim = xyz[0];
+        this.yDim = xyz[1];
+        this.zDim = xyz[2];
 
-
-        Calibration cal = new Calibration();
-        cal.color = c;
-        calibrations.add(cal);
-
-        findMinAndMaxValues(cal, double3d);
-        cal.setRange(cl_min, cl_max);
-
-        clamp();
 
         setEnable(true);
         setMinFilter(Texture.BASE_LEVEL_LINEAR);
@@ -171,26 +158,27 @@ public class MultiChannelVolumeTexture extends Texture3D{
 
     }
 
-    public void updateTextureData(int index, double[][][] double3d, double cl_min, double cl_max, Color3f c){
+    public void updateTextureData(int index, TextureProducer tex, double cl_min, double cl_max, Color3f c){
 
-        textures.set(index, double3d);
+        textures.set(index, tex);
 
         Calibration cal = calibrations.get(index);
         cal.color = c;
-        findMinAndMaxValues(cal, double3d);
+        findMinAndMaxValues(cal, tex);
         cal.setRange(cl_min, cl_max);
         clamp();
     }
 
-    public void addChannel(double[][][] channelValues, double cl_min, double cl_max, Color3f c){
+    public int addChannel(TextureProducer channelValues, double cl_min, double cl_max, Color3f c){
         Calibration cal = new Calibration();
         cal.color = c;
         calibrations.add(cal);
 
         findMinAndMaxValues(cal, channelValues);
         cal.setRange(cl_min, cl_max);
-
+        textures.add(channelValues);
         clamp();
+        return textures.size() - 1;
     }
 
     public void setVolumePainter(int channel, VoxelPainter painter){
@@ -202,14 +190,15 @@ public class MultiChannelVolumeTexture extends Texture3D{
      * Finds the max and min values in the image.
      *
      */
-    private void findMinAndMaxValues(Calibration cal, double[][][] double3d) {
+    private void findMinAndMaxValues(Calibration cal, TextureProducer tex) {
         cal.min = Double.MAX_VALUE;
         cal.max = -Double.MAX_VALUE;
         for (int k = 0; k < zDim; k++) {
             for (int j = 0; j < yDim; j++) {
                 for (int i = 0; i < xDim; i++) {
-                    if (double3d[i][j][k] > cal.max) cal.max = double3d[i][j][k];
-                    if (double3d[i][j][k] < cal.min) cal.min = double3d[i][j][k];
+                    double v = tex.get(i, j, k);
+                    if (v > cal.max) cal.max = v;
+                    if (v < cal.min) cal.min = v;
                 }
             }
         }
@@ -263,14 +252,14 @@ public class MultiChannelVolumeTexture extends Texture3D{
 
             for(int channel = 0; channel < textures.size(); channel ++ ) {
                 int index = 0;
-                double[][][] double3d = textures.get(channel);
+                TextureProducer double3d = textures.get(channel);
                 Calibration cal = calibrations.get(channel);
                 //final Vector4f color4f = new Vector4f(cal.color.x, cal.color.y, cal.color.z, 1.f);
                 int notFirst = channel==0?0:1;
                 for (int y = 0; y < yDim; y++) {
                     for (int x = 0; x < xDim; x++) {
 
-                        double data = double3d[x][y][z];
+                        double data = double3d.get(x, y, z);
                         Vector4f v = cal.painter.getColor(data);
 
                         //R

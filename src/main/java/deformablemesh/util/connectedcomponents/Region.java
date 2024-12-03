@@ -30,6 +30,7 @@ import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.gui.Drawable;
 import deformablemesh.meshview.DataObject;
+import deformablemesh.meshview.MultiChannelVolumeTexture;
 import deformablemesh.meshview.VolumeDataObject;
 import deformablemesh.util.ColorSuggestions;
 import ij.ImagePlus;
@@ -119,7 +120,9 @@ public class Region {
     }
     public DataObject getDataObject(MeshImageStack stack){
         if(dataObject==null){
-            dataObject = new VolumeDataObject(c);
+            int[] dims = {stack.getWidthPx(), stack.getHeightPx(), stack.getNSlices()};
+            MultiChannelVolumeTexture texture = new MultiChannelVolumeTexture(dims);
+            dataObject = new VolumeDataObject(c, texture);
             dataObject.setTextureData(stack, pts);
             double[] corner = stack.getNormalizedCoordinate(new double[]{lx-stack.offsets[0]*0.5, ly-stack.offsets[0]*0.5, lz-stack.offsets[0]*0.5});
             dataObject.setPosition(corner[0], corner[1], corner[2]);

@@ -37,7 +37,7 @@ import deformablemesh.meshview.CanvasView;
 import deformablemesh.meshview.DataObject;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.meshview.TexturedPlaneDataObject;
-import deformablemesh.ringdetection.FurrowTransformer;
+import deformablemesh.geometry.FurrowTransformer;
 import deformablemesh.track.Track;
 import deformablemesh.util.Vector3DOps;
 import deformablemesh.util.actions.ActionStack;
@@ -431,7 +431,6 @@ public class MeshModifier implements Drawable {
 
             try {
                 ImagePlus plus = new ImagePlus(Paths.get(args[0]).toAbsolutePath().toString());
-                mod.setImage(plus);
                 List<Track> tracks = MeshReader.loadMeshes(new File(args[1]));
                 DeformableMesh3D mesh = tracks.get(0).getMesh(tracks.get(0).getFirstFrame());
                 mod.setMesh(mesh);

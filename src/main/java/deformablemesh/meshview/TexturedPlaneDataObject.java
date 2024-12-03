@@ -40,52 +40,28 @@ public class TexturedPlaneDataObject extends DeformableMeshDataObject {
     private Color volumeColor = Color.WHITE;
     Appearance texturedAppearance;
     MeshImageStack stack;
-    double[][][] texture_data;
     int[] sizes;
     double[] lengths;
     double[] offsets;
     MultiChannelVolumeTexture volume;
     float min = 0;
     float max = 1;
+    final int textureIndex;
     public TexturedPlaneDataObject(DeformableMesh3D mesh, MeshImageStack stack){
         super(mesh.nodes, mesh.connections, mesh.triangles, mesh.positions, mesh.connection_index, mesh.triangle_index);
         offsets = new double[]{ stack.offsets[0], stack.offsets[1], stack.offsets[2]};
+        texturedAppearance = createTexturedSurface();
+        surface_object.setAppearance(texturedAppearance);
 
-        setTextureData(stack);
+        this.stack = stack;
+        int[] dims = {stack.getWidthPx(), stack.getHeightPx(), stack.getNSlices()};
+
+        volume = new MultiChannelVolumeTexture(dims);
+        textureIndex = volume.addChannel(stack::getValue, min, max, DataCanvas.getComponents(volumeColor));
+
         surface_object.setAppearance(createTexturedSurface());
         branch_group.removeChild(mesh_object);
     }
-    public MeshImageStack getMeshImageStack(){
-        return stack;
-    }
-    public void setTextureData(MeshImageStack stack){
-        this.stack = stack;
-        int w = stack.getWidthPx();
-        int h = stack.getHeightPx();
-        int d = stack.getNSlices();
-
-
-
-
-
-        //create a new one if there isn't one, or if the dimensions do not match.
-        if(texture_data==null||d!=texture_data[0][0].length||h!=texture_data[0].length||w!=texture_data.length){
-            texture_data = new double[w][h][d];
-        }
-        sizes = new int[]{w, h, d};
-
-        for(int z = 0; z<d; z++){
-            for(int y = 0; y<h; y++){
-                for(int x = 0; x<w; x++){
-                    texture_data[x][y][z] = stack.getValue(x, y, z);
-                }
-            }
-        }
-
-        updateVolume();
-
-    }
-
     private Appearance hiddenSurface() {
         Appearance a = new Appearance();
         a.setTransparencyAttributes(new TransparencyAttributes(TransparencyAttributes.SCREEN_DOOR, 1f));
@@ -138,16 +114,9 @@ public class TexturedPlaneDataObject extends DeformableMeshDataObject {
         return appear;
     }
 
-    public void setMinMaxRange(double min, double max){
-        this.min = (float)min;
-        this.max = (float)max;
-        updateVolume();
-    }
-
     public void updateVolume(){
-        volume = new MultiChannelVolumeTexture(texture_data, min, max, DataCanvas.getComponents(volumeColor));
-        texturedAppearance = createTexturedSurface();
-        surface_object.setAppearance(texturedAppearance);
+        volume.updateTextureData(textureIndex, stack::getValue, min, max, DataCanvas.getComponents(volumeColor));
+
     }
 
     public void setShowSurface(boolean showSurface) {

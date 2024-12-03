@@ -23,10 +23,11 @@
  * THE SOFTWARE.
  * #L%
  */
-package deformablemesh.ringdetection;
+package deformablemesh.geometry;
 
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.Furrow3D;
+import deformablemesh.geometry.FurrowTransformer;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
@@ -42,7 +43,7 @@ import java.util.stream.Collectors;
  *
  * Created by msmith on 1/20/14.
  */
-public class ContractileRingDetector implements Iterable<Integer>{
+public class FurrowManageModel implements Iterable<Integer>{
     MeshImageStack stack;
     ImageProcessor currentSlice, currentBinary;
 
@@ -57,7 +58,7 @@ public class ContractileRingDetector implements Iterable<Integer>{
     Map<Integer, Furrow3D> furrows;
     private Furrow3D furrow;
 
-    public ContractileRingDetector(){
+    public FurrowManageModel(){
 
         furrows = new TreeMap<>();
         stack = MeshImageStack.getEmptyStack();
@@ -121,27 +122,10 @@ public class ContractileRingDetector implements Iterable<Integer>{
 
         ImageProcessor binary = new ShortProcessor(proc.getWidth(), proc.getHeight());
 
-        double[] center;
-        double v;
-        center = threshAndCenter(proc, binary);
-        //pruneBinaryBlobs(binary);
         currentBinary = binary;
         return binary;
     }
 
-
-    public List<List<double[]>> mapTo2D(List<List<double[]>> input){
-
-        List<List<double[]>> ret = new ArrayList<>();
-
-        if(furrow!=null) {
-            FurrowTransformer transformer = new FurrowTransformer(furrow, stack);
-            for (List<double[]> curve3d : input) {
-                ret.add(curve3d.stream().map(i -> transformer.getPlaneCoordinates(i)).collect(Collectors.toList()));
-            }
-        }
-        return ret;
-    }
 
     /**
      * Apply the current threshold to the image and find the center of mass of the successful points.
@@ -150,33 +134,19 @@ public class ContractileRingDetector implements Iterable<Integer>{
      * @param output where the output should be placed.
      * @return {x, y } positions
      */
-    double[] threshAndCenter(ImageProcessor input, ImageProcessor output){
+    void threshAndCenter(ImageProcessor input, ImageProcessor output){
         int w = input.getWidth();
         int h = input.getHeight();
         int n = w*h;
         double count = 0;
-        double[] center = {0,0};
         for(int i = 0; i<n; i++){
             float f = input.getf(i);
             if(f>threshold){
                 output.set(i, 255);
-                center[0] += i%w;
-                center[1] += i/w;
-                count++;
             } else{
                 output.set(i, 0);
             }
         }
-
-        if(count>0) {
-
-            center[0] = center[0] / count;
-            center[1] = center[1] / count;
-        }
-
-        return center;
-
-
     }
 
 
@@ -188,7 +158,7 @@ public class ContractileRingDetector implements Iterable<Integer>{
     public Furrow3D getFurrow(int i){
         Furrow3D f = furrows.get(i);
         if(f == null){
-            f = furrow;
+            return furrow;
         }
         return f;
     }
@@ -210,12 +180,6 @@ public class ContractileRingDetector implements Iterable<Integer>{
     public void putFurrow(int frame, Furrow3D furrow){
         furrows.put(frame, furrow);
         this.furrow = furrow;
-    }
-
-    public List<double[]> get3DCoordinatesFromFurrowPlane(List<double[]> pts){
-        if(furrow==null) return Collections.<double[]>emptyList();
-        FurrowTransformer transformer = new FurrowTransformer(furrow, stack);
-        return pts.stream().map(transformer::getVolumeCoordinates).collect(Collectors.toList());
     }
 
 

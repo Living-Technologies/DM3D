@@ -25,6 +25,7 @@
  */
 package deformablemesh.gui;
 
+import deformablemesh.meshview.TextureProducer;
 import ij.ImageStack;
 import ij.process.ImageProcessor;
 
@@ -49,8 +50,8 @@ public class IntensityRanges {
         public void setMinMax(double min, double max);
     }
 
-    public IntensityRanges(double[][][] intensityValues){
-        histogram = new Histogram(intensityValues);
+    public IntensityRanges(TextureProducer intensityValues, int[] xyz){
+        histogram = new Histogram(intensityValues, xyz);
         panel = new HistogramPanel(histogram);
     }
 
@@ -84,9 +85,19 @@ public class IntensityRanges {
      * @param stack
      */
     public IntensityRanges(ImageStack stack){
-        this(intensityRanges(stack));
+        this(getProducer(stack), getDimensions(stack));
     }
 
+    static TextureProducer getProducer(ImageStack stack){
+        final int w = stack.getWidth();
+        return (x, y, z)->{
+            return stack.getProcessor(z+1).get(y*w + x);
+        };
+
+    }
+    static int[] getDimensions(ImageStack stack){
+        return new int[]{stack.getWidth(), stack.getHeight(), stack.getSize()};
+    }
     public void addContrastableListener(Contrastable c){
         listeners.add(c);
     }
@@ -128,23 +139,25 @@ public class IntensityRanges {
         double minValue, maxValue;
         final int[] bins; //elements per bin.
         final double[] values; //value per bin
-        final double[][][] backingValues; //full values represented by histogram.
         double binMax = 0;
 
-        public Histogram(double[][][] inputValues){
-            this(120, inputValues);
+        public Histogram(TextureProducer inputValues, int[] xyz){
+            this(120, inputValues, xyz);
         }
 
-        public Histogram(int nBins, double[][][] inputValues){
+        public Histogram(int nBins, TextureProducer inputValues, int[] xyz){
             bins = new int[nBins];
             values = new double[nBins];
-            backingValues = inputValues;
 
             minValue = Double.MAX_VALUE;
             maxValue = -Double.MAX_VALUE;
-            for(double[][] slice: backingValues) {
-                for(double[] row: slice) {
-                    for (double v : row) {
+
+
+
+            for(int i = 0; i<xyz[0]; i++) {
+                for(int j = 0; j<xyz[1]; j++) {
+                    for (int k = 0; k<xyz[2]; k++) {
+                        double v = inputValues.get(i, j, k);
                         minValue = v < minValue ? v : minValue;
                         maxValue = v > maxValue ? v : maxValue;
                     }
@@ -158,9 +171,10 @@ public class IntensityRanges {
 
             double range = nBins/(maxValue - minValue);
 
-            for(double[][] slice: backingValues) {
-                for(double[] row: slice) {
-                    for (double v : row) {
+            for(int i = 0; i<xyz[0]; i++) {
+                for(int j = 0; j<xyz[1]; j++) {
+                    for (int k = 0; k<xyz[2]; k++) {
+                        double v = inputValues.get(i, j, k);
                         int dex = (int) ((v - minValue) * range);
                         dex = dex >= bins.length ? bins.length - 1 : dex;
                         int bin = ++bins[dex];
@@ -495,7 +509,7 @@ public class IntensityRanges {
             range[2*i] = u*f + 2;
             range[2*i+1] = v*f + 2;
         }
-        IntensityRanges ranger = new IntensityRanges(new double[][][]{{range}});
+        IntensityRanges ranger = new IntensityRanges((x, y, z)->range[z], new int[]{1, 1, range.length});
         frame.add(ranger.panel);
         frame.pack();
         frame.setVisible(true);
