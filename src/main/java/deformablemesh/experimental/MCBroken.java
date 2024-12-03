@@ -65,7 +65,7 @@ public class MCBroken {
         mf3d.addDataObject(dm3d.data_object);
         int[] dims = {mis.getWidthPx(), mis.getHeightPx(), mis.getNFrames()};
         MultiChannelVolumeTexture texture = new MultiChannelVolumeTexture(dims);
-        ChannelVolume cv = new ChannelVolume(mis, Color.BLACK, texture);
+        ChannelVolume cv = new ChannelVolume(mis, Color.BLACK, texture, null);
         VolumeDataObject vdo = cv.getVolumeDataObject();
         vdo.setMinMaxRange(0, 1);
         vdo.setTransparencyTrim(0, 10);

@@ -68,7 +68,6 @@ public class MultiChannelVolumeTexture extends Texture3D{
 
     }
 
-
     static class Calibration{
         double clampedMin;
         double clampedMax;
@@ -170,15 +169,32 @@ public class MultiChannelVolumeTexture extends Texture3D{
     }
 
     public int addChannel(TextureProducer channelValues, double cl_min, double cl_max, Color3f c){
+        System.out.println("starting: " + textures);
+
         Calibration cal = new Calibration();
         cal.color = c;
-        calibrations.add(cal);
-
         findMinAndMaxValues(cal, channelValues);
         cal.setRange(cl_min, cl_max);
-        textures.add(channelValues);
+
+        int dex = -1;
+        for(int i = 0; i<textures.size(); i++){
+            if(textures.get(i) == null){
+                //empty slot.
+                calibrations.set(i, cal);
+                textures.set(i, channelValues);
+                dex = i;
+            }
+        }
+        System.out.println("after: " + textures + " with " + dex);
+        if(dex == -1) {
+            dex = textures.size();
+            calibrations.add(cal);
+            textures.add(channelValues);
+        }
+        System.out.println("finally: " + dex + " // " + textures);
         clamp();
-        return textures.size() - 1;
+
+        return dex;
     }
 
     public void setVolumePainter(int channel, VoxelPainter painter){
@@ -247,39 +263,48 @@ public class MultiChannelVolumeTexture extends Texture3D{
         //COLORS: [0;255] 0 - black, 255 - white
         //TRANSP: [0;255] 0 - fully transparent, 255 - opaque
 
+        //find the first non-null channel so that it erases.
+        int firstChannel = 0;
+        for(int i = 0; i<textures.size(); i++){
+            if(textures.get(i) != null){
+                firstChannel = i;
+                break;
+            }
+        }
 
         for (int z = 0; z < zDim; z++) {
 
             for(int channel = 0; channel < textures.size(); channel ++ ) {
                 int index = 0;
                 TextureProducer double3d = textures.get(channel);
-                Calibration cal = calibrations.get(channel);
-                //final Vector4f color4f = new Vector4f(cal.color.x, cal.color.y, cal.color.z, 1.f);
-                int notFirst = channel==0?0:1;
-                for (int y = 0; y < yDim; y++) {
-                    for (int x = 0; x < xDim; x++) {
+                if(double3d != null) {
 
-                        double data = double3d.get(x, y, z);
-                        Vector4f v = cal.painter.getColor(data);
+                    Calibration cal = calibrations.get(channel);
+                    //final Vector4f color4f = new Vector4f(cal.color.x, cal.color.y, cal.color.z, 1.f);
+                    int notFirst = channel == firstChannel ? 0 : 1;
+                    for (int y = 0; y < yDim; y++) {
+                        for (int x = 0; x < xDim; x++) {
 
-                        //R
-                        byteData[index] = accumulate(byteData[index]*notFirst, (int)(v.x*255));
-                        index++;
-                        //G
-                        byteData[index] = accumulate(byteData[index]*notFirst, (int)(v.y*255));
-                        index++;
-                        //B
-                        byteData[index] = accumulate(byteData[index]*notFirst, (int)(v.z*255));
-                        index++;
-                        //transparency
-                        byteData[index] = accumulate(byteData[index]*notFirst, (int)(v.w*255));
-                        index++;
+                            double data = double3d.get(x, yDim - y - 1, z);
+                            Vector4f v = cal.painter.getColor(data);
+
+                            //R
+                            byteData[index] = accumulate(byteData[index] * notFirst, (int) (v.x * 255));
+                            index++;
+                            //G
+                            byteData[index] = accumulate(byteData[index] * notFirst, (int) (v.y * 255));
+                            index++;
+                            //B
+                            byteData[index] = accumulate(byteData[index] * notFirst, (int) (v.z * 255));
+                            index++;
+                            //transparency
+                            byteData[index] = accumulate(byteData[index] * notFirst, (int) (v.w * 255));
+                            index++;
+                        }
                     }
                 }
-
-                pArray.set(z, bImage);
-
             }
+            pArray.set(z, bImage);
         }
 
         setImage(0, pArray);
@@ -303,4 +328,9 @@ public class MultiChannelVolumeTexture extends Texture3D{
         clamp();
     }
 
+    public void removeChannel(int index){
+        System.out.println("removing!");
+        textures.set(index, null);
+        clamp();
+    }
 }

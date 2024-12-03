@@ -61,6 +61,14 @@ public class VolumeDataObject implements DataObject {
         color = c;
         offsets = new double[]{0,0,0};
         volume = tex;
+
+    }
+
+    public void setGeometry(Sizeable3DSurface surface){
+        this.surface = surface;
+    }
+    public Sizeable3DSurface getGeometry(){
+        return surface;
     }
 
     public void setColor(Color c){
@@ -150,6 +158,7 @@ public class VolumeDataObject implements DataObject {
     }
 
     public void setMinMaxRange(double min, double max){
+        System.out.println("Setting min and Max for: " + dex);
         this.min = min;
         this.max = max;
         updateVolume();
@@ -204,7 +213,6 @@ public class VolumeDataObject implements DataObject {
             branchGroup = new BranchGroup();
             branchGroup.addChild(tg);
             branchGroup.setCapability(BranchGroup.ALLOW_DETACH);
-
         }
 
     }
@@ -226,5 +234,9 @@ public class VolumeDataObject implements DataObject {
     }
     public double[] getMinMax() {
         return new double[] {min, max};
+    }
+
+    public void unlinkFromTexture() {
+        volume.removeChannel(dex);
     }
 }

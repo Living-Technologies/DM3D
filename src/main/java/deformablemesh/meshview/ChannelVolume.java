@@ -37,9 +37,9 @@ public class ChannelVolume implements FrameListener {
     VolumeDataObject vdo;
     MeshImageStack stack;
     String name;
-    public ChannelVolume(MeshImageStack stack, Color c, MultiChannelVolumeTexture tex){
-        vdo = new VolumeDataObject(c, tex );
-
+    public ChannelVolume(MeshImageStack stack, Color c, MultiChannelVolumeTexture tex, Sizeable3DSurface geom){
+        vdo = new VolumeDataObject(c, tex);
+        vdo.setGeometry(geom);
         this.stack = stack;
         vdo.setTextureData(stack);
         name = "ChannelVolume(" + stack.getOriginalPlus().getShortTitle() + ", " + c + ")";
@@ -58,4 +58,9 @@ public class ChannelVolume implements FrameListener {
     public VolumeDataObject getVolumeDataObject(){
         return vdo;
     }
+
+    public void unlinkFromTexture(){
+        vdo.unlinkFromTexture();
+    }
+
 }

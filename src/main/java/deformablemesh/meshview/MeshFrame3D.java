@@ -81,6 +81,8 @@ public class    MeshFrame3D {
     public DataCanvas getCanvas() {
         return canvas;
     }
+    //MultiChannelVolumeTexture texture;
+    VolumeDataObject volumeDataObject;
     MultiChannelVolumeTexture texture;
 
     @FunctionalInterface
@@ -110,13 +112,19 @@ public class    MeshFrame3D {
     public void addChannelVolume(ChannelVolume cv){
         channelVolumes.add(cv);
         segmentationController.addFrameListener(cv);
-        addDataObject(cv.vdo);
+        //This is added when the first volume is added.
+        //addDataObject(cv.vdo);
     }
 
     public void removeChannelVolume(ChannelVolume cv){
         channelVolumes.remove(cv);
         segmentationController.removeFrameListener(cv);
-        removeDataObject(cv.vdo);
+        cv.unlinkFromTexture();
+        if(channelVolumes.isEmpty()) {
+            //only remove the last channel.
+            removeDataObject(volumeDataObject);
+            volumeDataObject = null;
+        }
     }
 
     public List<ChannelVolume> getChannelVolumes(){
@@ -156,18 +164,26 @@ public class    MeshFrame3D {
             MeshImageStack stack = new MeshImageStack(plus);
             stack.setChannel(channel);
             stack.setFrame(segmentationController.getCurrentFrame());
-            texture = getMultiChannelVolumeTexture(stack);
-            ChannelVolume cv = new ChannelVolume(stack, c, texture);
-
+            ChannelVolume cv = getMultiChannelVolumeObject(stack, c);
             addChannelVolume(cv);
         }
 
     }
 
-    public MultiChannelVolumeTexture getMultiChannelVolumeTexture(MeshImageStack stack){
-        if( texture != null ) return texture;
-        int[] dims = new int[]{stack.getWidthPx(), stack.getHeightPx(), stack.getNSlices()};
-        return new MultiChannelVolumeTexture(dims);
+    public ChannelVolume getMultiChannelVolumeObject(MeshImageStack stack, Color c){
+        ChannelVolume cv;
+        //If the volume data object exists, it just returns it.
+        if( volumeDataObject != null ){
+            cv = new ChannelVolume(stack, c, volumeDataObject.volume, volumeDataObject.getGeometry());
+        } else {
+            //creates a new volume data object and adds it to the group.
+            int[] dims = new int[]{stack.getWidthPx(), stack.getHeightPx(), stack.getNSlices()};
+            texture = new MultiChannelVolumeTexture(dims);
+            cv = new ChannelVolume(stack, c, texture, null);
+            volumeDataObject = cv.getVolumeDataObject();
+            addDataObject(volumeDataObject);
+        }
+        return cv;
     }
 
     public void chooseToremoveChannelVolume(){

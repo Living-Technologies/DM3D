@@ -237,24 +237,14 @@ public class Sizeable3DSurface  implements DataObject{
         appear.setTexture(tex);
     }
 
-
-
-
-
-
     public BranchGroup getBranchGroup(){
         if(BG==null){
             BG = new BranchGroup();
             BG.setCapability(BranchGroup.ALLOW_DETACH);
-
             tg = new TransformGroup();
             tg.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
             Transform3D tt = new Transform3D();
-
             tt.setTranslation(OFFSET);
-
-
-
             tg.setTransform(tt);
             tg.addChild(surface);
             BG.addChild(tg);

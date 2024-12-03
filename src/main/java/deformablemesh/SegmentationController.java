@@ -3333,7 +3333,10 @@ public class SegmentationController {
         meshFrame3D.setSegmentationController(this);
         //for mesh only updates
         model.addMeshListener(meshFrame3D::syncMesh);
-
+        model.addFrameListener((i)->{
+            meshFrame3D.updateRingController();
+            meshFrame3D.syncMesh(i);
+        });
         meshFrame3D.addPickListener(new PickSelector(this));
 
     }
