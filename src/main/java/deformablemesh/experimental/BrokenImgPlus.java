@@ -1,14 +1,11 @@
 package deformablemesh.experimental;
 
-import net.imagej.ImageJ;
 import net.imagej.ImgPlus;
 import net.imagej.axis.CalibratedAxis;
 import net.imagej.axis.DefaultAxisType;
 import net.imagej.axis.DefaultLinearAxis;
-import net.imagej.axis.LinearAxis;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.img.imageplus.ByteImagePlus;
-import net.imglib2.img.imageplus.ImagePlusImg;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.util.Fraction;
 import org.janelia.saalfeldlab.n5.N5Writer;

@@ -29,7 +29,6 @@ import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.io.MeshReader;
-import deformablemesh.io.MeshWriter;
 import deformablemesh.track.Track;
 import ij.ImagePlus;
 import lightgraph.DataSet;

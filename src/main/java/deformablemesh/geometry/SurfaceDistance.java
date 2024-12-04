@@ -1,26 +1,10 @@
 package deformablemesh.geometry;
 
 import deformablemesh.DeformableMesh3DTools;
-import deformablemesh.io.MeshReader;
-import deformablemesh.meshview.CanvasView;
-import deformablemesh.meshview.LineDataObject;
-import deformablemesh.meshview.MeshFrame3D;
-import deformablemesh.meshview.SphereDataObject;
-import deformablemesh.track.Track;
 import deformablemesh.util.Vector3DOps;
-import org.jogamp.java3d.utils.picking.PickIntersection;
-import org.jogamp.java3d.utils.picking.PickResult;
-import org.jogamp.vecmath.Point3d;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.MouseEvent;
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 
 public class SurfaceDistance {
     DeformableMesh3D mesh;

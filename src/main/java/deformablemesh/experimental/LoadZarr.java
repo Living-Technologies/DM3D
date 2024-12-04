@@ -8,20 +8,16 @@ import ij.ImageJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.measure.Calibration;
-import net.imglib2.Interval;
-import net.imglib2.RandomAccess;
-import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.cache.img.CachedCellImg;
-import net.imglib2.img.display.imagej.ImageJFunctions;
 import org.janelia.saalfeldlab.n5.N5Reader;
 import org.janelia.saalfeldlab.n5.ij.N5IJUtils;
-import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
 import org.janelia.saalfeldlab.n5.universe.N5Factory;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class LoadZarr {

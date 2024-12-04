@@ -4,8 +4,6 @@ import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
 import deformablemesh.experimental.Imglib2MeshBenchMark;
 import deformablemesh.geometry.topology.TopoCheck;
-import deformablemesh.geometry.BinaryMeshGenerator;
-import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.topology.TopologyValidationError;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.meshview.VolumeDataObject;
@@ -17,7 +15,7 @@ import ij.process.ImageProcessor;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.awt.*;
+import java.awt.Color;
 import java.util.List;
 
 public class BinaryMeshGenerationTests {

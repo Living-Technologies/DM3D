@@ -25,15 +25,12 @@
  */
 package deformablemesh.util.connectedcomponents;
 
-import deformablemesh.MeshDetector;
 import deformablemesh.MeshImageStack;
-import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.gui.Drawable;
 import deformablemesh.meshview.DataObject;
 import deformablemesh.meshview.MultiChannelVolumeTexture;
 import deformablemesh.meshview.VolumeDataObject;
 import deformablemesh.util.ColorSuggestions;
-import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ShortProcessor;
 

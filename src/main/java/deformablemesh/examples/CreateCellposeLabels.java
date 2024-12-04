@@ -2,8 +2,6 @@ package deformablemesh.examples;
 
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
-import deformablemesh.geometry.DeformableMesh3D;
-import deformablemesh.gui.GuiTools;
 import deformablemesh.io.MeshReader;
 import deformablemesh.track.Track;
 import ij.IJ;

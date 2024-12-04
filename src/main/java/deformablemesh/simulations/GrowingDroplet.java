@@ -29,7 +29,11 @@ import deformablemesh.MeshImageStack;
 import deformablemesh.externalenergies.ExternalEnergy;
 import deformablemesh.externalenergies.SofterStericMesh;
 import deformablemesh.externalenergies.VolumeConservation;
-import deformablemesh.geometry.*;
+import deformablemesh.geometry.DeformableMesh3D;
+import deformablemesh.geometry.Furrow3D;
+import deformablemesh.geometry.Node3D;
+import deformablemesh.geometry.RayCastMesh;
+import deformablemesh.geometry.Sphere;
 import deformablemesh.geometry.interceptable.Interceptable;
 import deformablemesh.geometry.interceptable.InterceptingMesh3D;
 import deformablemesh.meshview.MeshFrame3D;
@@ -41,7 +45,11 @@ import ij.process.ColorProcessor;
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * A simulation where the volume increase, when the surface area to volume reaches a certain cutoff, the droplet will

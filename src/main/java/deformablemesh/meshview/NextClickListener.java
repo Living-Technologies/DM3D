@@ -1,7 +1,6 @@
 package deformablemesh.meshview;
 
 import deformablemesh.geometry.DeformableMesh3D;
-import deformablemesh.track.Track;
 import org.jogamp.java3d.GeometryArray;
 import org.jogamp.java3d.utils.picking.PickResult;
 

@@ -10,7 +10,6 @@ import ij.process.ShortProcessor;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;

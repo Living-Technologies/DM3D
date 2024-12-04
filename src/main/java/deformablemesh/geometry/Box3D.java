@@ -28,7 +28,7 @@ package deformablemesh.geometry;
 import deformablemesh.geometry.interceptable.Box3DInterceptable;
 import deformablemesh.util.Vector3DOps;
 
-import java.util.*;
+import java.util.Arrays;
 
 /**
  * A 3D box, with edges along x-y-z axis.

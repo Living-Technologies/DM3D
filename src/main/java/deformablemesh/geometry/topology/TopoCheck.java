@@ -2,18 +2,30 @@ package deformablemesh.geometry.topology;
 
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.experimental.Imglib2MeshBenchMark;
-import deformablemesh.geometry.*;
+import deformablemesh.geometry.Connection3D;
+import deformablemesh.geometry.DeformableMesh3D;
+import deformablemesh.geometry.Node3D;
+import deformablemesh.geometry.Triangle3D;
 import deformablemesh.io.MeshReader;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.track.Track;
 import deformablemesh.util.ColorSuggestions;
 import deformablemesh.util.Vector3DOps;
 
-import java.awt.*;
+import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**

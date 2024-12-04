@@ -27,13 +27,13 @@ package deformablemesh.examples;
 
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.DeformableMesh3D;
+import deformablemesh.geometry.FurrowTransformer;
 import deformablemesh.geometry.projectable.ProjectableMesh;
 import deformablemesh.gui.Drawable;
 import deformablemesh.gui.GuiTools;
 import deformablemesh.io.MeshReader;
 import deformablemesh.meshview.DeformableMeshDataObject;
 import deformablemesh.meshview.MeshFrame3D;
-import deformablemesh.geometry.FurrowTransformer;
 import deformablemesh.track.Track;
 import deformablemesh.util.GroupDynamics;
 import deformablemesh.util.Vector3DOps;

@@ -26,7 +26,6 @@
 package deformablemesh.geometry;
 
 import deformablemesh.io.MeshReader;
-import deformablemesh.io.MeshWriter;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.meshview.PlotSurface;
 import deformablemesh.track.Track;
@@ -38,7 +37,13 @@ import lightgraph.Graph;
 import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**

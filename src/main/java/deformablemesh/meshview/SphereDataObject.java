@@ -25,7 +25,12 @@
  */
 package deformablemesh.meshview;
 
-import org.jogamp.java3d.*;
+import org.jogamp.java3d.Appearance;
+import org.jogamp.java3d.BranchGroup;
+import org.jogamp.java3d.Material;
+import org.jogamp.java3d.Transform3D;
+import org.jogamp.java3d.TransformGroup;
+import org.jogamp.java3d.TransparencyAttributes;
 import org.jogamp.java3d.utils.geometry.Sphere;
 import org.jogamp.vecmath.Color3f;
 import org.jogamp.vecmath.Point3d;

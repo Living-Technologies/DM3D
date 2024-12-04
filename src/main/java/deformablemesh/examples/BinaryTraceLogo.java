@@ -10,10 +10,11 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ByteProcessor;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JSlider;
+import java.awt.Color;
 
 public class BinaryTraceLogo {
 

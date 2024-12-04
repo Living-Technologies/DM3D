@@ -43,15 +43,19 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.plugin.FileInfoVirtualStack;
 import ij.process.ColorProcessor;
-import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 
-import java.awt.*;
+import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 /**

@@ -31,7 +31,12 @@ import deformablemesh.geometry.Triangle3D;
 import deformablemesh.util.GaussianKernels;
 import deformablemesh.util.Vector3DOps;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by msmith on 2/10/16.

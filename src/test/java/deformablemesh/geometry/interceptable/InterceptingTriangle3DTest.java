@@ -29,7 +29,6 @@ import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Intersection;
-import deformablemesh.geometry.interceptable.InterceptingTriangle3D;
 import deformablemesh.io.MeshReader;
 import deformablemesh.track.Track;
 import deformablemesh.util.Vector3DOps;

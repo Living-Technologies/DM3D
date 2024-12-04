@@ -1,9 +1,6 @@
 package deformablemesh.util.connectedcomponents;
 
-import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.BinaryMeshGenerationTests;
-import deformablemesh.geometry.BinaryMeshGenerator;
-import deformablemesh.geometry.DeformableMesh3D;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ImageProcessor;

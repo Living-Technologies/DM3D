@@ -2,7 +2,6 @@ package deformablemesh.io;
 
 import deformablemesh.track.Track;
 
-import java.nio.LongBuffer;
 import java.util.Map;
 import java.util.Set;
 

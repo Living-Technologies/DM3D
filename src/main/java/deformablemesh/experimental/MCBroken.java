@@ -21,9 +21,8 @@ import net.imglib2.mesh.Mesh;
 import net.imglib2.mesh.Vertex;
 import net.imglib2.mesh.alg.MarchingCubesRealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
-import net.imglib2.util.ImgUtil;
 
-import java.awt.*;
+import java.awt.Color;
 import java.util.List;
 
 

@@ -25,17 +25,10 @@
  */
 package deformablemesh.geometry.interceptable;
 
-import deformablemesh.DeformableMesh3DTools;
-import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.Intersection;
 import deformablemesh.geometry.Triangle3D;
-import deformablemesh.io.MeshReader;
-import deformablemesh.track.Track;
 import deformablemesh.util.Vector3DOps;
-import ij.plugin.FileInfoVirtualStack;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.List;
 
 public class InterceptingTriangle3D {

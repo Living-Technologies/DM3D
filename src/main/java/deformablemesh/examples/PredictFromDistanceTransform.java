@@ -1,6 +1,5 @@
 package deformablemesh.examples;
 
-import deformablemesh.MeshDetector;
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.Box3D;
 import deformablemesh.gui.GuiTools;
@@ -12,14 +11,12 @@ import ij.ImageJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.plugin.FileInfoVirtualStack;
-import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 
-import javax.swing.*;
-import java.awt.*;
-import java.io.File;
-import java.nio.file.Paths;
+import java.awt.FileDialog;
+import java.awt.Frame;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;

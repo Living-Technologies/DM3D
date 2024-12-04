@@ -26,7 +26,6 @@
 package deformablemesh.track;
 
 import deformablemesh.geometry.DeformableMesh3D;
-import deformablemesh.util.ColorSuggestions;
 
 import java.awt.Color;
 import java.util.ArrayList;

@@ -1,6 +1,5 @@
 package deformablemesh.examples;
 
-import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -8,16 +7,13 @@ import com.fasterxml.jackson.databind.util.StdConverter;
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.RayCastMesh;
-import deformablemesh.track.Track;
 import ij.ImagePlus;
 import ij.measure.Calibration;
 import ij.plugin.FileInfoVirtualStack;
 import ij.plugin.FolderOpener;
 
-import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;

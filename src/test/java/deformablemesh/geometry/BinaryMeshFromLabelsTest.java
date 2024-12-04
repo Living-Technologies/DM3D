@@ -9,13 +9,12 @@ import deformablemesh.util.ColorSuggestions;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.measure.Calibration;
-import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.awt.*;
+import java.awt.Color;
 import java.util.List;
 import java.util.stream.Collectors;
 

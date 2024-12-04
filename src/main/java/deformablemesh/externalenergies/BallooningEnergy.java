@@ -27,7 +27,11 @@ package deformablemesh.externalenergies;
 
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
-import deformablemesh.geometry.*;
+import deformablemesh.geometry.CurvatureCalculator;
+import deformablemesh.geometry.DeformableMesh3D;
+import deformablemesh.geometry.RayCastMesh;
+import deformablemesh.geometry.Sphere;
+import deformablemesh.geometry.Triangle3D;
 import deformablemesh.geometry.interceptable.CompositeInterceptables;
 import deformablemesh.geometry.interceptable.Interceptable;
 import deformablemesh.meshview.MeshFrame3D;
@@ -38,7 +42,6 @@ import java.awt.event.KeyListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  *

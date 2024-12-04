@@ -32,29 +32,26 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.gui.GenericDialog;
 import ij.measure.Calibration;
-import ij.plugin.filter.PlugInFilter;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
-import org.janelia.saalfeldlab.n5.N5FSWriter;
 
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
-import java.awt.*;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
+import java.awt.BorderLayout;
+import java.awt.EventQueue;
+import java.awt.Window;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This is an experimental class derived from https://github.com/odinsbane/JavaTF2ModelRunner

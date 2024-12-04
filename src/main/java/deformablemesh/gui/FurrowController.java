@@ -29,11 +29,11 @@ import deformablemesh.MeshImageStack;
 import deformablemesh.SegmentationController;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Furrow3D;
-import deformablemesh.geometry.projectable.ProjectableMesh;
-import deformablemesh.geometry.modifier.MeshModifier;
-import deformablemesh.io.FurrowWriter;
 import deformablemesh.geometry.FurrowManageModel;
 import deformablemesh.geometry.FurrowTransformer;
+import deformablemesh.geometry.modifier.MeshModifier;
+import deformablemesh.geometry.projectable.ProjectableMesh;
+import deformablemesh.io.FurrowWriter;
 import deformablemesh.track.Track;
 import ij.process.ImageProcessor;
 

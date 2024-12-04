@@ -13,7 +13,7 @@ import deformablemesh.track.Track;
 import deformablemesh.util.connectedcomponents.Region;
 import ij.ImagePlus;
 
-import java.awt.*;
+import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;

@@ -26,21 +26,40 @@
 package deformablemesh.meshview;
 
 import deformablemesh.util.Vector3DOps;
-import org.jogamp.java3d.*;
+import org.jogamp.java3d.Background;
+import org.jogamp.java3d.BoundingSphere;
+import org.jogamp.java3d.BranchGroup;
+import org.jogamp.java3d.Canvas3D;
+import org.jogamp.java3d.GraphicsConfigTemplate3D;
+import org.jogamp.java3d.Group;
+import org.jogamp.java3d.ImageComponent;
+import org.jogamp.java3d.ImageComponent2D;
+import org.jogamp.java3d.Screen3D;
+import org.jogamp.java3d.Transform3D;
+import org.jogamp.java3d.TransformGroup;
+import org.jogamp.java3d.View;
 import org.jogamp.java3d.utils.picking.PickCanvas;
 import org.jogamp.java3d.utils.picking.PickResult;
 import org.jogamp.java3d.utils.picking.PickTool;
 import org.jogamp.java3d.utils.universe.SimpleUniverse;
 import org.jogamp.java3d.utils.universe.Viewer;
-import org.jogamp.java3d.utils.universe.ViewingPlatform;
-import org.jogamp.vecmath.*;
+import org.jogamp.vecmath.AxisAngle4d;
+import org.jogamp.vecmath.Color3f;
+import org.jogamp.vecmath.Matrix3d;
+import org.jogamp.vecmath.Point3d;
+import org.jogamp.vecmath.Vector3d;
+import org.jogamp.vecmath.Vector4d;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
+import java.awt.Rectangle;
+import java.awt.Window;
 import java.awt.event.MouseEvent;
-import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**

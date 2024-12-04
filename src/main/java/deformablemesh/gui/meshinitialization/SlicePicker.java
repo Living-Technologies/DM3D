@@ -27,15 +27,24 @@ package deformablemesh.gui.meshinitialization;
 
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.DeformableMesh3D;
+import deformablemesh.geometry.FurrowTransformer;
 import deformablemesh.geometry.projectable.Projectable;
 import deformablemesh.geometry.projectable.ProjectableMesh;
 import deformablemesh.gui.Drawable;
 import deformablemesh.gui.GuiTools;
 import deformablemesh.gui.Slice3DView;
-import deformablemesh.geometry.FurrowTransformer;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSlider;
+import javax.swing.JViewport;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;

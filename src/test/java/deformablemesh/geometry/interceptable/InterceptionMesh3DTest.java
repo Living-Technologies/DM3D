@@ -29,7 +29,6 @@ import deformablemesh.geometry.AngleGenerator;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Intersection;
 import deformablemesh.geometry.RayCastMesh;
-import deformablemesh.geometry.interceptable.InterceptingMesh3D;
 import deformablemesh.util.Vector3DOps;
 import org.junit.Assert;
 import org.junit.Test;

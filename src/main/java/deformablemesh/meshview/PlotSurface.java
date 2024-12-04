@@ -28,7 +28,11 @@ package deformablemesh.meshview;
 import deformablemesh.geometry.CurvatureCalculator;
 import deformablemesh.geometry.Node3D;
 import deformablemesh.geometry.Triangle3D;
-import org.jogamp.java3d.*;
+import org.jogamp.java3d.Appearance;
+import org.jogamp.java3d.BranchGroup;
+import org.jogamp.java3d.GeometryArray;
+import org.jogamp.java3d.IndexedTriangleArray;
+import org.jogamp.java3d.Shape3D;
 
 import java.util.ArrayList;
 import java.util.HashMap;

@@ -31,7 +31,11 @@ import deformablemesh.SegmentationModel;
 import deformablemesh.geometry.DeformableMesh3D;
 import ij.ImagePlus;
 
-import javax.swing.*;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.EventQueue;

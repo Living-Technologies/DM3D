@@ -25,7 +25,11 @@
  */
 package deformablemesh.meshview;
 
-import org.jogamp.java3d.*;
+import org.jogamp.java3d.Appearance;
+import org.jogamp.java3d.BranchGroup;
+import org.jogamp.java3d.Material;
+import org.jogamp.java3d.Transform3D;
+import org.jogamp.java3d.TransformGroup;
 import org.jogamp.java3d.utils.geometry.Cone;
 import org.jogamp.java3d.utils.geometry.Cylinder;
 import org.jogamp.vecmath.AxisAngle4d;

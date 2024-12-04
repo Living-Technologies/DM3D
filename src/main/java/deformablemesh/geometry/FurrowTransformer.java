@@ -26,7 +26,6 @@
 package deformablemesh.geometry;
 
 import deformablemesh.MeshImageStack;
-import deformablemesh.geometry.Furrow3D;
 import deformablemesh.util.Vector3DOps;
 
 /**

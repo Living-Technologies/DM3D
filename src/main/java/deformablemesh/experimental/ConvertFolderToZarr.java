@@ -4,7 +4,6 @@ import deformablemesh.MeshImageStack;
 import ij.ImagePlus;
 import ij.ImageStack;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 

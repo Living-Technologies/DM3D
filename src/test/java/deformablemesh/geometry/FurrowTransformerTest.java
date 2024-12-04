@@ -26,8 +26,6 @@
 package deformablemesh.geometry;
 
 import deformablemesh.MeshImageStack;
-import deformablemesh.geometry.Furrow3D;
-import deformablemesh.geometry.FurrowTransformer;
 import org.junit.Assert;
 import org.junit.Test;
 

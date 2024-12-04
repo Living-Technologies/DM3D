@@ -25,12 +25,22 @@
  */
 package deformablemesh;
 
-import deformablemesh.geometry.*;
+import deformablemesh.geometry.Box3D;
+import deformablemesh.geometry.Connection3D;
+import deformablemesh.geometry.DeformableMesh3D;
+import deformablemesh.geometry.Node3D;
+import deformablemesh.geometry.Triangle3D;
 import deformablemesh.io.MeshReader;
 import deformablemesh.track.Track;
 import deformablemesh.util.MeshVolumeToBinary;
 import deformablemesh.util.Vector3DOps;
-import deformablemesh.util.astar.*;
+import deformablemesh.util.astar.AStarBasic;
+import deformablemesh.util.astar.BasicCost;
+import deformablemesh.util.astar.BasicHeuristic;
+import deformablemesh.util.astar.Boundary;
+import deformablemesh.util.astar.ChoiceGenerator;
+import deformablemesh.util.astar.History;
+import deformablemesh.util.astar.PossiblePath;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -44,7 +54,14 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 /**

@@ -25,7 +25,10 @@
  */
 package deformablemesh.gui.render2d;
 
-import deformablemesh.geometry.*;
+import deformablemesh.geometry.Box3D;
+import deformablemesh.geometry.DeformableMesh3D;
+import deformablemesh.geometry.Intersection;
+import deformablemesh.geometry.Node3D;
 import deformablemesh.geometry.interceptable.Box3DInterceptable;
 import deformablemesh.geometry.interceptable.InterceptingMesh3D;
 import deformablemesh.io.MeshReader;
@@ -42,7 +45,11 @@ import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.List;
+import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;

@@ -1,11 +1,16 @@
 package deformablemesh.simulations;
 
-import deformablemesh.externalenergies.*;
-import deformablemesh.geometry.*;
+import deformablemesh.externalenergies.CellCenterAttraction;
+import deformablemesh.externalenergies.SofterStericMesh;
+import deformablemesh.externalenergies.VolumeConservation;
+import deformablemesh.geometry.DeformableMesh3D;
+import deformablemesh.geometry.Node3D;
+import deformablemesh.geometry.RayCastMesh;
+import deformablemesh.geometry.Sphere;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.util.ColorSuggestions;
 
-import java.awt.*;
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 

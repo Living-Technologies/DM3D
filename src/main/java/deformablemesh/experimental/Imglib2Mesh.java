@@ -3,7 +3,8 @@ package deformablemesh.experimental;
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshDetector;
 import deformablemesh.MeshImageStack;
-import deformablemesh.geometry.*;
+import deformablemesh.geometry.ConnectionRemesher;
+import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.topology.TopoCheck;
 import deformablemesh.geometry.topology.TopologyValidationError;
 import deformablemesh.io.MeshWriter;
@@ -35,11 +36,13 @@ import net.imglib2.mesh.alg.MeshConnectedComponents;
 import net.imglib2.mesh.impl.nio.BufferMesh;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 
-import java.awt.*;
+import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class Imglib2Mesh {

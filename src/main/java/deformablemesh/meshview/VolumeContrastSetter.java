@@ -25,12 +25,18 @@
  */
 package deformablemesh.meshview;
 
-import deformablemesh.MeshImageStack;
-import deformablemesh.geometry.Box3D;
 import deformablemesh.gui.IntensityRanges;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Frame;
+import java.awt.Window;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;

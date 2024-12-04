@@ -29,13 +29,21 @@ import deformablemesh.externalenergies.ExternalEnergy;
 import deformablemesh.externalenergies.StericMesh;
 import deformablemesh.externalenergies.TriangleAreaDistributor;
 import deformablemesh.externalenergies.VolumeConservation;
-import deformablemesh.geometry.*;
+import deformablemesh.geometry.DeformableMesh3D;
+import deformablemesh.geometry.NewtonMesh3D;
+import deformablemesh.geometry.Node3D;
+import deformablemesh.geometry.RayCastMesh;
+import deformablemesh.geometry.Sphere;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.util.Vector3DOps;
 import lightgraph.Graph;
 
 import java.awt.Color;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * This class is to test deforming two meshes that are influenced by "gravity", each other and a surface.

@@ -27,7 +27,6 @@ package deformablemesh.geometry;
 
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.io.MeshReader;
-import deformablemesh.io.MeshWriter;
 import deformablemesh.meshview.CanvasView;
 import deformablemesh.meshview.LineDataObject;
 import deformablemesh.meshview.MeshFrame3D;

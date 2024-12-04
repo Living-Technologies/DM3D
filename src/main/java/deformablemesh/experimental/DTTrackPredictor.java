@@ -6,12 +6,11 @@ import deformablemesh.geometry.Box3D;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.util.connectedcomponents.ConnectedComponents3D;
 import deformablemesh.util.connectedcomponents.Region;
-import deformablemesh.util.connectedcomponents.RegionGrowing;
 import ij.ImageStack;
 import ij.process.ImageProcessor;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class DTTrackPredictor implements BoundingBoxGenerator {

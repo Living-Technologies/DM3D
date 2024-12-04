@@ -26,14 +26,13 @@
 package deformablemesh.geometry;
 
 import deformablemesh.MeshImageStack;
-import deformablemesh.geometry.Furrow3D;
-import deformablemesh.geometry.FurrowTransformer;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * This used to be a way to initialize a contractile ring. It is becoming a tool for

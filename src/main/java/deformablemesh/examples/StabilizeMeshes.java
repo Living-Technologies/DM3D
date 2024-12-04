@@ -25,30 +25,18 @@
  */
 package deformablemesh.examples;
 
-import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.io.MeshReader;
 import deformablemesh.io.MeshWriter;
-import deformablemesh.meshview.DeformableMeshDataObject;
-import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.track.Track;
 import deformablemesh.util.GroupDynamics;
 import deformablemesh.util.Vector3DOps;
-import ij.ImagePlus;
-import ij.ImageStack;
-import ij.process.ColorProcessor;
 
-import javax.swing.JFrame;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class StabilizeMeshes {

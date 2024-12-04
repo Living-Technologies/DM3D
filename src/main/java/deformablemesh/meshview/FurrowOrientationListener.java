@@ -28,7 +28,6 @@ package deformablemesh.meshview;
 import deformablemesh.SegmentationController;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Furrow3D;
-import deformablemesh.track.Track;
 import deformablemesh.util.Vector3DOps;
 import org.jogamp.java3d.GeometryArray;
 import org.jogamp.java3d.utils.picking.PickIntersection;
