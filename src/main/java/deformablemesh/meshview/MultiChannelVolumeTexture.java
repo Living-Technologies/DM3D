@@ -48,6 +48,7 @@ public class MultiChannelVolumeTexture extends Texture3D{
 
     //WHITE:
     private List<Calibration> calibrations = new ArrayList<>();
+    private boolean paused;
 
     public double[] getMinMax(int channel) {
 
@@ -66,6 +67,14 @@ public class MultiChannelVolumeTexture extends Texture3D{
         Calibration c = calibrations.get(channel);
         return new double[] {c.min, c.max};
 
+    }
+
+    public void setPaused(boolean paused) {
+        this.paused = paused;
+    }
+
+    public boolean isPaused() {
+        return paused;
     }
 
     static class Calibration{
@@ -142,7 +151,7 @@ public class MultiChannelVolumeTexture extends Texture3D{
     public MultiChannelVolumeTexture(int[] xyz){
         super(Texture.BASE_LEVEL, Texture.RGBA, xyz[0], xyz[1], xyz[2]);
         setCapability(ALLOW_IMAGE_WRITE);
-
+        setCapability(ALLOW_ENABLE_WRITE);
         this.xDim = xyz[0];
         this.yDim = xyz[1];
         this.zDim = xyz[2];
@@ -238,11 +247,12 @@ public class MultiChannelVolumeTexture extends Texture3D{
         clamp();
     }
     /**
+     * Mixes the channels and passed the results to the 3D texture.
      *
-     * Creates the data for the Texture3D
-     *
+     * If paused this method will not do anything.
      */
     protected void clamp() {
+        if(paused) return;
         ImageComponent3D pArray = new ImageComponent3D(ImageComponent.FORMAT_RGBA, xDim, yDim, zDim);
 
 
@@ -306,8 +316,9 @@ public class MultiChannelVolumeTexture extends Texture3D{
             }
             pArray.set(z, bImage);
         }
-
+        setEnable(false);
         setImage(0, pArray);
+        setEnable(true);
     }
 
     public void setColor(int channel, double x, double y, double z){

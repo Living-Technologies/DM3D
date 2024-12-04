@@ -111,17 +111,12 @@ public class    MeshFrame3D {
 
     public void addChannelVolume(ChannelVolume cv){
         channelVolumes.add(cv);
-        segmentationController.addFrameListener(cv);
-        //This is added when the first volume is added.
-        //addDataObject(cv.vdo);
     }
 
     public void removeChannelVolume(ChannelVolume cv){
         channelVolumes.remove(cv);
-        segmentationController.removeFrameListener(cv);
         cv.unlinkFromTexture();
         if(channelVolumes.isEmpty()) {
-            //only remove the last channel.
             removeDataObject(volumeDataObject);
             volumeDataObject = null;
         }
@@ -619,9 +614,19 @@ public class    MeshFrame3D {
 
     public void setSegmentationController(SegmentationController control){
         segmentationController = control;
+        segmentationController.addFrameListener(frame ->{
+            if(volumeDataObject != null){
+                volumeDataObject.volume.setPaused(true);
+                    channelVolumes.forEach( channelVolume ->{
+                        channelVolume.frameChanged(frame);
+                    } );
+                volumeDataObject.volume.setPaused(false);
+                volumeDataObject.volume.clamp();
+            }
+        });
     }
 
-        public void syncMesh(int currentFrame){
+    public void syncMesh(int currentFrame){
         List<Track> tracks = segmentationController.getAllTracks();
 
         Set<DeformableMesh3D> current = tracks.stream().filter(t->t.containsKey(currentFrame)).map(t->t.getMesh(currentFrame)).collect(Collectors.toSet());

@@ -14,7 +14,7 @@ import net.imglib2.type.numeric.NumericType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.view.MixedTransformView;
 import net.imglib2.view.Views;
-import net.imglib2.view.fluent.RandomAccessibleIntervalView;
+//import net.imglib2.view.fluent.RandomAccessibleIntervalView;
 import org.janelia.saalfeldlab.n5.DataType;
 import org.janelia.saalfeldlab.n5.DatasetAttributes;
 import org.janelia.saalfeldlab.n5.GzipCompression;

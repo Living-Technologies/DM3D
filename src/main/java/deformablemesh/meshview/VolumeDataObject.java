@@ -218,7 +218,7 @@ public class VolumeDataObject implements DataObject {
     }
 
     public void showAsLabeledVolume(){
-        volume.setVolumePainter(0, new LabeledVoxelPainter(0));
+        volume.setVolumePainter(dex, new LabeledVoxelPainter(0));
     }
 
     @Override
