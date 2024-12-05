@@ -42,8 +42,8 @@ public class BinaryMeshFromLabelsTest {
                 }
             }
         }
-
-        List<DeformableMesh3D> meshes = BinaryMeshGenerator.meshesFromLabels(new MeshImageStack(plus));
+        BinaryMeshGenerator generator = new BinaryMeshGenerator();
+        List<DeformableMesh3D> meshes = generator.meshesFromLabels(new MeshImageStack(plus));
         Assert.assertEquals(2,meshes.size());
 
         long error = testHarness(plus);
@@ -100,7 +100,8 @@ public class BinaryMeshFromLabelsTest {
     }
 
     static long testHarness(ImagePlus plus){
-        List<DeformableMesh3D> meshes = BinaryMeshGenerator.meshesFromLabels(new MeshImageStack(plus));
+        BinaryMeshGenerator generator = new BinaryMeshGenerator();
+        List<DeformableMesh3D> meshes = generator.meshesFromLabels(new MeshImageStack(plus));
         List<Track> tracks = meshes.stream().map(m -> {
             TopoCheck tc = new TopoCheck(m);
             List<DeformableMesh3D> m2 = tc.repairMesh();
@@ -130,7 +131,7 @@ public class BinaryMeshFromLabelsTest {
         //ImagePlus plus = generate();
 
         ImagePlus plus = new ImagePlus("D:\\working\\maria\\sample-debug.tif");
-        List<DeformableMesh3D> meshes = BinaryMeshGenerator.meshesFromLabels(new MeshImageStack(plus));
+        List<DeformableMesh3D> meshes = new BinaryMeshGenerator().meshesFromLabels(new MeshImageStack(plus));
         MeshFrame3D mf3d = new MeshFrame3D();
         mf3d.showFrame(true);
         mf3d.setBackgroundColor(Color.BLACK);

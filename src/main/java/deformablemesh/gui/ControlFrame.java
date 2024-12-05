@@ -1064,8 +1064,16 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         imprtFrom.addActionListener(actionEvent -> {
             importFrom();
         });
-
+        JMenuItem transformToOpenImage = new JMenuItem("Transform to Open Image");
+        mesh.add(transformToOpenImage);
+        transformToOpenImage.addActionListener(new UiAction(segmentationController::transformToImage));
         mesh.addSeparator();
+
+        JMenuItem cropAroundSelectedMesh = new JMenuItem("Crop around selected mesh.");
+        mesh.add(cropAroundSelectedMesh);
+        cropAroundSelectedMesh.addActionListener(
+                new ModelAction(segmentationController::cropSelectedMeshRegion)
+        );
 
         JMenuItem stlSave = new JMenuItem("Export as Stl");
         mesh.add(stlSave);
@@ -1124,9 +1132,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
 
         JMenuItem voxelMeshGeneration = new JMenuItem("Voxel Meshes from Labels");
         mesh.add(voxelMeshGeneration);
-       voxelMeshGeneration.addActionListener(evt->{
-            segmentationController.submit(segmentationController::voxelMeshesFromLabelledImage);
-        });
+       voxelMeshGeneration.addActionListener(new ModelAction(segmentationController::voxelMeshesFromLabelledImage) );
         mesh.addSeparator();
         JMenuItem predictEllipses = new JMenuItem("Ellispes from DT");
         mesh.add(predictEllipses);

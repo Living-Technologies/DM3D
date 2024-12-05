@@ -1080,6 +1080,8 @@ public class SegmentationController {
         startNewMeshTracks(guessed);
     }
 
+
+
     /**
      * Processes the selected image by separating out all of the pixel regions
      * and then creating spherical meshes and deforming them to the binary blob.
@@ -1126,8 +1128,15 @@ public class SegmentationController {
      *
      */
     public void voxelMeshesFromLabelledImage(){
+        voxelMeshesFromLabelledImage(0, 0);
+    }
+
+    public void voxelMeshesFromLabelledImage(int openSteps, int closeSteps){
+        BinaryMeshGenerator generator = new BinaryMeshGenerator();
+        generator.setOpenSteps(openSteps);
+        generator.setCloseSteps(closeSteps);
         submit(()->{
-            List<DeformableMesh3D> meshes = BinaryMeshGenerator.generateVoxelMeshes(getMeshImageStack());
+            List<DeformableMesh3D> meshes = generator.meshesFromLabels(getMeshImageStack());
             startNewMeshTracks(meshes);
         });
     }
@@ -1643,12 +1652,24 @@ public class SegmentationController {
     public void changeVolumeClipping(int minDelta, int maxDelta) {
         submit(()->meshFrame3D.changeVolumeClipping(minDelta, maxDelta));
     }
-
+    public void cropSelectedMeshRegion(){
+        DeformableMesh3D mesh = getSelectedMesh();
+        if(mesh != null){
+            cropNormalized3DRegionAndTransform(mesh.getBoundingBox());
+        }
+    }
     /**
      * Overloaded for using normalized coordinates represented as a box3d
      * @param region an axis aligned bounding box.
      */
-    public void crop3DRegionNormalized(Box3D region){
+    public void cropNormalized3DRegionAndTransform(Box3D region){
+        ImagePlus plus = cropNormalizedRegion(region);
+        plus.setOpenAsHyperStack(true);
+        plus.show();
+        transformToImage(plus);
+    }
+
+    public ImagePlus cropNormalizedRegion(Box3D region){
         MeshImageStack stack = getMeshImageStack();
         MeshImageStack.ImageRegion3D r = stack.getImageCropValues(region);
         int x = r.lx;
@@ -1658,39 +1679,22 @@ public class SegmentationController {
         int h = r.hy - r.ly + 1;
         int d = r.hz - r.lz + 1;
 
-        crop3DRegion(x, y, z, w, h, d);
-
+        ImagePlus plus = crop3DRegion(x, y, z, w, h, d);
+        return plus;
     }
 
-    public void crop3DRegion(int x, int y, int z, int w, int h, int d){
+    public ImagePlus crop3DRegion(int x, int y, int z, int w, int h, int d){
         MeshImageStack stack = getMeshImageStack();
         ImagePlus alt = stack.getCroppedRegion(x, y, z, w, h, d);
-        alt.show();
         alt.setTitle(
                 getShortImageName() + "_"
-                        + x + ", " + y +", " +  z + ", "
-                        + w + ", " +  h +", " +  d );
-        setOriginalPlus(alt);
-        MeshImageStack next = getMeshImageStack();
-        List<Track> tracks = getAllTracks();
-        List<Track> dups = new ArrayList<>();
-        for(Track t: tracks){
-            Track t2 = new Track(t.getName(), t.getColor());
-            for(Integer key: t.getTrack().keySet()){
-                t2.addMesh(key, DeformableMesh3DTools.copyOf(t.getMesh(key)));
-            }
-            dups.add(t2);
-        }
-        BoundingBoxTransformer bbt = new BoundingBoxTransformer(stack, next);
-        dups.forEach(bbt::transformTrack);
-        setMeshTracks(dups);
+                        + x + "_" + y +"_" +  z + "_"
+                        + w + "_" +  h +"_" +  d );
+        return alt;
     }
 
-
-    public void transformToImage(){
+    public void transformToImage(ImagePlus plus){
         MeshImageStack current = getMeshImageStack();
-        ImagePlus plus = GuiTools.selectOpenImage(IJ.getInstance());
-        if(plus == null) return;
         setOriginalPlus(plus);
         MeshImageStack next = getMeshImageStack();
         List<Track> tracks = getAllTracks();
@@ -1707,6 +1711,13 @@ public class SegmentationController {
         BoundingBoxTransformer bbt = new BoundingBoxTransformer(current, next);
         dups.forEach(bbt::transformTrack);
         setMeshTracks(dups);
+    }
+
+    public void transformToImage(){
+        MeshImageStack current = getMeshImageStack();
+        ImagePlus plus = GuiTools.selectOpenImage(IJ.getInstance());
+        if(plus == null) return;
+        transformToImage(plus);
     }
 
     /**
@@ -3584,7 +3595,9 @@ public class SegmentationController {
 
 
     public void guessVoxelMeshes() {
-        List<DeformableMesh3D> meshes = BinaryMeshGenerator.predictMeshes(getMeshImageStack());
+        BinaryMeshGenerator generator = new BinaryMeshGenerator();
+
+        List<DeformableMesh3D> meshes = generator.predictMeshes(getMeshImageStack());
         startNewMeshTracks(meshes);
     }
 

@@ -4,6 +4,7 @@ import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.topology.TopoCheck;
 import deformablemesh.meshview.MeshFrame3D;
+import deformablemesh.meshview.MultiChannelVolumeTexture;
 import deformablemesh.meshview.VolumeDataObject;
 import deformablemesh.track.Track;
 import ij.ImageJ;
@@ -112,7 +113,8 @@ public class BinaryImageGenerationTest {
         Assert.assertEquals(volume,  pixels.size(), 100);
 
         ImagePlus bin = DeformableMesh3DTools.createBinaryRepresentation(mis, mesh);
-        List<DeformableMesh3D> binned = BinaryMeshGenerator.meshesFromLabels(new MeshImageStack(bin));
+        BinaryMeshGenerator generator = new BinaryMeshGenerator();
+        List<DeformableMesh3D> binned = generator.meshesFromLabels(new MeshImageStack(bin));
         ImagePlus bin2 = DeformableMesh3DTools.createBinaryRepresentation(mis, binned.get(0));
 
         ImageStack os = bin2.getStack();
@@ -143,12 +145,14 @@ public class BinaryImageGenerationTest {
         ImagePlus bin = DeformableMesh3DTools.createBinaryRepresentation(mis, mesh);
         bin.show();
 
-
+        MultiChannelVolumeTexture texture = new MultiChannelVolumeTexture(
+                new int[]{bin.getWidth(), bin.getHeight(), bin.getNSlices()}
+            );
         MeshFrame3D mf3d = new MeshFrame3D();
         mf3d.showFrame(true);
         mf3d.setBackgroundColor(new Color(0, 90, 40));
         mf3d.addLights();
-        VolumeDataObject vdo = new VolumeDataObject(Color.WHITE);
+        VolumeDataObject vdo = new VolumeDataObject(Color.WHITE, texture);
         vdo.setTextureData(new MeshImageStack(bin));
         mf3d.addDataObject(vdo);
         mesh.create3DObject();
@@ -163,7 +167,8 @@ public class BinaryImageGenerationTest {
         System.out.println(mesh2.calculateVolume()*factor + ", " + mesh.calculateVolume()*factor + " " + volume);
         //Assert.assertEquals(4*256*256*256/64/3, pixels.size());
 
-        DeformableMesh3D binners = BinaryMeshGenerator.meshesFromLabels(new MeshImageStack(bin)).get(0);
+        BinaryMeshGenerator generator = new BinaryMeshGenerator();
+        DeformableMesh3D binners = generator.meshesFromLabels(new MeshImageStack(bin)).get(0);
         binners.create3DObject();
         binners.data_object.setWireColor(Color.BLACK);
         mf3d.addDataObject(binners.data_object);

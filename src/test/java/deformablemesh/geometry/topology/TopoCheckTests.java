@@ -55,7 +55,7 @@ public class TopoCheckTests {
     @Test
     public void loopFaultTest(){
         ImagePlus plus = BinaryMeshGenerationTests.loopFault();
-        List<DeformableMesh3D> meshes = BinaryMeshGenerator.generateVoxelMeshes(new MeshImageStack(plus));
+        List<DeformableMesh3D> meshes = BinaryMeshGenerator.generateRawVoxelMeshes(new MeshImageStack(plus));
         Assert.assertEquals(1, meshes.size());
         List<TopologyValidationError> errors = TopoCheck.validate(meshes.get(0));
         Assert.assertEquals(4, errors.size());
@@ -104,7 +104,7 @@ public class TopoCheckTests {
     @Test
     public void tailLoopFaultTest(){
         ImagePlus plus = BinaryMeshGenerationTests.tailLoopFault();
-        List<DeformableMesh3D> meshes = BinaryMeshGenerator.generateVoxelMeshes(new MeshImageStack(plus));
+        List<DeformableMesh3D> meshes = BinaryMeshGenerator.generateRawVoxelMeshes(new MeshImageStack(plus));
         Assert.assertEquals(1, meshes.size());
         List<TopologyValidationError> errors = TopoCheck.validate(meshes.get(0));
         Assert.assertEquals(5, errors.size());
@@ -119,7 +119,7 @@ public class TopoCheckTests {
     @Test
     public void doubleLoopFaultTest(){
         ImagePlus plus = BinaryMeshGenerationTests.doubleLoopFault();
-        List<DeformableMesh3D> meshes = BinaryMeshGenerator.generateVoxelMeshes(new MeshImageStack(plus));
+        List<DeformableMesh3D> meshes = BinaryMeshGenerator.generateRawVoxelMeshes(new MeshImageStack(plus));
         Assert.assertEquals(1, meshes.size());
         List<TopologyValidationError> errors = TopoCheck.validate(meshes.get(0));
         Assert.assertEquals(7, errors.size());

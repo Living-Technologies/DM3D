@@ -180,8 +180,8 @@ public class BinaryTraceLogo {
 
         BinaryTraceLogo btl  = new BinaryTraceLogo(mf3d);
         btl.buildGui();
-
-        DeformableMesh3D start = BinaryMeshGenerator.meshesFromLabels(new MeshImageStack(plus)).get(0);
+        BinaryMeshGenerator generator = new BinaryMeshGenerator();
+        DeformableMesh3D start = generator.meshesFromLabels(new MeshImageStack(plus)).get(0);
         btl.setMesh(start);
 
 

@@ -6,6 +6,7 @@ import deformablemesh.experimental.Imglib2MeshBenchMark;
 import deformablemesh.geometry.topology.TopoCheck;
 import deformablemesh.geometry.topology.TopologyValidationError;
 import deformablemesh.meshview.MeshFrame3D;
+import deformablemesh.meshview.MultiChannelVolumeTexture;
 import deformablemesh.meshview.VolumeDataObject;
 import deformablemesh.util.ColorSuggestions;
 import ij.ImagePlus;
@@ -164,7 +165,7 @@ public class BinaryMeshGenerationTests {
     public void jTest(){
         ImagePlus j = j();
         MeshImageStack mis = new MeshImageStack(j);
-        List<DeformableMesh3D> meshes = BinaryMeshGenerator.generateVoxelMeshes(mis);
+        List<DeformableMesh3D> meshes = new BinaryMeshGenerator().generateRawVoxelMeshes(mis);
         Assert.assertEquals(1, meshes.size());
         DeformableMesh3D mesh = meshes.get(0);
         Assert.assertEquals(24, mesh.nodes.size());
@@ -204,7 +205,7 @@ public class BinaryMeshGenerationTests {
     public void oTest(){
         ImagePlus o = o();
         MeshImageStack mis = new MeshImageStack(o);
-        List<DeformableMesh3D> meshes = BinaryMeshGenerator.generateVoxelMeshes(mis);
+        List<DeformableMesh3D> meshes = new BinaryMeshGenerator().generateRawVoxelMeshes(mis);
         Assert.assertEquals(2, meshes.size());
         for(DeformableMesh3D mesh : meshes) {
             List<TopologyValidationError> errors = TopoCheck.validate(mesh);
@@ -248,7 +249,7 @@ public class BinaryMeshGenerationTests {
     public void shellTest(){
         ImagePlus o = shell();
         MeshImageStack mis = new MeshImageStack(o);
-        List<DeformableMesh3D> meshes = BinaryMeshGenerator.generateVoxelMeshes(mis);
+        List<DeformableMesh3D> meshes = new BinaryMeshGenerator().generateRawVoxelMeshes(mis);
         Assert.assertEquals(1, meshes.size());
         List<DeformableMesh3D> innerOuter = Imglib2MeshBenchMark.connectedComponents(meshes.get(0));
         for(DeformableMesh3D mesh : innerOuter) {
@@ -279,7 +280,7 @@ public class BinaryMeshGenerationTests {
     }
 
     public static List<DeformableMesh3D> getMeshes(ImagePlus plus){
-        return BinaryMeshGenerator.generateVoxelMeshes(new MeshImageStack(plus));
+        return new BinaryMeshGenerator().generateRawVoxelMeshes(new MeshImageStack(plus));
     }
 
     public static ImagePlus singlePointFault(){
@@ -365,12 +366,13 @@ public class BinaryMeshGenerationTests {
         List<DeformableMesh3D> meshes = getMeshes(volume);
         System.out.println(System.currentTimeMillis() - start);
         MeshImageStack mis = new MeshImageStack(volume);
-        VolumeDataObject vdo = new VolumeDataObject(Color.BLACK);
+        MultiChannelVolumeTexture mcvt = new MultiChannelVolumeTexture(new int[]{volume.getWidth(), volume.getHeight(), volume.getNSlices()});
+        VolumeDataObject vdo = new VolumeDataObject(Color.BLACK, mcvt);
         vdo.setTextureData(mis);
         mf3d.addDataObject(vdo);
         for(DeformableMesh3D dm3d : meshes){
             ImagePlus plus = DeformableMesh3DTools.createBinaryRepresentation(mis, dm3d);
-            VolumeDataObject vdo2 = new VolumeDataObject(Color.ORANGE);
+            VolumeDataObject vdo2 = new VolumeDataObject(Color.ORANGE, mcvt);
             vdo2.setTextureData(new MeshImageStack(plus));
             vdo2.setMinMaxRange(0, 0.1);
             mf3d.addDataObject(vdo2);

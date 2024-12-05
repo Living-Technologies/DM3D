@@ -34,7 +34,6 @@ import deformablemesh.io.MeshWriter;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.track.Track;
 import deformablemesh.util.ColorSuggestions;
-import deformablemesh.util.Vector3DOps;
 import deformablemesh.util.connectedcomponents.ConnectedComponents3D;
 import deformablemesh.util.connectedcomponents.Region;
 import deformablemesh.util.connectedcomponents.RegionGrowing;
@@ -44,11 +43,13 @@ import ij.ImageStack;
 import ij.plugin.FileInfoVirtualStack;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
+import ij.process.ShortProcessor;
 
 import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -64,6 +65,14 @@ import java.util.stream.Collectors;
 public class BinaryMeshGenerator {
     static private ExecutorService es = null;
     static double tolerance = 1e-9;
+
+    int openSteps = 0;
+    int closeSteps = 0;
+    ImageStack ones;
+    public BinaryMeshGenerator(){
+
+    }
+
     public static DeformableMesh3D voxelMesh(Region r, MeshImageStack stack){
 
         int w = stack.getWidthPx();
@@ -161,20 +170,7 @@ public class BinaryMeshGenerator {
         }
         return array;
     }
-    static public DeformableMesh3D generateVoxelPlane(MeshImageStack stack, int[] px, double[] normal) {
-        double[] up = Vector3DOps.zhat;
-        if(normal[2]!=0){
-            up = Vector3DOps.xhat;
-        }
 
-        double[] lat = Vector3DOps.cross(up, normal);
-        double[] nx = stack.scaleToNormalizedLength(lat);
-        double[] ny = stack.scaleToNormalizedLength(up);
-        double[] nc = stack.getNormalizedCoordinate(new double[]{px[0]*1.0 + 0.5, px[1]*1.0 + 0.5, px[2]*1.0 + 0.5});
-        double[] offset = stack.scaleToNormalizedLength(normal);
-        return getQuad(Vector3DOps.add( nc, offset, 0.5), nx, ny);
-
-    }
     static public long[][] getQuadTriangles(long a, long b, long c, long d, boolean sign){
         long[] t1, t2;
         if(sign){
@@ -226,6 +222,13 @@ public class BinaryMeshGenerator {
         double dy = a[1] - b[1];
         double dz = a[2] - b[2];
         return dx*dx + dy*dy + dz*dz < tolerance;
+    }
+
+    public void setOpenSteps(int openSteps) {
+        this.openSteps = openSteps;
+    }
+    public void setCloseSteps(int closeSteps){
+        this.closeSteps = closeSteps;
     }
 
     interface Merger{
@@ -312,7 +315,7 @@ public class BinaryMeshGenerator {
         return DeformableMesh3DTools.fromTriangles(positions, triangles);
     }
 
-    public static DeformableMesh3D remesh(DeformableMesh3D mesh, MeshImageStack stack){
+    public DeformableMesh3D remesh(DeformableMesh3D mesh, MeshImageStack stack){
         ImagePlus binaryBlob = DeformableMesh3DTools.createBinaryRepresentation(stack, mesh);
         MeshImageStack binstack = new MeshImageStack(binaryBlob);
         long start = System.currentTimeMillis();
@@ -320,6 +323,26 @@ public class BinaryMeshGenerator {
         Region r = new Region(255, points);
         System.out.println(System.currentTimeMillis() - start);
         return voxelMesh(r, binstack);
+
+    }
+    private void morphologyStep(List<Region> regions, MeshImageStack stack){
+        if(openSteps != 0 || closeSteps != 0){
+            ones = ones(stack.getCurrentFrame().getStack());
+            RegionGrowing rg = new RegionGrowing(stack.getCurrentFrame().getStack(), ones);
+            rg.setRegions(regions);
+            for(int i = 0; i<openSteps; i++){
+                rg.erode();
+            }
+            for(int i = 0; i<openSteps; i++){
+                rg.dilate();
+            }
+            for(int i = 0; i<closeSteps; i++){
+                rg.dilate();
+            }
+            for(int i = 0; i<closeSteps; i++){
+                rg.erode();
+            }
+        }
 
     }
 
@@ -397,15 +420,14 @@ public class BinaryMeshGenerator {
         }
         return false;
     }
-
     /**
-     * This assumes a binary image that needs to be labelled with connected
-     * components then meshed with an exact mesh, not a prediction.
+     * Creates voxel mesh from the provided binary blob. There is no processing done,
+     * this method is used to test the topology correction routines.
      *
      * @param mis
      * @return
      */
-    public static List<DeformableMesh3D> generateVoxelMeshes(MeshImageStack mis){
+     public static List<DeformableMesh3D> generateRawVoxelMeshes(MeshImageStack mis){
         ImagePlus frame = mis.getCurrentFrame();
         ImageStack old = frame.getStack();
         ImageStack stack = new ImageStack(frame.getWidth(), frame.getHeight());
@@ -420,21 +442,51 @@ public class BinaryMeshGenerator {
         ImagePlus regionPlus = mis.getOriginalPlus().createImagePlus();
         regionPlus.setStack(stack);
 
-        MeshImageStack labeledMis = new MeshImageStack(regionPlus);
+
+        MeshImageStack labelledMis = new MeshImageStack(regionPlus);
+
         for(Region r: regions){
-            DeformableMesh3D mesh = voxelMesh(r, labeledMis);
+            DeformableMesh3D mesh = voxelMesh(r, labelledMis);
             meshes.add(mesh);
         }
         return meshes;
     }
+    private ImageStack ones(ImageStack stack){
+        int w = stack.getWidth();
+        int h = stack.getHeight();
+        ImageStack ones = new ImageStack(w, h);
+        for(int i = 0; i<stack.size(); i++){
+            ImageProcessor p = new ShortProcessor(w, h);
+            short[] px = (short[])p.getPixels();
+            Arrays.fill(px, (short)1);
+            ones.addSlice(p);
+        }
 
-    private static List<DeformableMesh3D> processRegion(Region r, MeshImageStack regionStack){
+        return ones;
+    }
+
+    private ImageStack zeros(ImageStack stack){
+        int w = stack.getWidth();
+        int h = stack.getHeight();
+        ImageStack ones = new ImageStack(w, h);
+        for(int i = 0; i<stack.size(); i++){
+            ImageProcessor p = new ShortProcessor(w, h);
+            short[] px = (short[])p.getPixels();
+            ones.addSlice(p);
+        }
+
+        return ones;
+    }
+
+    private List<DeformableMesh3D> processRegion(Region r, MeshImageStack regionStack){
         List<DeformableMesh3D> meshes = new ArrayList<>();
+
         if(r.getPoints().size() == 0){
-            System.out.println(r.getLabel() + " is empty!?");
+            //System.out.println(r.getLabel() + " is empty!?");
             return meshes;
         }
         r.validate();
+
 
         DeformableMesh3D mesh = voxelMesh(r, regionStack);
 
@@ -465,7 +517,7 @@ public class BinaryMeshGenerator {
      * @param mis distance transform
      * @return List of meshes that were found within the image.
      */
-    public static List<DeformableMesh3D> predictMeshes(MeshImageStack mis){
+    public List<DeformableMesh3D> predictMeshes(MeshImageStack mis){
         ImagePlus frame = mis.getCurrentFrame();
 
         ImageStack old = frame.getStack();
@@ -492,18 +544,12 @@ public class BinaryMeshGenerator {
             rg.step();
         }
 
-        int steps = 0;
-        //Removes topological errors that cannot be handled.
-        for(int i = 0; i<steps; i++) {
-            rg.erode();
-        }
-
-        for(int i = 0; i<steps; i++) {
-            rg.dilate();
-        }
         ImagePlus regionPlus = mis.getOriginalPlus().createImagePlus();
         regionPlus.setStack(stack);
+
         MeshImageStack regionStack = new MeshImageStack(regionPlus);
+
+        morphologyStep(regions, regionStack);
 
         List<DeformableMesh3D> meshes = new ArrayList<>();
 
@@ -532,17 +578,21 @@ public class BinaryMeshGenerator {
         return meshes;
     }
 
-    public static List<DeformableMesh3D> meshesFromLabels(MeshImageStack stack){
+    public List<DeformableMesh3D> meshesFromLabels(MeshImageStack stack){
+
         List<Region> regions = null;
         MeshDetector detects = new MeshDetector(stack);
         regions = detects.getRegionsFromLabelledImage();
+
+        morphologyStep(regions, stack);
+
         return regions.stream().map(
                 r->processRegion(r, stack)
             ).flatMap(List::stream).collect(Collectors.toList());
     }
 
     public static void main(String[] args) throws IOException {
-        es = Executors.newFixedThreadPool(20);
+        es = Executors.newFixedThreadPool(4);
         new ImageJ();
         ImagePlus plus = FileInfoVirtualStack.openVirtual(new File(args[0]).getAbsolutePath());
         //ImagePlus plus = ImageJFunctions.wrap(MCBroken.image(), "3x3x3-blob");
@@ -556,10 +606,14 @@ public class BinaryMeshGenerator {
         List<Track> broken = new ArrayList<>();
         int saved = 0;
         ImageStack stack = null;
+        BinaryMeshGenerator generator = new BinaryMeshGenerator();
+        generator.openSteps = 0;
+
         for(int i = 0; i < mis.getNFrames(); i++){
             mis.setFrame(i);
             long start = System.currentTimeMillis();
-            List<DeformableMesh3D> meshes = predictMeshes(mis);
+            //List<DeformableMesh3D> meshes = predictMeshes(mis);
+            List<DeformableMesh3D> meshes = generator.meshesFromLabels(mis);
             int triangles = meshes.stream().mapToInt(m -> m.triangles.size()).sum();
             System.out.println(System.currentTimeMillis() - start + " meshed + " + triangles);
             start = System.currentTimeMillis();
