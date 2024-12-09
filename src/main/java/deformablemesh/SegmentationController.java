@@ -1659,7 +1659,9 @@ public class SegmentationController {
         }
     }
     /**
-     * Overloaded for using normalized coordinates represented as a box3d
+     * Crops the image to the provided region, selects the image and transforms the
+     * current meshes.
+     *
      * @param region an axis aligned bounding box.
      */
     public void cropNormalized3DRegionAndTransform(Box3D region){

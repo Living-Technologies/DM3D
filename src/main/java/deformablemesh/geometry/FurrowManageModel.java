@@ -26,6 +26,7 @@
 package deformablemesh.geometry;
 
 import deformablemesh.MeshImageStack;
+import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
@@ -119,19 +120,18 @@ public class FurrowManageModel implements Iterable<Integer>{
         if(currentSlice==null) return null;
         ImageProcessor proc = currentSlice;
 
-        ImageProcessor binary = new ShortProcessor(proc.getWidth(), proc.getHeight());
-
+        ImageProcessor binary = new ByteProcessor(proc.getWidth(), proc.getHeight());
+        threshAndCenter(proc, binary);
         currentBinary = binary;
         return binary;
     }
 
 
     /**
-     * Apply the current threshold to the image and find the center of mass of the successful points.
+     * Apply the current threshold to the image.
      *
      * @param input input intensity values
-     * @param output where the output should be placed.
-     * @return {x, y } positions
+     * @param output where the output will be drawn.
      */
     void threshAndCenter(ImageProcessor input, ImageProcessor output){
         int w = input.getWidth();

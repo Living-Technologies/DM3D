@@ -78,6 +78,7 @@ public class LoadZarr {
         N5Reader reader = factory.openReader(location);
         String[] sets = reader.deepListDatasets("/");
         List<ImagePlus> pluses = new ArrayList<>();
+        String baseName = Paths.get(location).getFileName().toString();
         for(String s: sets){
             Path attrs = Paths.get(location, s).getParent().resolve(".zattrs");
             List<MultiScaleSpatial> things = getSpatialAttributes(attrs);
@@ -160,6 +161,7 @@ public class LoadZarr {
             }
 
             img.setStack(stack, channels, slices, frames);
+            img.setTitle(baseName + "/" + s);
             pluses.add(img);
         }
         return pluses;
