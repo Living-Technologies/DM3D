@@ -24,19 +24,37 @@
   #L%
   -->
 <html>
-<head></head>
+<head>
+    <style type="text/css">
+        #content {
+          margin : "20px";
+        }
+        .section{
+            border-bottom : 2px solid black;
+            padding : 5px;
+        }
+        #VERSION{
+            color : red;
+        }
+    </style>
+
+</head>
 <body>
-<div>
-    <div>3D Mesh Plugin: for segmenting cells in 3D.</div>
-	<div>Version <span id="VERSION">%%VERSION%%</span></div>
-	<div>
+<div id="content">
+    <div class="section"><h1>3D Mesh Plugin: for segmenting cells in 3D.</h1></div>
+	<div class="section"><h3>Version <span id="VERSION">%%VERSION%%</span></h3></div>
+	<div class="section">
 		Current development is happening at <a href="https://github.com/Living-Technologies/DM3D">Living-Technologies/DM3D</a>
 	</div>
-    <div>Documentation can be found at: <br/>
+    <div class="section">
+        Online guide: <br/>
+        <a href="https://franciscrickinstitute.github.io/dm3d-pages/">https://franciscrickinstitute.github.io/dm3d-pages</a></div>
+    <div class="section">Other resources: <br/>
+        Original development page:<br/>
         <a href="https://github.com/PaluchLabUCL/DeformingMesh3D-plugin">https://github.com/PaluchLabUCL/DeformingMesh3D-plugin</a> <br/>
+        Unet based 3D segmentation tool:<br/>
         <a href="https://github.com/FrancisCrickInstitute/ActiveUnetSegmentation">https://github.com/FrancisCrickInstitute/ActiveUnetSegmentation</a>
     </div>
-    <div>Online guide: <a href="https://franciscrickinstitute.github.io/dm3d-pages/">https://franciscrickinstitute.github.io/dm3d-pages</a></div>
 </div>
 </body>
 </html>

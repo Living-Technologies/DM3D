@@ -98,7 +98,7 @@ import static deformablemesh.gui.ControlFrame.instance;
 public class GuiTools {
     public static Color SELECTED_MESH_COLOR = Color.WHITE;
 
-    final static String versionHTML = getVersionHTML();
+//    final static String versionHTML = getVersionHTML();
     public static void createTextOuputPane(String s){
         final JFrame frame = new JFrame();
         final JTextComponent pane = new JTextArea();
@@ -244,7 +244,7 @@ public class GuiTools {
     public static void showAboutWindow(JFrame owner){
         JDialog log = new JDialog(owner, "about DM3D");
         log.setModal(false);
-        JEditorPane svg = new JEditorPane("text/html", versionHTML);
+        JEditorPane svg = new JEditorPane("text/html", getVersionHTML());
         svg.setEditable(false);
         svg.addHyperlinkListener(hyperlinkEvent ->{
             try {
@@ -267,7 +267,7 @@ public class GuiTools {
 
         try {
             String versionTag = "%%VERSION%%";
-            BufferedReader r = new BufferedReader(new InputStreamReader(Thread.currentThread().getClass().getResourceAsStream("/about.html"), Charset.forName("UTF8")));
+            BufferedReader r = new BufferedReader(new InputStreamReader(GuiTools.class.getResourceAsStream("/about.html"), Charset.forName("UTF8")));
             StringBuilder b = new StringBuilder();
             String s;
 
