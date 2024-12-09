@@ -1,6 +1,6 @@
 package deformablemesh.meshview;
 
-import org.scijava.vecmath.Vector4f;
+import org.jogamp.vecmath.Vector4f;
 
 import java.awt.Color;
 import java.util.HashMap;

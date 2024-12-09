@@ -27,31 +27,59 @@ package deformablemesh.meshview;
 
 import deformablemesh.MeshImageStack;
 import deformablemesh.SegmentationController;
-import deformablemesh.externalenergies.ExternalEnergy;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Furrow3D;
+import deformablemesh.gui.FurrowController;
 import deformablemesh.gui.GuiTools;
-import deformablemesh.gui.RingController;
 import deformablemesh.track.Track;
 import deformablemesh.util.Vector3DOps;
 import ij.ImagePlus;
-
-import org.scijava.java3d.*;
-import org.scijava.vecmath.Color3f;
-import org.scijava.vecmath.Point3d;
-import org.scijava.vecmath.Vector3d;
-import org.scijava.vecmath.Vector3f;
-import org.scijava.java3d.utils.picking.PickResult;
+import org.jogamp.java3d.AmbientLight;
+import org.jogamp.java3d.BoundingSphere;
+import org.jogamp.java3d.BranchGroup;
+import org.jogamp.java3d.DirectionalLight;
+import org.jogamp.java3d.GeometryArray;
+import org.jogamp.java3d.J3DGraphics2D;
+import org.jogamp.java3d.Transform3D;
+import org.jogamp.java3d.TransformGroup;
+import org.jogamp.java3d.utils.picking.PickResult;
+import org.jogamp.vecmath.Color3f;
+import org.jogamp.vecmath.Point3d;
+import org.jogamp.vecmath.Vector3d;
+import org.jogamp.vecmath.Vector3f;
 
 import javax.imageio.ImageIO;
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JColorChooser;
+import javax.swing.JComboBox;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Graphics2D;
+import java.awt.GraphicsConfiguration;
+import java.awt.Point;
+import java.awt.Window;
 import java.awt.event.KeyListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -81,6 +109,9 @@ public class    MeshFrame3D {
     public DataCanvas getCanvas() {
         return canvas;
     }
+    //MultiChannelVolumeTexture texture;
+    VolumeDataObject volumeDataObject;
+    MultiChannelVolumeTexture texture;
 
     @FunctionalInterface
     public static interface HudDisplay{
@@ -94,10 +125,10 @@ public class    MeshFrame3D {
     boolean showingVolume = false;
     VolumeDataObject vdo;
 
-    RingController ringController;
+    FurrowController ringController;
 
     DataObject lights;
-    float ambient = 0.6f;
+    float ambient = 0.75f;
     float directional = 0.25f;
 
     List<ChannelVolume> channelVolumes = new ArrayList<>();
@@ -108,14 +139,15 @@ public class    MeshFrame3D {
 
     public void addChannelVolume(ChannelVolume cv){
         channelVolumes.add(cv);
-        segmentationController.addFrameListener(cv);
-        addDataObject(cv.vdo);
     }
 
     public void removeChannelVolume(ChannelVolume cv){
         channelVolumes.remove(cv);
-        segmentationController.removeFrameListener(cv);
-        removeDataObject(cv.vdo);
+        cv.unlinkFromTexture();
+        if(channelVolumes.isEmpty()) {
+            removeDataObject(volumeDataObject);
+            volumeDataObject = null;
+        }
     }
 
     public List<ChannelVolume> getChannelVolumes(){
@@ -134,7 +166,7 @@ public class    MeshFrame3D {
         if(plus == null){
             return;
         }
-        Color c = JColorChooser.showDialog(null, "Select Color", Color.WHITE);
+        Color c = JColorChooser.showDialog(frame, "Select Color", Color.WHITE);
 
         int channel = 0;
         if(plus.getNChannels()>1){
@@ -155,10 +187,26 @@ public class    MeshFrame3D {
             MeshImageStack stack = new MeshImageStack(plus);
             stack.setChannel(channel);
             stack.setFrame(segmentationController.getCurrentFrame());
-            ChannelVolume cv = new ChannelVolume(stack, c);
+            ChannelVolume cv = getMultiChannelVolumeObject(stack, c);
             addChannelVolume(cv);
         }
 
+    }
+
+    public ChannelVolume getMultiChannelVolumeObject(MeshImageStack stack, Color c){
+        ChannelVolume cv;
+        //If the volume data object exists, it just returns it.
+        if( volumeDataObject != null ){
+            cv = new ChannelVolume(stack, c, volumeDataObject.volume, volumeDataObject.getGeometry());
+        } else {
+            //creates a new volume data object and adds it to the group.
+            int[] dims = new int[]{stack.getWidthPx(), stack.getHeightPx(), stack.getNSlices()};
+            texture = new MultiChannelVolumeTexture(dims);
+            cv = new ChannelVolume(stack, c, texture, null);
+            volumeDataObject = cv.getVolumeDataObject();
+            addDataObject(volumeDataObject);
+        }
+        return cv;
     }
 
     public void chooseToremoveChannelVolume(){
@@ -203,7 +251,6 @@ public class    MeshFrame3D {
                 volume.getVolumeDataObject().showAsLabeledVolume();
             } else{
                 VolumeContrastSetter setter = new VolumeContrastSetter(volume.vdo);
-                setter.setPreviewBackgroundColor(getBackgroundColor());
                 setter.showDialog(getJFrame());
             }
         });
@@ -226,10 +273,6 @@ public class    MeshFrame3D {
                 new Point(p.x + ( w - dw ) / 2, p.y + ( h - dh ) / 3 )
         );
         dialog.setVisible(true);
-
-
-
-
     }
 
     /**
@@ -599,9 +642,19 @@ public class    MeshFrame3D {
 
     public void setSegmentationController(SegmentationController control){
         segmentationController = control;
+        segmentationController.addFrameListener(frame ->{
+            if(volumeDataObject != null){
+                volumeDataObject.volume.setPaused(true);
+                    channelVolumes.forEach( channelVolume ->{
+                        channelVolume.frameChanged(frame);
+                    } );
+                volumeDataObject.volume.setPaused(false);
+                volumeDataObject.volume.clamp();
+            }
+        });
     }
 
-        public void syncMesh(int currentFrame){
+    public void syncMesh(int currentFrame){
         List<Track> tracks = segmentationController.getAllTracks();
 
         Set<DeformableMesh3D> current = tracks.stream().filter(t->t.containsKey(currentFrame)).map(t->t.getMesh(currentFrame)).collect(Collectors.toSet());
@@ -645,62 +698,6 @@ public class    MeshFrame3D {
 
     }
 
-    /**
-     * Backs the volume texture date with the supplied image stack.
-     * TODO qualify whether the stack/texture data has changed.
-     * @param stack
-     */
-    public void showVolume(MeshImageStack stack){
-        if(stack.getWidthPx()==0 || stack.getHeightPx()==0 || stack.getNSlices()==0){
-            //no volume data ignore request.
-            return;
-        }
-
-        if(showingVolume==false){
-            showingVolume=true;
-            if(vdo==null){
-                vdo = new VolumeDataObject(segmentationController.getVolumeColor());
-            }
-            vdo.setTextureData(stack);
-            addDataObject(vdo);
-        } else{
-            vdo.setTextureData(stack);
-        }
-
-
-    }
-
-
-
-    public void showEnergy(MeshImageStack stack, ExternalEnergy erg) {
-        showingVolume = true;
-        int d = stack.getNSlices();
-        int h = stack.getHeightPx();
-        int w = stack.getWidthPx();
-
-        if(vdo==null){
-            vdo = new VolumeDataObject(segmentationController.getVolumeColor());
-            vdo.setTextureData(stack);
-        }
-
-        for(int i = 0; i<d; i++){
-            for(int j = 0; j<h; j++){
-                for(int k = 0; k<w; k++){
-
-                    //double v = stack.data[i][j][k];
-                    double v = erg.getEnergy(stack.getNormalizedCoordinate(new double[]{k,j,i}));
-                    vdo.texture_data[k][h-j-1][i] = v;
-
-
-                }
-            }
-        }
-
-        vdo.updateVolume();
-
-    }
-
-
     public JFrame getJFrame() {
         return frame;
     }
@@ -728,7 +725,7 @@ public class    MeshFrame3D {
 
 
     public void updateRingController(){
-        RingController rc = segmentationController.getRingController();
+        FurrowController rc = segmentationController.getRingController();
         if(rc!=ringController){
             ringController=rc;
             ringController.addFrameListener((i)->{
@@ -754,6 +751,43 @@ public class    MeshFrame3D {
 
     public boolean volumeShowing() {
         return showingVolume;
+    }
+
+    public static void main(String[] args){
+        JFrame jframe = new JFrame("what");
+        JLabel lbl = new JLabel("waiting");
+        jframe.add(lbl);
+        jframe.setSize(1024, 1024);
+        jframe.setVisible(true);
+
+        MeshFrame3D frame = new MeshFrame3D();
+        frame.showFrame(true);
+        MeshImageStack stack = new MeshImageStack(Paths.get("quality-sample.tif"));
+
+        MultiChannelVolumeTexture texture = new MultiChannelVolumeTexture(new int[]{stack.getWidthPx(), stack.getHeightPx(), stack.getNFrames()});
+        VolumeDataObject vdo = new VolumeDataObject(Color.RED, texture);
+        vdo.setTextureData(stack);
+        frame.addDataObject(vdo);
+        VolumeDataObject vdo2 = new VolumeDataObject(Color.YELLOW, texture);
+        vdo2.setTextureData(stack);
+        vdo2.showAsLabeledVolume();
+        VolumeDataObject tmp;
+        for(int j = 0; j<100; j++) {
+            for (int i = 0; i < 100; i++) {
+                frame.canvas.rotateView(10, 0);
+                BufferedImage img = frame.snapShot();
+                ImageIcon icon = new ImageIcon(img);
+                lbl.setIcon(icon);
+            }
+            tmp = vdo;
+            frame.canvas.destroyOffscreenCanvas();
+            frame.removeDataObject(vdo);
+            vdo = vdo2;
+            vdo2 = tmp;
+
+            frame.addDataObject(vdo);
+
+        }
     }
 
 

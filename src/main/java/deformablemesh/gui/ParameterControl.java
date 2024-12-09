@@ -25,7 +25,11 @@
  */
 package deformablemesh.gui;
 
-import javax.swing.*;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 
 /**
  * Created on 31/07/18.

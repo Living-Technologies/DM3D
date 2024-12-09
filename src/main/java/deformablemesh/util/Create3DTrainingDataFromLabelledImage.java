@@ -25,16 +25,10 @@
  */
 package deformablemesh.util;
 
-import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
-import deformablemesh.track.Track;
 import ij.ImagePlus;
 import ij.ImageStack;
-import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
-
-import java.util.HashSet;
-import java.util.Set;
 
 public class Create3DTrainingDataFromLabelledImage extends Create3DTrainingData{
     MeshImageStack labels;

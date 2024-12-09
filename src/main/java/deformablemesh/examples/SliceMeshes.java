@@ -25,23 +25,19 @@
  */
 package deformablemesh.examples;
 
-import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Furrow3D;
 import deformablemesh.geometry.MeshInverter;
 import deformablemesh.gui.FurrowInput;
 import deformablemesh.io.MeshReader;
-import deformablemesh.meshview.DeformableMeshDataObject;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.meshview.StationaryViews;
 import deformablemesh.track.Track;
-import deformablemesh.util.Vector3DOps;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
-import loci.poi.ddf.EscherChildAnchorRecord;
 
 import javax.swing.JFrame;
 import java.awt.Color;

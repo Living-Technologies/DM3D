@@ -25,13 +25,13 @@
  */
 package deformablemesh.experimental;
 
+import deformablemesh.MeshImageStack;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.gui.GenericDialog;
 import ij.measure.Calibration;
-import ij.plugin.filter.PlugInFilter;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 
@@ -40,13 +40,9 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import java.awt.BorderLayout;
+import java.awt.EventQueue;
 import java.awt.Window;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
@@ -55,6 +51,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * This is an experimental class derived from https://github.com/odinsbane/JavaTF2ModelRunner
@@ -63,9 +60,9 @@ import java.util.concurrent.Future;
  * made locally by specifying "localhost" if the server is started on the local computer.
  *
  */
-public class RemotePrediction implements PlugInFilter {
-    Socket server;
-    ImagePlus toProcess;
+public class RemotePrediction{
+    PredictionClient client;
+    MeshImageStack toProcess;
     ProgressDialog progress;
     static class ProgressDialog extends JDialog{
         JLabel status;
@@ -81,11 +78,13 @@ public class RemotePrediction implements PlugInFilter {
             setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         }
         public void updateStatus(String s){
-            status.setText(s);
+            EventQueue.invokeLater(()->status.setText(s));
+        }
+        public void step(){
+            EventQueue.invokeLater(()->progress.setValue(progress.getValue() + 1));
         }
     }
-    @Override
-    public int setup(String s, ImagePlus imagePlus) {
+    public int setup(MeshImageStack stack) {
         GenericDialog gd = new GenericDialog("Select host");
         gd.addStringField("hostname", "", 30);
         gd.addStringField("port", "5050", 6);
@@ -93,12 +92,12 @@ public class RemotePrediction implements PlugInFilter {
         String hostname = gd.getNextString();
         int port = Integer.parseInt( gd.getNextString() );
         try {
-            server = new Socket(hostname, port);
+            client = new PredictionClient(hostname, port);
         } catch (IOException e) {
-            e.printStackTrace();
-            return DONE;
+            System.out.println("Canceling! " + e.getMessage());
+            return -1;
         }
-        toProcess = imagePlus;
+        toProcess = stack;
         ImageJ ij = IJ.getInstance();
         progress = new ProgressDialog(ij, toProcess.getNFrames());
         progress.pack();
@@ -109,14 +108,13 @@ public class RemotePrediction implements PlugInFilter {
             int h = ij.getHeight();
             progress.setLocation(x, y + h / 2);
         }
-        return DOES_ALL;
+        return 0;
     }
 
-    @Override
-    public void run(ImageProcessor imageProcessor) {
+    public void run() {
 
         try {
-            process(toProcess);
+            process();
             progress.updateStatus("Finished!");
 
         } catch (IOException e) {
@@ -131,59 +129,58 @@ public class RemotePrediction implements PlugInFilter {
         }
     }
 
-    public void process(ImagePlus plus) throws IOException, ExecutionException, InterruptedException {
+    public void process() throws IOException, ExecutionException, InterruptedException {
         ExecutorService sending = Executors.newFixedThreadPool(1);
         List<Future<Integer>> finishing = new ArrayList<>();
-        OutputStream os = server.getOutputStream();
-        DataOutputStream dos = new DataOutputStream(os);
-        final InputStream in = server.getInputStream();
-        DataInputStream din = new DataInputStream(in);
-        dos.writeInt(plus.getNFrames());
-        for(int i = 0; i<plus.getNFrames(); i++){
+        ImagePlus[] cannon = new ImagePlus[1];
+        client.start(toProcess.getNFrames());
+        AtomicBoolean stopSending = new AtomicBoolean(false);
+        for(int i = 0; i<toProcess.getNFrames(); i++){
             final int frame = i;
+
             Future<Integer> future = sending.submit(()->{
+                if(stopSending.get()){
+                    return -1;
+                }
                 try {
-                    byte[] data = FloatRunner.getImageData(plus, frame);
-                    dos.writeInt(plus.getNChannels());
-                    dos.writeInt(plus.getWidth());
-                    dos.writeInt(plus.getHeight());
-                    dos.writeInt(plus.getNSlices());
-                    os.write(data);
+                    System.out.println("starting frame " + frame);
+                    final ImagePlus plus = toProcess.getStackIso(frame);
+                    if(cannon[0] == null){
+                        cannon[0] = plus;
+                    }
+                    client.writeImage(plus);
+                    progress.step();
                     return frame;
                 } catch(IOException e){
+                    stopSending.set(true);
                     throw new RuntimeException(e);
                 }
             });
             finishing.add(future);
         }
-        progress.updateStatus("Finished preparing awaiting results");
+        progress.updateStatus("Finished preparation awaiting results");
         List<ImagePlus> pluses = new ArrayList<>();
         for(Future<Integer> result: finishing){
             int frame = result.get();
-            int previous = progress.progress.getValue();
-            progress.progress.setValue( previous + 1);
-            progress.updateStatus("compiling frame " + previous);
-            int outputs = din.readInt();
+            progress.updateStatus("compiling frame " + frame);
 
-            for(int i = 0; i<outputs; i++){
-                int c = din.readInt();
-                int w = din.readInt();
-                int h = din.readInt();
-                int s = din.readInt();
-                byte[] buffer = new byte[c*w*h*s*4];
-                int read = 0;
-                while(read < buffer.length){
-                    int r = din.read(buffer, read, buffer.length - read);
-                    if(r<0) break;
+            List<ImagePlus> predictions = client.getOutputs();
 
-                    read += r;
-                }
-                ImagePlus op = FloatRunner.toImage(buffer, c, w, h, s, plus);
-
+            for(int i = 0; i<predictions.size(); i++) {
+                ImagePlus op = predictions.get(i);
                 if(frame == 0){
-                    op.setTitle(i + " created from " + plus.getShortTitle());
-                    op.show();
-                    pluses.add(op);
+                    ImagePlus smaller = op.createImagePlus();
+                    ImageStack stack = smaller.getStack();
+                    ImageStack fresh = op.getStack();
+                    int nc = op.getNChannels();
+                    int ns = op.getNSlices();
+                    for(int j = 1; j<=fresh.size(); j++){
+                        stack.addSlice(fresh.getProcessor(j).convertToByte(false));
+                    }
+                    smaller.setTitle("op-" + i + "-pred-" + cannon[0].getShortTitle());
+                    smaller.setStack(stack, nc, ns, 1);
+                    EventQueue.invokeLater(smaller::show);
+                    pluses.add(smaller);
                 } else{
                     ImagePlus or = pluses.get(i);
                     ImageStack stack = or.getStack();
@@ -191,16 +188,16 @@ public class RemotePrediction implements PlugInFilter {
                     int nc = or.getNChannels();
                     int ns = or.getNSlices();
                     for(int j = 1; j<=fresh.size(); j++){
-                        stack.addSlice(fresh.getProcessor(j));
+                        stack.addSlice(fresh.getProcessor(j).convertToByte(false));
                     }
-                    or.setStack(stack,nc, ns, (frame + 1));
-                    or.setOpenAsHyperStack(true);
+                    EventQueue.invokeLater(()->{
+                        or.setStack(stack,nc, ns, (frame + 1));
+                        or.setOpenAsHyperStack(true);
+                    });
                 }
-
             }
-            progress.progress.setValue( previous + 1);
-            progress.updateStatus("compiled frame " + previous + " with " + outputs + " outputs");
-
+            progress.step();
+            progress.updateStatus("compiled frame " + frame + " with " + predictions.size() + " outputs");
         }
     }
     public static void main(String... args){
@@ -212,19 +209,17 @@ public class RemotePrediction implements PlugInFilter {
 }
 
 class FloatRunner {
-    static byte[] getImageData(ImagePlus plus, int frame){
+    static byte[] getImageData(ImagePlus plus){
         int c = plus.getNChannels();
         int s = plus.getNSlices();
         int w = plus.getWidth();
         int h = plus.getHeight();
         ImageStack stack = plus.getStack();
 
-        int frame_offset = c*s*frame;
-
         byte[] data = new byte[4 * w*h*s*c];
         FloatBuffer buffer = ByteBuffer.wrap(data).asFloatBuffer();
         for(int i = 0; i<c*s; i++){
-            FloatProcessor proc = stack.getProcessor(frame_offset + 1 + i).convertToFloatProcessor();
+            FloatProcessor proc = stack.getProcessor( 1 + i ).convertToFloatProcessor();
             buffer.put( (float[])proc.getPixels());
         }
 
@@ -247,9 +242,12 @@ class FloatRunner {
         if(dup.getNSlices() != original.getNSlices() || dup.getHeight() != original.getHeight() || dup.getWidth() != original.getWidth()){
             Calibration c0 = original.getCalibration();
             Calibration c1 = dup.getCalibration();
-            c1.pixelDepth = c0.pixelDepth*dup.getNSlices() / original.getNSlices();
-            c1.pixelWidth = c0.pixelWidth*dup.getWidth() / original.getWidth();
-            c1.pixelHeight = c0.pixelHeight*dup.getHeight() / original.getHeight();
+            c1.pixelDepth = c0.pixelDepth*original.getNSlices() / dup.getNSlices();
+            c1.pixelWidth = c0.pixelWidth*original.getWidth() / dup.getWidth();
+            c1.pixelHeight = c0.pixelHeight*original.getHeight() / dup.getHeight();
+            c1.xOrigin = c0.xOrigin*dup.getWidth()/original.getWidth();
+            c1.yOrigin = c0.yOrigin*dup.getHeight()/original.getHeight();
+            c1.zOrigin = c0.zOrigin*dup.getNSlices()/ original.getNSlices();
             dup.setCalibration(c1);
         }
 

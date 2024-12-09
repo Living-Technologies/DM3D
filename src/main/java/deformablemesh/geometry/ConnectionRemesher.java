@@ -30,7 +30,14 @@ import deformablemesh.meshview.DeformableMeshDataObject;
 import deformablemesh.meshview.MeshFrame3D;
 
 import java.awt.Color;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -629,6 +636,13 @@ public class ConnectionRemesher {
 
     public void addConnection(Connection3D c){
         if(connections.contains(c)){
+
+            int i = connections.indexOf(c);
+            Connection3D o = connections.get(connections.indexOf(c));
+            int a = nodes.indexOf(c.A);
+            int b = nodes.indexOf(c.B);
+            int e = nodes.indexOf(o.A);
+            int d = nodes.indexOf(o.B);
             throw new RuntimeException("adding existing connection");
         }
         connections.add(c);
@@ -672,7 +686,9 @@ public class ConnectionRemesher {
         rmesh.setShowSurface(true);
         rem.frame.addDataObject(rmesh.data_object);
     }
-
+    public boolean isOpenSurface(){
+        return openSurface;
+    }
     public void setMinAndMaxLengths(double minConnectionLength, double maxConnectionLength) {
         minLength = minConnectionLength;
         maxLength = maxConnectionLength;

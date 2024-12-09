@@ -27,24 +27,51 @@ package deformablemesh;
 
 import Jama.LUDecomposition;
 import Jama.Matrix;
+import deformablemesh.examples.CreateCellposeLabels;
 import deformablemesh.externalenergies.ImageEnergyType;
-import deformablemesh.geometry.*;
+import deformablemesh.geometry.BinaryMeshGenerator;
+import deformablemesh.geometry.Box3D;
+import deformablemesh.geometry.ConnectionRemesher;
+import deformablemesh.geometry.CurvatureCalculator;
+import deformablemesh.geometry.DeformableLine3D;
+import deformablemesh.geometry.DeformableMesh3D;
+import deformablemesh.geometry.Furrow3D;
+import deformablemesh.geometry.FurrowTransformer;
+import deformablemesh.geometry.Node3D;
+import deformablemesh.geometry.RayCastMesh;
 import deformablemesh.geometry.interceptable.Interceptable;
 import deformablemesh.geometry.interceptable.InterceptingMesh3D;
 import deformablemesh.gui.FrameListener;
+import deformablemesh.gui.FurrowController;
 import deformablemesh.gui.GuiTools;
 import deformablemesh.gui.PropertySaver;
-import deformablemesh.gui.RingController;
 import deformablemesh.gui.render2d.RenderFrame2D;
 import deformablemesh.io.ImportType;
 import deformablemesh.io.MeshReader;
 import deformablemesh.io.TrackMateAdapter;
-import deformablemesh.meshview.*;
-import deformablemesh.ringdetection.FurrowTransformer;
+import deformablemesh.meshview.Arrow;
+import deformablemesh.meshview.DataObject;
+import deformablemesh.meshview.DeformableMeshDataObject;
+import deformablemesh.meshview.FurrowOrientationListener;
+import deformablemesh.meshview.MeshFrame3D;
+import deformablemesh.meshview.NextClickListener;
+import deformablemesh.meshview.PickSelector;
+import deformablemesh.meshview.TexturedPlaneDataObject;
+import deformablemesh.meshview.VectorField;
 import deformablemesh.simulations.FillingBinaryImage;
 import deformablemesh.track.FrameToFrameDisplacement;
 import deformablemesh.track.Track;
-import deformablemesh.util.*;
+import deformablemesh.util.Create3DTrainingData;
+import deformablemesh.util.Create3DTrainingDataFromLabelledImage;
+import deformablemesh.util.Create3DTrainingDataFromMeshes;
+import deformablemesh.util.CurvatureSurfacePlot;
+import deformablemesh.util.DistanceTransformMosaicImage;
+import deformablemesh.util.IntensitySurfacePlot;
+import deformablemesh.util.MeshAnalysis;
+import deformablemesh.util.MeshFaceObscuring;
+import deformablemesh.util.SurfacePlot;
+import deformablemesh.util.TrackAnalysis;
+import deformablemesh.util.Vector3DOps;
 import deformablemesh.util.actions.ActionStack;
 import deformablemesh.util.actions.StateListener;
 import deformablemesh.util.actions.UndoableActions;
@@ -52,6 +79,8 @@ import deformablemesh.util.connectedcomponents.Region;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.measure.Calibration;
+import ij.plugin.Resizer;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
@@ -66,12 +95,16 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
-import java.util.concurrent.ExecutionException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
@@ -102,9 +135,9 @@ public class SegmentationController {
     public SegmentationController(SegmentationModel model){
         this.model = model;
         try {
-            model.setRingController(new RingController(this));
+            model.setRingController(new FurrowController(this));
             actionStack.addStateListener(s->{
-                RingController rc = getRingController();
+                FurrowController rc = getRingController();
                 if(rc != null){
                     submit(()->rc.setFrame(getCurrentFrame()));
                 }
@@ -690,6 +723,7 @@ public class SegmentationController {
         });
     }
 
+
     /**
      * Training data consists of two images. The original image, and a labelled image which is an a bit image.
      * The first bit represents the mesh, the second bit represents inside, or outside of the mesh and the last 6
@@ -704,7 +738,6 @@ public class SegmentationController {
         ImagePlus original = getMeshImageStack().original;
         List<Track> tracks = getAllTracks();
         Path baseFolder = Paths.get(IJ.getDirectory("Select root folder"));
-        Create3DTrainingData creator = new Create3DTrainingDataFromMeshes(tracks, original);
         Path labelPath = baseFolder.resolve("labels");
         Path imagePath = baseFolder.resolve("images");
         try {
@@ -723,18 +756,18 @@ public class SegmentationController {
         String name = original.getTitle().replace(".tif", "");
 
         for(int i = start; i<=finish; i++){
+            ImagePlus iso = getMeshImageStack().getStackIso(i);
+            Create3DTrainingData creator = new Create3DTrainingDataFromMeshes(tracks, iso);
             String sliceName = String.format("%s-t%04d.tif", name, i);
             creator.run(i);
-            ImagePlus maskPlus = original.createImagePlus();
+            ImagePlus maskPlus = iso.createImagePlus();
             maskPlus.setStack(creator.getLabeledStack());
             IJ.save(maskPlus, new File(labelFolder, sliceName).getAbsolutePath());
             System.out.println("finished frame: " + i);
             //maskPlus.show();
             try {
-                ImagePlus scaled = creator.getOriginalFrame(i);
-                //scaled.setOpenAsHyperStack(true);
-                scaled.setLut(LUT.createLutFromColor(Color.WHITE));
-                IJ.save(scaled, new File(imageFolder, sliceName).getAbsolutePath());
+                iso.setLut(LUT.createLutFromColor(Color.WHITE));
+                IJ.save(iso, new File(imageFolder, sliceName).getAbsolutePath());
 
             } catch(Exception e){
                 e.printStackTrace();
@@ -750,8 +783,14 @@ public class SegmentationController {
      * @param last frame inclusive
      */
     public void generateTrainingDataFromLabelledImage(int first, int last){
-        ImagePlus plus = GuiTools.selectOpenImage(IJ.getInstance());
-        ImagePlus original = getMeshImageStack().getOriginalPlus();
+        ImagePlus plus = GuiTools.selectOpenImage(IJ.getInstance(), "Selected Labelled Image");
+        if(plus == null){
+            return;
+        }
+        MeshImageStack labelMis = new MeshImageStack(plus);
+        MeshImageStack stack = getMeshImageStack();
+
+
         Path baseFolder = Paths.get(IJ.getDirectory("Select root folder"));
 
         Path labelPath = baseFolder.resolve("labels");
@@ -769,28 +808,32 @@ public class SegmentationController {
 
         File labelFolder = labelPath.toFile();
         File imageFolder = imagePath.toFile();
-        String name = original.getTitle().replace(".tif", "");
-        Create3DTrainingData creator = new Create3DTrainingDataFromLabelledImage(original, plus);
+        String name = stack.original.getTitle().replace(".tif", "");
+
         for(int i = first; i<=last; i++){
+            ImagePlus image = stack.getStackIso(i);
+            ImagePlus labels = labelMis.getStack(i);
+            if(labels.getNSlices() != image.getNSlices()){
+                Resizer resizer = new Resizer();
+                labels = resizer.zScale(plus, image.getNSlices(), ImageProcessor.NEAREST_NEIGHBOR);
+                Calibration c2 = labels.getCalibration();
+                c2.zOrigin = image.getCalibration().zOrigin;
+            }
+            Create3DTrainingData creator = new Create3DTrainingDataFromLabelledImage(image, labels);
             String sliceName = String.format("%s-t%04d.tif", name, i);
-            creator.run(i);
-            ImagePlus maskPlus = original.createImagePlus();
+            creator.run(0);
+            ImagePlus maskPlus = image.createImagePlus();
             maskPlus.setStack(creator.getLabeledStack());
             IJ.save(maskPlus, new File(labelFolder, sliceName).getAbsolutePath());
             System.out.println("finished frame: " + i);
-            //maskPlus.show();
             try {
-                ImagePlus scaled = creator.getOriginalFrame(i);
-                //scaled.setOpenAsHyperStack(true);
-                scaled.setLut(LUT.createLutFromColor(Color.WHITE));
-                IJ.save(scaled, new File(imageFolder, sliceName).getAbsolutePath());
+                image.setLut(LUT.createLutFromColor(Color.WHITE));
+                IJ.save(image, new File(imageFolder, sliceName).getAbsolutePath());
 
             } catch(Exception e){
                 e.printStackTrace();
             }
         }
-
-
     }
 
     /**
@@ -1037,6 +1080,8 @@ public class SegmentationController {
         startNewMeshTracks(guessed);
     }
 
+
+
     /**
      * Processes the selected image by separating out all of the pixel regions
      * and then creating spherical meshes and deforming them to the binary blob.
@@ -1050,12 +1095,13 @@ public class SegmentationController {
     public void meshesFromLabelledImage(int relaxSteps, int remeshSteps){
         MeshDetector detector = new MeshDetector(getMeshImageStack());
         List<Region> regions = detector.getRegionsFromLabelledImage();
+        System.out.println(regions.size());
         FillingBinaryImage mesher = new FillingBinaryImage(getMeshImageStack());
         mesher.setMinMaxLengths(getMinConnectionLength(),getMaxConnectionLength());
         mesher.setRemeshSteps(remeshSteps);
         mesher.setRelaxSteps(relaxSteps);
         List<DeformableMesh3D> meshes = regions.stream().map(
-                region-> mesher.fillBlobWithMesh(region.getPoints())
+                mesher::fillBlobWithMesh
         ).collect(Collectors.toList());
         startNewMeshTracks( meshes );
     }
@@ -1072,6 +1118,29 @@ public class SegmentationController {
     public void meshesFromLabelledImage(){
         meshesFromLabelledImage(100, 3);
     }
+
+    /**
+     *
+     * Generates meshes from a labelled image by surrounding each voxel of
+     * a labelled component with a mesh.
+     *
+     * @see SegmentationController#meshesFromLabelledImage(int, int)
+     *
+     */
+    public void voxelMeshesFromLabelledImage(){
+        voxelMeshesFromLabelledImage(0, 0);
+    }
+
+    public void voxelMeshesFromLabelledImage(int openSteps, int closeSteps){
+        BinaryMeshGenerator generator = new BinaryMeshGenerator();
+        generator.setOpenSteps(openSteps);
+        generator.setCloseSteps(closeSteps);
+        submit(()->{
+            List<DeformableMesh3D> meshes = generator.meshesFromLabels(getMeshImageStack());
+            startNewMeshTracks(meshes);
+        });
+    }
+
 
     /**
      * Applies the connection remesh algorith to all meshes in the current frame.
@@ -1185,52 +1254,6 @@ public class SegmentationController {
 
         IntensitySurfacePlot plot = new IntensitySurfacePlot(mesh, model.stack);
         return plot;
-    }
-
-    /**
-     * Shows the volume of the currently selected mesh by adding a voxel transient object, similar to the way
-     * show volume works, but the result is binary and colored.
-     *
-     */
-    public void showBinaryBlob(){
-        if(model.hasSelectedMesh()) {
-            main.submit(() -> {
-
-                int f = model.getCurrentFrame();
-                DeformableMesh3D mesh = model.getSelectedMesh(f);
-                ImagePlus plus = DeformableMesh3DTools.createBinaryRepresentation(model.stack, mesh);
-                List<int[]> pts = new ArrayList<>();
-                ImageStack stack = plus.getStack();
-                int lx = Integer.MAX_VALUE;
-                int ly = Integer.MAX_VALUE;
-                int lz = Integer.MAX_VALUE;
-
-                for(int j = 1; j<= plus.getNSlices(); j++){
-                    ImageProcessor proc = stack.getProcessor(j);
-                    final int w = proc.getWidth();
-                    final int h = proc.getHeight();
-                    for(int i = 0; i<w*h; i++){
-                        if(proc.get(i)!=0){
-                            int x = i%w;
-                            int y = i/w;
-                            int z = j-1;
-                            pts.add(new int[]{x, y, z});
-                            lx = x<lx?x:lx;
-                            ly = y<ly?y:ly;
-                            lz = z<lz?z:lz;
-                        }
-                    }
-                }
-                VolumeDataObject obj = new VolumeDataObject(model.getSelectedTrack().getColor());
-                obj.setTextureData(model.stack, pts);
-                double[] corner = model.stack.getNormalizedCoordinate(
-                        new double[]{
-                                lx-model.stack.offsets[0]*0.5, ly-model.stack.offsets[0]*0.5, lz-model.stack.offsets[0]*0.5
-                        });
-                obj.setPosition(corner[0], corner[1], corner[2]);
-                meshFrame3D.addTransientObject(obj);
-            });
-        }
     }
 
     /**
@@ -1602,18 +1625,6 @@ public class SegmentationController {
         }
     }
 
-
-    /**
-     * Shows the volume data in the meshframe. The program is much slower with the volume showing. It can be faster
-     * to adjust min/max (contrast) and set the frame with the volume hidden.
-     */
-    public void showVolume() {
-        submit(()->{
-            meshFrame3D.showVolume(model.stack);
-            meshFrame3D.setVisible(true);
-        });
-    }
-
     /**
      * The type of image energy that will be used.
      *
@@ -1641,12 +1652,26 @@ public class SegmentationController {
     public void changeVolumeClipping(int minDelta, int maxDelta) {
         submit(()->meshFrame3D.changeVolumeClipping(minDelta, maxDelta));
     }
-
+    public void cropSelectedMeshRegion(){
+        DeformableMesh3D mesh = getSelectedMesh();
+        if(mesh != null){
+            cropNormalized3DRegionAndTransform(mesh.getBoundingBox());
+        }
+    }
     /**
-     * Overloaded for using normalized coordinates represented as a box3d
+     * Crops the image to the provided region, selects the image and transforms the
+     * current meshes.
+     *
      * @param region an axis aligned bounding box.
      */
-    public void crop3DRegionNormalized(Box3D region){
+    public void cropNormalized3DRegionAndTransform(Box3D region){
+        ImagePlus plus = cropNormalizedRegion(region);
+        plus.setOpenAsHyperStack(true);
+        plus.show();
+        transformToImage(plus);
+    }
+
+    public ImagePlus cropNormalizedRegion(Box3D region){
         MeshImageStack stack = getMeshImageStack();
         MeshImageStack.ImageRegion3D r = stack.getImageCropValues(region);
         int x = r.lx;
@@ -1656,39 +1681,22 @@ public class SegmentationController {
         int h = r.hy - r.ly + 1;
         int d = r.hz - r.lz + 1;
 
-        crop3DRegion(x, y, z, w, h, d);
-
+        ImagePlus plus = crop3DRegion(x, y, z, w, h, d);
+        return plus;
     }
 
-    public void crop3DRegion(int x, int y, int z, int w, int h, int d){
+    public ImagePlus crop3DRegion(int x, int y, int z, int w, int h, int d){
         MeshImageStack stack = getMeshImageStack();
         ImagePlus alt = stack.getCroppedRegion(x, y, z, w, h, d);
-        alt.show();
         alt.setTitle(
                 getShortImageName() + "_"
-                        + x + ", " + y +", " +  z + ", "
-                        + w + ", " +  h +", " +  d );
-        setOriginalPlus(alt);
-        MeshImageStack next = getMeshImageStack();
-        List<Track> tracks = getAllTracks();
-        List<Track> dups = new ArrayList<>();
-        for(Track t: tracks){
-            Track t2 = new Track(t.getName(), t.getColor());
-            for(Integer key: t.getTrack().keySet()){
-                t2.addMesh(key, DeformableMesh3DTools.copyOf(t.getMesh(key)));
-            }
-            dups.add(t2);
-        }
-        BoundingBoxTransformer bbt = new BoundingBoxTransformer(stack, next);
-        dups.forEach(bbt::transformTrack);
-        setMeshTracks(dups);
+                        + x + "_" + y +"_" +  z + "_"
+                        + w + "_" +  h +"_" +  d );
+        return alt;
     }
 
-
-    public void transformToImage(){
+    public void transformToImage(ImagePlus plus){
         MeshImageStack current = getMeshImageStack();
-        ImagePlus plus = GuiTools.selectOpenImage(IJ.getInstance());
-        if(plus != null) return;
         setOriginalPlus(plus);
         MeshImageStack next = getMeshImageStack();
         List<Track> tracks = getAllTracks();
@@ -1706,13 +1714,12 @@ public class SegmentationController {
         dups.forEach(bbt::transformTrack);
         setMeshTracks(dups);
     }
-    public void showVolumeClippingDialog(){
-        VolumeDataObject vdo = meshFrame3D.getVolumeDataObject();
-        if(vdo!=null){
-            VolumeContrastSetter setter = new VolumeContrastSetter(vdo);
-            setter.setPreviewBackgroundColor(meshFrame3D.getBackgroundColor());
-            setter.showDialog(meshFrame3D.getJFrame());
-        }
+
+    public void transformToImage(){
+        MeshImageStack current = getMeshImageStack();
+        ImagePlus plus = GuiTools.selectOpenImage(IJ.getInstance());
+        if(plus == null) return;
+        transformToImage(plus);
     }
 
     /**
@@ -2437,10 +2444,6 @@ public class SegmentationController {
                     if(f == null){
                         setFurrowForCurrentFrame(new double[]{0,0,0}, new double[]{0, 0, 1});
                     }
-
-                    if(volumeShowing) {
-                        showVolume();
-                    }
                 }
         );
     }
@@ -2847,7 +2850,7 @@ public class SegmentationController {
      */
     public void createLabelledImage(List<Track> tracks){
         submit( ()->{
-            ImagePlus plus = DeformableMesh3DTools.createUniqueLabelsRepresentation(
+            ImagePlus plus = DeformableMesh3DTools.asUniqueLabels(
                     getMeshImageStack(), tracks
             );
             plus.setOpenAsHyperStack(true);
@@ -2894,16 +2897,6 @@ public class SegmentationController {
     }
 
     /**
-     * The color the image volume is display as, when the image volume is showing.
-     *
-     * @param color
-     */
-    public void setVolumeColor(Color color){
-        model.volumeColor = color;
-        showVolume();
-    }
-
-    /**
      *
      * @return the ration of distance between slices to the height of a pixel.
      */
@@ -2935,7 +2928,7 @@ public class SegmentationController {
      *
      * @return
      */
-    public RingController getRingController() {
+    public FurrowController getRingController() {
         return model.getRingController();
     }
 
@@ -3362,14 +3355,14 @@ public class SegmentationController {
     /**
      * Sets the position and normal of the furrow.
      *
-     * @see RingController
+     * @see FurrowController
      * @param center
      * @param normal
      */
     public void setFurrowForCurrentFrame(double[] center, double[] normal){
 
         submit(()->{
-            RingController rc = model.getRingController();
+            FurrowController rc = model.getRingController();
             rc.setFurrow(normal, center);
         });
 
@@ -3387,17 +3380,10 @@ public class SegmentationController {
         meshFrame3D.setSegmentationController(this);
         //for mesh only updates
         model.addMeshListener(meshFrame3D::syncMesh);
-
-
         model.addFrameListener((i)->{
             meshFrame3D.updateRingController();
-            if(meshFrame3D.volumeShowing()) {
-                meshFrame3D.showVolume(model.stack);
-            }
             meshFrame3D.syncMesh(i);
-
         });
-
         meshFrame3D.addPickListener(new PickSelector(this));
 
     }
@@ -3574,23 +3560,47 @@ public class SegmentationController {
     }
 
     public void startModifierTranslate(){
-        RingController rc = getRingController();
+        FurrowController rc = getRingController();
         rc.translateClicked();
     }
 
     public void startModifierSculpt(){
-        RingController rc = getRingController();
+        FurrowController rc = getRingController();
         rc.sculptClicked();
     }
 
     public void cancelModifier(){
-        RingController rc = getRingController();
+        FurrowController rc = getRingController();
         rc.cancel();
     }
 
     public void acceptModifier(){
-        RingController rc = getRingController();
+        FurrowController rc = getRingController();
         rc.finishedClicked();
+    }
+
+    /**
+     * Creates a set of isotropic data for use with stardist3d training.
+     *
+     */
+    public void generateStardistTrainingData() {
+    }
+
+    public void generateActiveUnetTrainingData(){
+
+    }
+
+    public void generateCellposeTrainingData(){
+        CreateCellposeLabels cclbl = new CreateCellposeLabels(getMeshImageStack(), getAllTracks());
+        cclbl.process();
+    }
+
+
+    public void guessVoxelMeshes() {
+        BinaryMeshGenerator generator = new BinaryMeshGenerator();
+
+        List<DeformableMesh3D> meshes = generator.predictMeshes(getMeshImageStack());
+        startNewMeshTracks(meshes);
     }
 
 }

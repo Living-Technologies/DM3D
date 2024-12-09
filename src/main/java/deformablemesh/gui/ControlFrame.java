@@ -29,6 +29,8 @@ import deformablemesh.BoundingBoxTransformer;
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
 import deformablemesh.SegmentationController;
+import deformablemesh.examples.SaveImageToZarr;
+import deformablemesh.experimental.LoadZarr;
 import deformablemesh.experimental.RemotePrediction;
 import deformablemesh.externalenergies.ImageEnergyType;
 import deformablemesh.geometry.DeformableMesh3D;
@@ -46,17 +48,58 @@ import ij.ImagePlus;
 import ij.io.OpenDialog;
 import ij.measure.Calibration;
 import ij.plugin.FileInfoVirtualStack;
-import ij.plugin.filter.PlugInFilter;
 import loci.plugins.BF;
 import loci.plugins.in.ImporterOptions;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JTextField;
+import javax.swing.KeyStroke;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.EventQueue;
+import java.awt.FileDialog;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Locale;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
@@ -85,10 +128,9 @@ public class ControlFrame implements ReadyObserver, FrameListener {
     Component mainDisplay;
 
     SwingJSTerm terminal;
-    Dimension pm = new Dimension(29, 29);
     JLabel message = new JLabel("");
     HotKeyDelegate mf3DInterface;
-    RingController ringController;
+    FurrowController ringController;
 
     static String showPlane = "show plane";
     static String hidePlane = "hide plane";
@@ -100,7 +142,6 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         } catch (Throwable e){
             System.out.println("Javascript not configured properly");
             e.printStackTrace();
-            //can be a couple errors.
         }
 
         ringController = model.getRingController();
@@ -121,7 +162,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         contentPanel.add(createStatusPanel(), BorderLayout.SOUTH);
 
         frame.setContentPane(contentPanel);
-        frame.setJMenuBar(createMenu(frame));
+        frame.setJMenuBar(createMenuBar(frame));
 
 
         frame.pack();
@@ -274,14 +315,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         JPanel buttonPanel = new JPanel(new GridBagLayout());
         GridBagConstraints bcon = new GridBagConstraints();
 
-        buttonPanel.add( createButtonShowVolume(), bcon);
-        bcon.gridx = 1;
-        buttonPanel.add( createButtonAdjustVolumeContrast(), bcon);
-        bcon.gridy = 1;
-        bcon.gridx = 0;
-        buttonPanel.add( createButtonAdjustMinimum(), bcon);
-        bcon.gridx = 1;
-        buttonPanel.add( createButtonAdjustMaximum(), bcon);
+        buttonPanel.add( createManageVolumeButton(), bcon);
         return buttonPanel;
     }
 
@@ -499,16 +533,6 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         return content;
     }
 
-    private JButton createButtonAdjustVolumeContrast() {
-
-        JButton vc = new JButton("vol-contrast");
-        vc.addActionListener(evt->{
-            segmentationController.showVolumeClippingDialog();
-        });
-        buttons.add(vc);
-        return vc;
-    }
-
     private JCheckBox createRigidBoundaryCheckbox() {
         JCheckBox check = new JCheckBox("rigid boundaries");
         check.addActionListener(evt->{
@@ -543,14 +567,6 @@ public class ControlFrame implements ReadyObserver, FrameListener {
 
         };
         return saving;
-    }
-    private void createButtonMeasureVolume(JPanel buttonPanel) {
-        final JButton measureVolume = new JButton("measure volume");
-        measureVolume.setToolTipText("Measures volume vs time");
-        buttons.add(measureVolume);
-        buttonPanel.add(measureVolume);
-        measureVolume.addActionListener(evt-> segmentationController.measureVolume());
-
     }
 
     public JButton createButtonClearMesh(){
@@ -630,44 +646,31 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         JButton action = new JButton("connection remesh");
         buttons.add(action);
 
-        JLabel scaledMinUnits = new JLabel("no units");
-        JLabel scaledMaxUnits = new JLabel("no units");
+        JLabel scaledMeanUnits = new JLabel("no units");
 
 
-
-        ParameterControl minValue = GuiTools.createInputField(
-                "min length",
-                v->{
-                    MeshImageStack stack = segmentationController.getMeshImageStack();
-                    if(stack != null){
-                        double scale = stack.SCALE;
-                        //TODO
-                        String unit = stack.getUnits();
-
-                        scaledMinUnits.setText(String.format(Locale.US, "%3.3f %s", scale*v, unit ));
-                    } else{
-                        scaledMinUnits.setText("");
-                    }
-                    segmentationController.setMinConnectionLength(v);
-                },
-                segmentationController.getMinConnectionLength(),
-                this
-        );
-
-        ParameterControl maxValue = GuiTools.createInputField(
-                "max length",
+        double initialMean = 0.5*(
+                segmentationController.getMaxConnectionLength() +
+                        segmentationController.getMinConnectionLength() );
+        ParameterControl targetMeanLength = GuiTools.createInputField(
+                "connection length",
                 v->{
                     MeshImageStack stack = segmentationController.getMeshImageStack();
                     if(stack != null){
                         double scale = stack.SCALE;
                         String unit = stack.getUnits();
-                        scaledMaxUnits.setText(String.format(Locale.US, "%3.3f %s", scale*v, unit ));
+                        scaledMeanUnits.setText(String.format(Locale.US, "%3.3f %s", scale*v, unit ));
                     } else{
-                        scaledMaxUnits.setText("");
+                        scaledMeanUnits.setText("");
                     }
-                    segmentationController.setMaxConnectionLength(v);
+                    //The mean length is the average of the min and max
+                    //2*min = max.
+                    double max = 4*v/3;
+                    double min = 2*v/3;
+                    segmentationController.setMaxConnectionLength(max);
+                    segmentationController.setMinConnectionLength(min);
                 },
-                segmentationController.getMaxConnectionLength(),
+                initialMean,
                 this
         );
 
@@ -677,11 +680,12 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             if(stack != null){
                 scale = stack.SCALE;
                 String unit = stack.getUnits();
-                scaledMaxUnits.setText(String.format(Locale.US, "%3.3f %s",  scale*maxValue.getValue(), unit ));
-                scaledMinUnits.setText(String.format(Locale.US, "%3.3f %s",  scale*minValue.getValue(), unit ));
+                double mean = 0.5*(
+                        segmentationController.getMaxConnectionLength() +
+                                segmentationController.getMinConnectionLength() );
+                scaledMeanUnits.setText(String.format(Locale.US, "%3.3f %s",  scale*mean, unit ));
             } else{
-                scaledMinUnits.setText("");
-                scaledMaxUnits.setText("");
+                scaledMeanUnits.setText("");
             }
         };
 
@@ -703,26 +707,18 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         gbc.gridwidth = 2;
         gbc.gridx = 0;
         gbc.gridy = 1;
-        host.add(minValue, gbc);
+        host.add(targetMeanLength, gbc);
         gbc.gridwidth = 1;
         gbc.gridx = 2;
-        host.add(scaledMinUnits, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        gbc.gridwidth = 2;
-        host.add(maxValue, gbc);
-        gbc.gridwidth = 1;
-        gbc.gridx = 2;
-        host.add(scaledMaxUnits, gbc);
+        host.add(scaledMeanUnits, gbc);
 
         action.addActionListener(evt->{
             boolean reMeshAll = ( evt.getModifiers() & ActionEvent.CTRL_MASK ) > 0;
             connectionRemesh(reMeshAll);
         });
+
         host.setOpaque(false);
         return host;
-
     }
 
     public void connectionRemesh(boolean reMeshAll){
@@ -755,7 +751,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
 
     public JButton createButtonClearTransients(){
         JButton clearTransients = new JButton("X");
-        clearTransients.setToolTipText("Clear all force vectors.");
+        clearTransients.setToolTipText("Clear temporary items (eg force vectors).");
         buttons.add(clearTransients);
         clearTransients.addActionListener((evt)->{
             setReady(false);
@@ -765,19 +761,12 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         return clearTransients;
     }
 
-    public JButton createButtonShowVolume(){
-        final String showing = "show volume";
-        final String hide = "hide volume";
+    public JButton createManageVolumeButton(){
+        final String showing = "manage volumes";
         JButton show_volume = new JButton(showing);
         buttons.add(show_volume);
         show_volume.addActionListener(e -> {
-            if(showing.equals(show_volume.getText())){
-                show_volume.setText(hide);
-                showVolumeAction();
-            } else{
-                show_volume.setText(showing);
-                hideVolumeAction();
-            }
+                showVolumeManagerAction();
         });
         return show_volume;
     }
@@ -791,17 +780,6 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             finished();
         });
         return showForces;
-    }
-    public void createButtonShowMeshVolume(JPanel buttonPanel){
-
-        JButton showMeshVolume = new JButton("show mesh volume");
-        buttons.add(showMeshVolume);
-        buttonPanel.add(showMeshVolume);
-        showMeshVolume.addActionListener(e->{
-            setReady(false);
-            segmentationController.showBinaryBlob();
-            finished();
-        });
     }
 
 
@@ -823,75 +801,6 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         buttons.add(energySelector);
         panel.add(energySelector);
         return panel;
-    }
-
-    public JPanel createButtonAdjustMinimum(){
-        Insets margin = new Insets(5, 0, 5, 0);
-        JLabel m = new JLabel("min.");
-
-        JButton decrease_min = new JButton("-");
-        decrease_min.setPreferredSize(pm);
-        decrease_min.setMargin(margin);
-        buttons.add(decrease_min);
-        decrease_min.addActionListener(e -> {
-            setReady(false);
-            segmentationController.changeVolumeClipping(-1,0);
-            finished();
-        });
-
-        JButton increase_min = new JButton("+");
-        increase_min.setPreferredSize(pm);
-        increase_min.setMargin(margin);
-        buttons.add(increase_min);
-        increase_min.addActionListener(e -> {
-            setReady(false);
-            segmentationController.changeVolumeClipping(1,0);
-            finished();
-        });
-
-        JPanel sub = new JPanel();
-        sub.add(Box.createHorizontalStrut(5));
-        sub.setLayout(new BoxLayout(sub, BoxLayout.LINE_AXIS));
-        sub.add(m);
-        sub.add(Box.createHorizontalGlue());
-        sub.add(decrease_min);
-        sub.add(increase_min);
-        sub.add(Box.createHorizontalStrut(5));
-        return sub;
-    }
-
-    public JPanel createButtonAdjustMaximum(){
-        JLabel m = new JLabel("max.");
-        Insets margin = new Insets(5, 0, 5, 0);
-        JButton decrease_max = new JButton("-");
-        decrease_max.setPreferredSize(pm);
-        decrease_max.setMargin(margin);
-        buttons.add(decrease_max);
-        decrease_max.addActionListener(e -> {
-            setReady(false);
-            segmentationController.changeVolumeClipping(0,-1);
-            finished();
-        });
-
-        JButton increase_max = new JButton("+");
-        increase_max.setPreferredSize(pm);
-        increase_max.setMargin(margin);
-        buttons.add(increase_max);
-        increase_max.addActionListener(e -> {
-            setReady(false);
-            segmentationController.changeVolumeClipping(0,1);
-            finished();
-        });
-
-        JPanel sub = new JPanel();
-        sub.setLayout(new BoxLayout(sub, BoxLayout.LINE_AXIS));
-        sub.add(Box.createHorizontalStrut(5));
-        sub.add(m);
-        sub.add(Box.createHorizontalGlue());
-        sub.add(decrease_max);
-        sub.add(increase_max);
-        sub.add(Box.createHorizontalStrut(5));
-        return sub;
     }
 
     public void deformAction(boolean deformAll){
@@ -923,141 +832,139 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         });
         return deformButton;
     }
-    JMenuBar createMenu(final JFrame frame){
-        JMenuBar menu = new JMenuBar();
 
+    public void importImageAsVirtualStack(){
+        String id = IJ.getFilePath("select h5/xml or tiff file");
+        if(id==null) return;
+        setReady(false);
+
+        segmentationController.submit( ()->{
+            try {
+                if (id.endsWith(".tif") ) {
+                    ImagePlus plus = FileInfoVirtualStack.openVirtual(id);
+                    plus.show();
+                    segmentationController.setOriginalPlus(plus);
+                } else{
+                    ImporterOptions options = new ImporterOptions();
+                    options.setVirtual(true);
+                    options.setOpenAllSeries(true);
+
+                    if(id == null) return;
+                    options.setId(id);
+                    ImagePlus[] pluses = BF.openImagePlus(options);
+                    int w = -1;
+                    int h = -1;
+                    int z = -1;
+                    for (ImagePlus plus : pluses) {
+                        int nz = plus.getNSlices();
+                        int ny = plus.getHeight();
+                        int nx = plus.getWidth();
+                        w = nx > w ? nx : w;
+                        h = ny > h ? ny : h;
+                        z = nz > z ? nz : z;
+
+                        plus.show();
+                    }
+                    for (ImagePlus plus : pluses) {
+                        int nz = plus.getNSlices();
+                        int ny = plus.getHeight();
+                        int nx = plus.getWidth();
+                        Calibration cal = plus.getCalibration();
+                        if(cal.scaled()){
+                            if(nz < z){
+                                cal.pixelDepth = cal.pixelDepth*z / nz;
+                            }
+                            if(ny < h){
+                                cal.pixelHeight = cal.pixelHeight*h / ny;
+                            }
+                            if(nx < w){
+                                cal.pixelWidth = cal.pixelWidth*w / nx;
+                            }
+                        }
+                    }
+                    segmentationController.setOriginalPlus(pluses[0]);
+                }
+            } catch( Exception e){
+                //oh well!
+            } finally {
+                finished();
+            }
+        });
+    }
+
+    class UiAction implements ActionListener{
+        final Runnable r;
+        public UiAction(Runnable r){
+            this.r = r;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            setReady(false);
+            r.run();
+            finished();
+        }
+    }
+    class ModelAction implements ActionListener{
+        final Runnable r;
+        public ModelAction(Runnable r){
+            this.r = r;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            setReady(false);
+            segmentationController.submit(()->{
+                r.run();
+                finished();
+            });
+        }
+    }
+
+    public void saveParameters(){
+        FileDialog fd = new FileDialog(frame,"Select file to save parameters to.");
+        fd.setDirectory(OpenDialog.getDefaultDirectory());
+        fd.setMode(FileDialog.SAVE);
+        fd.setVisible(true);
+        if(fd.getFile()==null || fd.getDirectory()==null){
+            finished();
+            return;
+        }
+        File f = new File(fd.getDirectory(),fd.getFile());
+        segmentationController.saveParameters(f);
+    }
+    JMenu createFileMenu(){
         JMenu file = new JMenu("file");
-        menu.add(file);
-
         JMenuItem original = new JMenuItem("Open Image");
         file.add(original);
-        original.addActionListener(evt -> {
-            openImage();
-        });
+        original.addActionListener(new UiAction(this::openImage));
 
         JMenuItem selectOpen = new JMenuItem("Select open image");
         file.add(selectOpen);
-        selectOpen.addActionListener(evt->{
+        selectOpen.addActionListener(new UiAction(this::selectOpenImage));
 
-            selectOpenImage();
-
-        });
         JMenuItem importH5Xml = new JMenuItem("import virtual");
         file.add(importH5Xml);
-        importH5Xml.addActionListener( evt->{
-            String id = IJ.getFilePath("select h5/xml or tiff file");
-            if(id==null) return;
-            setReady(false);
+        importH5Xml.addActionListener(new UiAction(this::importImageAsVirtualStack));
 
-            segmentationController.submit( ()->{
-                try {
-                    if (id.endsWith(".tif") ) {
-                        ImagePlus plus = FileInfoVirtualStack.openVirtual(id);
-                        plus.show();
-                        segmentationController.setOriginalPlus(plus);
-                    } else{
-                        ImporterOptions options = new ImporterOptions();
-                        options.setVirtual(true);
-                        options.setOpenAllSeries(true);
-
-                        if(id == null) return;
-                        options.setId(id);
-                        ImagePlus[] pluses = BF.openImagePlus(options);
-                        int w = -1;
-                        int h = -1;
-                        int z = -1;
-                        for (ImagePlus plus : pluses) {
-                            int nz = plus.getNSlices();
-                            int ny = plus.getHeight();
-                            int nx = plus.getWidth();
-                            w = nx > w ? nx : w;
-                            h = ny > h ? ny : h;
-                            z = nz > z ? nz : z;
-
-                            plus.show();
-                        }
-                        for (ImagePlus plus : pluses) {
-                            int nz = plus.getNSlices();
-                            int ny = plus.getHeight();
-                            int nx = plus.getWidth();
-                            Calibration cal = plus.getCalibration();
-                            if(cal.scaled()){
-                                if(nz < z){
-                                    cal.pixelDepth = cal.pixelDepth*z / nz;
-                                }
-                                if(ny < h){
-                                    cal.pixelHeight = cal.pixelHeight*h / ny;
-                                }
-                                if(nx < w){
-                                    cal.pixelWidth = cal.pixelWidth*w / nx;
-                                }
-                            }
-                        }
-                        segmentationController.setOriginalPlus(pluses[0]);
-                    }
-                } catch( Exception e){
-                    //oh well!
-                } finally{
-                    finished();
-                }
-            });
-        });
         JMenuItem saveAs = new JMenuItem("save meshes as...");
         file.add(saveAs);
         saveAs.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_MASK));
-        saveAs.addActionListener(actionEvent -> {
-            saveAs();
-        });
+        saveAs.addActionListener(new UiAction(this::saveAs));
+
         JMenuItem saveMesh = new JMenuItem("save");
         file.add(saveMesh);
         saveMesh.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK));
-        saveMesh.addActionListener(evt->{
-            File f = segmentationController.getLastSavedFile();
-            if(f==null){
-                saveAs();
-            } else{
-                segmentationController.saveMeshes(f);
-                finished();
-            }
-        });
+        saveMesh.addActionListener(new UiAction(this::save));
+
         JMenuItem load = new JMenuItem("load meshes");
         file.add(load);
-        load.addActionListener(actionEvent -> {
-            setReady(false);
+        load.addActionListener(new UiAction(this::loadMeshes));
 
-            FileDialog fd = new FileDialog(frame,"File to load mesh from");
-            fd.setDirectory(OpenDialog.getDefaultDirectory());
-            fd.setMode(FileDialog.LOAD);
-            fd.setVisible(true);
-
-            if(fd.getFile()==null || fd.getDirectory()==null){
-                finished();
-                return;
-            }
-
-            File f = new File(fd.getDirectory(),fd.getFile());
-
-            segmentationController.loadMeshes(f);
-            finished();
-        });
 
         JMenuItem saveParameters = new JMenuItem("Save parameters");
         file.add(saveParameters);
-        saveParameters.addActionListener(evt->{
-            setReady(false);
-
-            FileDialog fd = new FileDialog(frame,"Select file to save parameters to.");
-            fd.setDirectory(OpenDialog.getDefaultDirectory());
-            fd.setMode(FileDialog.SAVE);
-            fd.setVisible(true);
-            if(fd.getFile()==null || fd.getDirectory()==null){
-                finished();
-                return;
-            }
-            File f = new File(fd.getDirectory(),fd.getFile());
-            segmentationController.saveParameters(f);
-            finished();
-        });
+        saveParameters.addActionListener(new UiAction(this::saveParameters));
 
         JMenuItem loadParameters = new JMenuItem("Load parameters");
         file.add(loadParameters);
@@ -1079,22 +986,13 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         JMenuItem newMeshes = new JMenuItem("Start new meshes.");
         newMeshes.setToolTipText("Clear the current meshes, for starting a new set.");
         file.add(newMeshes);
-        newMeshes.addActionListener(evt->{
-            segmentationController.restartMeshes();
-        });
-        //JMenuItem exportFor = new JMenuItem("export for:");
-        //exportFor.setToolTipText("For exporting meshes to be used in a larger image.");
-        //file.add(exportFor);
-        //exportFor.addActionListener(evt->{
-        //    exportFor();
-        //});
+        newMeshes.addActionListener(new UiAction(segmentationController::restartMeshes));
 
+        return file;
+    }
 
-
-
+    public JMenu createEditMenu(){
         JMenu edit = new JMenu("edit");
-        menu.add(edit);
-
         undo = new JMenuItem("undo");
         undo.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, ActionEvent.CTRL_MASK));
         edit.add(undo);
@@ -1116,10 +1014,66 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         });
         redo.setEnabled(false);
 
+        JMenuItem clearHistory = new JMenuItem("clear undo history");
+        clearHistory.addActionListener(new UiAction(segmentationController::clearHistory));
+        return edit;
+    }
+    public JMenu createMenuTrack(){
+        JMenu trackMenu = new JMenu("track");
+
+        JMenuItem trackManager = new JMenuItem("Manage Tracks");
+        trackMenu.add(trackManager);
+        trackManager.addActionListener(evt->{
+            buildTrackManager();
+        });
+        trackMenu.addSeparator();
+
+        JMenuItem track = new JMenuItem("track selected");
+        trackMenu.add(track);
+        track.setAccelerator(KeyStroke.getKeyStroke('t'));
+        track.addActionListener(evt->{
+            trackMeshAction();
+        });
+
+        JMenuItem trackBack = new JMenuItem("track backwards");
+        trackMenu.add(trackBack);
+        trackBack.setAccelerator(KeyStroke.getKeyStroke('b'));
+        trackBack.addActionListener(evt->{
+            if(ready) {
+                segmentationController.trackMeshBackwards();
+                finished();
+            }
+        });
+        trackMenu.addSeparator();
+        JMenu trackMate = createMenuTrackMate();
+        trackMenu.add(trackMate);
+
+        return trackMenu;
+    }
+    public JMenu createMenuMesh(){
         JMenu mesh = new JMenu("mesh");
-        menu.add(mesh);
 
+        JMenuItem imprt = new JMenuItem("import meshes");
+        mesh.add(imprt);
+        imprt.addActionListener(actionEvent -> {
+            importMeshes();
+        });
 
+        JMenuItem imprtFrom = new JMenuItem("import from open image");
+        mesh.add(imprtFrom);
+        imprtFrom.addActionListener(actionEvent -> {
+            importFrom();
+        });
+        JMenuItem transformToOpenImage = new JMenuItem("Transform to Open Image");
+        mesh.add(transformToOpenImage);
+        transformToOpenImage.addActionListener(new UiAction(segmentationController::transformToImage));
+        mesh.addSeparator();
+
+        JMenuItem cropAroundSelectedMesh = new JMenuItem("Crop around selected mesh.");
+        mesh.add(cropAroundSelectedMesh);
+        cropAroundSelectedMesh.addActionListener(
+                new ModelAction(segmentationController::cropSelectedMeshRegion)
+        );
 
         JMenuItem stlSave = new JMenuItem("Export as Stl");
         mesh.add(stlSave);
@@ -1169,74 +1123,33 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             segmentationController.exportAsPly(f);
             finished();
         });
-
-        JMenu trackMate = createTrackMateMenu();
-        mesh.add(trackMate);
-
-        JMenuItem fromLabelledImage = new JMenuItem("Meshes from Labels");
+        mesh.addSeparator();
+        JMenuItem fromLabelledImage = new JMenuItem("Relax Meshes from Labels");
         mesh.add(fromLabelledImage);
         fromLabelledImage.addActionListener(evt->{
             segmentationController.submit(segmentationController::meshesFromLabelledImage);
         });
 
-        JMenuItem load_3d_furrows = new JMenuItem("load furrows");
-        mesh.add(load_3d_furrows);
-        load_3d_furrows.addActionListener(event -> {
-            setReady(false);
-            FileDialog fd = new FileDialog(frame,"File to load 3d furrow data from");
-            fd.setMode(FileDialog.LOAD);
-            fd.setVisible(true);
-            if(fd.getFile()==null || fd.getDirectory()==null){
-                return;
-            }
-            File f = new File(fd.getDirectory(),fd.getFile());
-            segmentationController.load3DFurrows(f);
-            finished();
-        });
-
-        JMenuItem saveFurrows = new JMenuItem("save furrows");
-        mesh.add(saveFurrows);
-        saveFurrows.addActionListener(event -> {
-            setReady(false);
-            FileDialog fd = new FileDialog(frame,"File to save furrow data to");
-            fd.setMode(FileDialog.SAVE);
-            fd.setFile(segmentationController.getShortImageName() + ".furrow");
-            fd.setVisible(true);
-            if(fd.getFile()==null || fd.getDirectory()==null){
-                return;
-            }
-            File f = new File(fd.getDirectory(),fd.getFile());
-            segmentationController.saveFurrows(f);
-            finished();
-        });
-
+        JMenuItem voxelMeshGeneration = new JMenuItem("Voxel Meshes from Labels");
+        mesh.add(voxelMeshGeneration);
+       voxelMeshGeneration.addActionListener(new ModelAction(segmentationController::voxelMeshesFromLabelledImage) );
         mesh.addSeparator();
-        JMenuItem track = new JMenuItem("track selected");
-        mesh.add(track);
-        track.setAccelerator(KeyStroke.getKeyStroke('t'));
-        track.addActionListener(evt->{
-            trackMeshAction();
-        });
+        JMenuItem predictEllipses = new JMenuItem("Ellispes from DT");
+        mesh.add(predictEllipses);
+        predictEllipses.addActionListener(new UiAction(()->{
+            segmentationController.submit(()->{
+                segmentationController.guessMeshes(3, true, 0.8);
+            });
+        }));
 
-        JMenuItem trackBack = new JMenuItem("track backwards");
-        mesh.add(trackBack);
-        trackBack.setAccelerator(KeyStroke.getKeyStroke('b'));
-        trackBack.addActionListener(evt->{
-            if(ready) {
-                segmentationController.trackMeshBackwards();
-                finished();
-            }
-        });
+        JMenuItem predictVoxels = new JMenuItem("Voxels from DT");
+        mesh.add(predictVoxels);
+        predictVoxels.addActionListener(new ModelAction(segmentationController::guessVoxelMeshes));
+        return mesh;
+    }
 
-
+    public JMenu createMenuTools(){
         JMenu tools = new JMenu("tools");
-        menu.add(tools);
-        JMenuItem bin = new JMenuItem("Create Binary Image");
-        tools.add(bin);
-        bin.addActionListener(evt->{
-            segmentationController.createBinaryImage();
-        });
-
         JMenuItem label = new JMenuItem("Create Label Image");
         label.setToolTipText("Creates a grayscale image with unique labels for each track.");
         tools.add(label);
@@ -1283,33 +1196,9 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             } finally{
                 finished();
             }
-
-
         });
 
-        JMenuItem showFurrowValues = new JMenuItem("Furrow Values");
-        tools.add(showFurrowValues);
-        showFurrowValues.addActionListener(evt->{
-            segmentationController.showFurrowValues();
-        });
 
-        JMenuItem imprt = new JMenuItem("import meshes");
-        tools.add(imprt);
-        imprt.addActionListener(actionEvent -> {
-            importMeshes();
-        });
-
-        JMenuItem imprtFrom = new JMenuItem("import from open image");
-        tools.add(imprtFrom);
-        imprtFrom.addActionListener(actionEvent -> {
-            importFrom();
-        });
-
-        JMenuItem trackManager = new JMenuItem("Manage Tracks");
-        tools.add(trackManager);
-        trackManager.addActionListener(evt->{
-            buildTrackManager();
-        });
 
         JMenuItem recordSnapShots = new JMenuItem("Record Snapshots");
         tools.add(recordSnapShots);
@@ -1368,13 +1257,10 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         JMenuItem remotePrediction = new JMenuItem("remote prediction");
         tools.add(remotePrediction);
         remotePrediction.addActionListener(evt->{
-            ImagePlus plus = segmentationController.getMeshImageStack().getOriginalPlus();
             RemotePrediction rep = new RemotePrediction();
-            int v = rep.setup("process", plus);
-            if(v == PlugInFilter.DOES_ALL){
-                new Thread(()->{
-                    rep.run(null);
-                }).start();
+            int v = rep.setup(segmentationController.getMeshImageStack());
+            if(v != -1){
+                new Thread(rep::run).start();
             }
         });
         JMenuItem substituteImageData = new JMenuItem("substitute data");
@@ -1397,9 +1283,46 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             }
         });
         tools.add(substituteImageData);
+        JMenu tde = createMenuTrainingDataExport();
+        tools.add(tde);
 
+        JMenu furrow = createMenuFurrows();
+        tools.add(furrow);
+
+        JMenu zarr = new JMenu("ome-zarr");
+        JMenuItem load = new JMenuItem("load zarr");
+        zarr.add(load);
+        load.addActionListener(evt->{
+            Path folder = Paths.get(IJ.getDirectory("select zarr folder"));
+            try {
+                List<ImagePlus> pluses = LoadZarr.load3DStackFromZarrFile(folder.toString());
+                for(ImagePlus plus: pluses){
+                    plus.show();
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+        });
+        JMenuItem save = new JMenuItem("save-zarr");
+        zarr.add(save);
+        save.addActionListener(evt->{
+            String out = IJ.getFilePath("Select file to save zarr too.");
+            if(out == null || !segmentationController.hasOriginalPlus()  ){
+                return;
+            }
+            try {
+                SaveImageToZarr.saveToZarr(segmentationController.getMeshImageStack().getOriginalPlus(), Paths.get(out));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+        tools.add(zarr);
+        return tools;
+    }
+
+    public JMenu createMenuHelp(){
         JMenu help = new JMenu("help");
-        menu.add(help);
         JMenuItem about = new JMenuItem("about");
         help.add(about);
         about.addActionListener(evt->{
@@ -1411,63 +1334,165 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             GuiTools.showFaqWindow(frame);
         });
         help.add(faq);
+        return help;
+    }
+
+    /**
+     * Top level creates menubar.
+     *
+     * @param frame
+     * @return main menu bar
+     */
+    JMenuBar createMenuBar(final JFrame frame){
+        JMenuBar menu = new JMenuBar();
+
+        JMenu fileMenu = createFileMenu();
+        menu.add(fileMenu);
+
+        JMenu editMenu = createEditMenu();
+        menu.add(editMenu);
 
 
+        JMenu meshMenu = createMenuMesh();
+        menu.add(meshMenu);
+
+        JMenu trackMenu = createMenuTrack();
+        menu.add(trackMenu);
+
+
+        JMenu toolsMenu = createMenuTools();
+        menu.add(toolsMenu);
+
+
+        JMenu helpMenu = createMenuHelp();
+
+        menu.add(helpMenu);
+
+        return menu;
+    }
+    public JMenu createMenuFurrows(){
+        JMenu furrows = new JMenu("furrow");
+        JMenuItem load_3d_furrows = new JMenuItem("load furrows");
+        furrows.add(load_3d_furrows);
+        load_3d_furrows.addActionListener(event -> {
+            setReady(false);
+            FileDialog fd = new FileDialog(frame,"File to load 3d furrow data from");
+            fd.setMode(FileDialog.LOAD);
+            fd.setVisible(true);
+            if(fd.getFile()==null || fd.getDirectory()==null){
+                return;
+            }
+            File f = new File(fd.getDirectory(),fd.getFile());
+            segmentationController.load3DFurrows(f);
+            finished();
+        });
+
+        JMenuItem saveFurrows = new JMenuItem("save furrows");
+        furrows.add(saveFurrows);
+        saveFurrows.addActionListener(event -> {
+            setReady(false);
+            FileDialog fd = new FileDialog(frame,"File to save furrow data to");
+            fd.setMode(FileDialog.SAVE);
+            fd.setFile(segmentationController.getShortImageName() + ".furrow");
+            fd.setVisible(true);
+            if(fd.getFile()==null || fd.getDirectory()==null){
+                return;
+            }
+            File f = new File(fd.getDirectory(),fd.getFile());
+            segmentationController.saveFurrows(f);
+            finished();
+        });
+
+        JMenuItem showFurrowValues = new JMenuItem("Furrow Values");
+        furrows.add(showFurrowValues);
+        showFurrowValues.addActionListener(evt->{
+            segmentationController.showFurrowValues();
+        });
+
+
+        return furrows;
+    }
+
+    public JMenu createMenuTrainingDataExport(){
+        JMenuItem generateStarDist = new JMenuItem("stardist");
+        generateStarDist.addActionListener(new ModelAction(segmentationController::generateStardistTrainingData));
+        JMenuItem generateCellPose = new JMenuItem("cellpose");
+        generateCellPose.addActionListener(new ModelAction(segmentationController::generateCellposeTrainingData));
+        JMenuItem generateActiveUnet = new JMenuItem("active-unet");
+        generateActiveUnet.addActionListener(new ModelAction(segmentationController::generateActiveUnetTrainingData));
+
+        JMenu menu = new JMenu("training labels");
+        menu.add(generateActiveUnet);
+        menu.add(generateStarDist);
+        menu.add(generateCellPose);
 
         return menu;
     }
 
-    JMenu createTrackMateMenu(){
+    public void exportAsTmXml(){
+        setReady(false);
+        File f = getSaveFile(segmentationController.getShortImageName() + ".xml");
+        if(f != null){
+            segmentationController.submit(()->{
+                try{
+                    TrackMateAdapter.saveAsTrackMateFile(segmentationController.getMeshImageStack(),
+                            segmentationController.getAllTracks(),
+                            f.toPath()
+                    );
+                }catch(Exception e){
+                    e.printStackTrace();
+                }
+            });
+        }
+        finished();
+    }
+
+    public void importFromTmXml(){
+        setReady(false);
+        File f = getOpenFile("Select Trackmate .xml");
+        if(f!=null){
+            segmentationController.submit( ()->{
+                List<Track> tracks = TrackMateAdapter.importTrackMateFile(
+                        segmentationController.getMeshImageStack(),
+                        f.toPath()
+                );
+                System.out.println("finished loading");
+                segmentationController.setMeshTracks(tracks);
+            });
+        }
+        finished();
+    }
+
+    public void trackFromTmXml(){
+        setReady(false);
+        File f = getOpenFile("Select Trackmate .xml");
+        if(f != null){
+            segmentationController.submit( () -> {
+                List<Track> tracks = TrackMateAdapter.applyTracking(
+                        segmentationController.getAllTracks(),
+                        segmentationController.getMeshImageStack(),
+                        f.toPath()
+                );
+                segmentationController.setMeshTracks(tracks);
+            });
+        }
+        finished();
+    }
+
+    JMenu createMenuTrackMate(){
         JMenu trackMate = new JMenu("TrackMate");
         JMenuItem export = new JMenuItem("export as TmXml");
         export.addActionListener(evt ->{
-            setReady(false);
-            File f = getSaveFile(segmentationController.getShortImageName() + ".xml");
-            if(f != null){
-                segmentationController.submit(()->{
-                    try{
-                        TrackMateAdapter.saveAsTrackMateFile(segmentationController.getMeshImageStack(),
-                                segmentationController.getAllTracks(),
-                                f.toPath()
-                        );
-                    }catch(Exception e){
-                        e.printStackTrace();
-                    }
-                });
-            }
-            finished();
+            exportAsTmXml();
         });
+
         JMenuItem imp = new JMenuItem("import from TmXml");
         imp.addActionListener(evt->{
-            setReady(false);
-            File f = getOpenFile("Select Trackmate .xml");
-            if(f!=null){
-                segmentationController.submit( ()->{
-                    List<Track> tracks = TrackMateAdapter.importTrackMateFile(
-                            segmentationController.getMeshImageStack(),
-                            f.toPath()
-                    );
-                    System.out.println("finished loading");
-                    segmentationController.setMeshTracks(tracks);
-                });
-            }
-            finished();
+            importFromTmXml();
         });
         JMenuItem mapping = new JMenuItem("track from TmXml");
         mapping.addActionListener(evt->{
-            setReady(false);
-            File f = getOpenFile("Select Trackmate .xml");
-            if(f != null){
-                segmentationController.submit( () -> {
-                    List<Track> tracks = TrackMateAdapter.applyTracking(
-                            segmentationController.getAllTracks(),
-                            segmentationController.getMeshImageStack(),
-                            f.toPath()
-                    );
-                    segmentationController.setMeshTracks(tracks);
-                });
-            }
-            finished();
+            trackFromTmXml();
         });
         mapping.setToolTipText("Use a trackmate file to track existing meshes.");
 
@@ -1528,18 +1553,40 @@ public class ControlFrame implements ReadyObserver, FrameListener {
 
     }
 
-    public void showVolumeAction(){
+    public void showVolumeManagerAction(){
         if(ready){
             setReady(false);
-            segmentationController.showVolume();
-            finished();
-        }
-    }
+            MeshFrame3D mf3d = segmentationController.getMeshFrame3D();
+            if(mf3d != null){
+                JDialog channelManager = new JDialog(getFrame(), true);
+                JPanel content = new JPanel();
+                JButton add = new JButton("add channel");
+                JButton contrast = new JButton( "contrast channel");
+                JButton remove = new JButton("remove");
+                add.addActionListener(evt->{
+                    mf3d.createNewChannelVolume();
+                    channelManager.setVisible(false);
+                });
+                contrast.addActionListener(evt->{
+                    mf3d.chooseToContrastChannelVolume();
+                    channelManager.setVisible(false);
+                });
+                remove.addActionListener(evt->{
+                    mf3d.chooseToremoveChannelVolume();
+                    channelManager.setVisible(false);
+                });
+                content.add(add);
+                content.add(contrast);
+                content.add(remove);
 
-    public void hideVolumeAction(){
-        if(ready){
-            setReady(false);
-            segmentationController.hideVolume();
+                channelManager.setContentPane(content);
+                channelManager.pack();
+                channelManager.setTitle("Add, Adjust or Remove 3D Volumes.");
+                GuiTools.centerComponent(mf3d.getJFrame(), channelManager);
+                channelManager.setVisible(true);
+                mf3d.setVisible(true);
+            }
+
             finished();
         }
     }
@@ -1612,6 +1659,18 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         //segmentationController.exportTo(f, viewBox);
         finished();
     }*/
+
+    public void save(){
+        setReady(false);
+        File f = segmentationController.getLastSavedFile();
+        if(f==null){
+            saveAs();
+        } else{
+            segmentationController.saveMeshes(f);
+            finished();
+        }
+
+    }
     public void saveAs(){
         setReady(false);
         FileDialog fd = new FileDialog(frame,"File to save mesh too");
@@ -1629,7 +1688,6 @@ public class ControlFrame implements ReadyObserver, FrameListener {
     }
 
     public void openImage(){
-        setReady(false);
         ImagePlus plus = IJ.openImage();
         if(plus == null){
             finished();
@@ -1653,7 +1711,6 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         }
         segmentationController.setOriginalPlus(plus, channel);
         plus.show();
-        finished();
     }
     File getOpenFile(String title){
         FileDialog fd = new FileDialog(frame, title);
@@ -1665,6 +1722,22 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         }
         return new File(fd.getDirectory(),fd.getFile());
     }
+
+    public void loadMeshes(){
+        FileDialog fd = new FileDialog(frame,"File to load mesh from");
+        fd.setDirectory(OpenDialog.getDefaultDirectory());
+        fd.setMode(FileDialog.LOAD);
+        fd.setVisible(true);
+
+        if(fd.getFile()==null || fd.getDirectory()==null){
+            finished();
+            return;
+        }
+
+        File f = new File(fd.getDirectory(),fd.getFile());
+        segmentationController.loadMeshes(f);
+    }
+
     public void importMeshes(){
         /**
          * "matching" the same frame.
@@ -1942,7 +2015,6 @@ public class ControlFrame implements ReadyObserver, FrameListener {
 
         void updateChannelSelectors(){
             int n = segmentationController.getNChannels();
-
             if(channelSelectors.size() != n){
                 int s = channelSelectors.size();
                 if(s < n){
@@ -1951,7 +2023,6 @@ public class ControlFrame implements ReadyObserver, FrameListener {
                         button.setOpaque(false);
                         channelSelectors.add(button);
                         csg.add(button);
-
                         channelLabel.add(button);
                         button.addActionListener(evt->{
                             int channel = segmentationController.getCurrentChannel();
@@ -1969,19 +2040,15 @@ public class ControlFrame implements ReadyObserver, FrameListener {
                     for(int i = 0; i<(s-n); i++){
                         int dex = channelSelectors.size()-1;
                         JRadioButton b = channelSelectors.remove(dex);
-
                         csg.remove(b);
                         channelLabel.remove(b);
                     }
                 }
                 channelLabel.revalidate();
-
             }
             int channel = segmentationController.getCurrentChannel() + 1;
             channelSelectors.get(segmentationController.getCurrentChannel()).setSelected(true);
-
         }
-
     }
 
 }

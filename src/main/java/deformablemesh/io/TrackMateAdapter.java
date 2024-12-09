@@ -26,7 +26,6 @@
 package deformablemesh.io;
 
 import deformablemesh.MeshImageStack;
-import deformablemesh.geometry.BinaryMomentsOfInertia;
 import deformablemesh.geometry.Box3D;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.RayCastMesh;
@@ -38,7 +37,6 @@ import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.TrackModel;
 import fiji.plugin.trackmate.graph.ConvexBranchesDecomposition;
 import fiji.plugin.trackmate.io.TmXmlReader;
@@ -46,7 +44,6 @@ import fiji.plugin.trackmate.io.TmXmlWriter;
 import ij.ImagePlus;
 
 import java.awt.Color;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;

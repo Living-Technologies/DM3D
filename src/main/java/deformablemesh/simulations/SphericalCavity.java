@@ -25,8 +25,16 @@
  */
 package deformablemesh.simulations;
 
-import deformablemesh.externalenergies.*;
-import deformablemesh.geometry.*;
+import deformablemesh.externalenergies.ExternalEnergy;
+import deformablemesh.externalenergies.PressureForce;
+import deformablemesh.externalenergies.SofterStericMesh;
+import deformablemesh.externalenergies.TriangleAreaDistributor;
+import deformablemesh.externalenergies.VolumeConservation;
+import deformablemesh.geometry.ConnectionRemesher;
+import deformablemesh.geometry.CurvatureCalculator;
+import deformablemesh.geometry.DeformableMesh3D;
+import deformablemesh.geometry.RayCastMesh;
+import deformablemesh.geometry.Sphere;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.meshview.VectorField;
@@ -41,7 +49,12 @@ import ij.process.ImageProcessor;
 import lightgraph.DataSet;
 import lightgraph.Graph;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 import java.awt.Color;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -50,7 +63,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 

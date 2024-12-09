@@ -29,8 +29,10 @@ import ij.ImageStack;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class RegionGrowing{
@@ -53,6 +55,109 @@ public class RegionGrowing{
             constraintPixels.add((short[]) constraints.getProcessor(i).getPixels());
         }
     }
+    public void erode(){
+
+        for(Region region: regions){
+            List<int[]> edges = new ArrayList<>();
+            Integer key = region.getLabel();
+            List<int[]> points = region.getPoints();
+            for(int[] pt: points){
+                if(isFrontier(key, pt)){
+                    edges.add(pt);
+                }
+            }
+            for(int[] pt: edges){
+                //ok because literally the same point.
+                points.remove(pt);
+                setLabel(pt, 0);
+            }
+        }
+    }
+    static class Point{
+        final int x, y, z;
+        final int[] xyz;
+        public Point(int[] xyz){
+            x = xyz[0];
+            y = xyz[1];
+            z = xyz[2];
+            this.xyz = xyz;
+        }
+
+        @Override
+        public boolean equals(Object p){
+            Point o = (Point)p;
+            return x == o.x && y == o.y && z == o.z;
+        }
+        @Override
+        public int hashCode(){
+            return x + y + z;
+        }
+    }
+    public void dilate(){
+
+        for(Region region: regions){
+            List<int[]> edges = new ArrayList<>();
+            Integer key = region.getLabel();
+            List<int[]> points = region.getPoints();
+            List<int[]> frontier = new ArrayList<>();
+            for(int[] pt: points){
+                if(isFrontier(key, pt)){
+                    edges.add(pt);
+                }
+            }
+            Set<Point> expand = new HashSet<>();
+            for(int[] pt: edges){
+                expand.addAll(freePossible(key, pt).stream().map(Point::new).collect(Collectors.toList()));
+            }
+
+            for(Point pt: expand){
+                points.add(pt.xyz);
+                setLabel(pt.xyz, region.label);
+            }
+        }
+    }
+
+    /**
+     * Ignores the constraints.
+     *
+     * @param label
+     * @param front
+     * @return
+     */
+    List<int[]> freePossible(int label, int[] front){
+        List<int[]> values = new ArrayList<>();
+        for(int i = -1; i<=1; i++){
+            int z = front[2] + i;
+            if(z<0 || z>slices-1){
+                continue;
+            }
+            for(int j = -1; j<=1; j++){
+                int y = front[1] + j;
+                if(y<0 || y>=height){
+                    continue;
+                }
+                for(int k = -1; k<=1; k++){
+
+                    if(i==0 && j == 0 && k == 0){
+                        continue;
+                    }
+
+                    int x = front[0] + k;
+                    if(x<0 || x>=width){
+                        continue;
+                    }
+                    int l = getLabel(x, y, z);
+                    if( l == 0){
+                        values.add(new int[]{x, y, z});
+                    }
+
+                }
+            }
+        }
+        return values;
+    }
+
+
 
     public void setRegions(List<Region> regions){
         this.regions = regions;
@@ -79,10 +184,17 @@ public class RegionGrowing{
     public short[] getLabelPixels(int i){
         return labelPixels.get(i-1);
     }
+
+    /**
+     * Finds the edge pixels of the region with the provided label.
+     * @param label
+     * @param xyz
+     * @return
+     */
     boolean isFrontier(int label, int[] xyz){
         for(int i = -1; i<=1; i++){
             int z = xyz[2] + i;
-            if(z<1 || z>slices){
+            if(z<0 || z>slices-1){
                 continue;
             }
             for(int j = -1; j<=1; j++){
@@ -115,7 +227,7 @@ public class RegionGrowing{
         List<int[]> values = new ArrayList<>();
         for(int i = -1; i<=1; i++){
             int z = front[2] + i;
-            if(z<1 || z>slices){
+            if(z<0 || z>slices-1){
                 continue;
             }
             for(int j = -1; j<=1; j++){
@@ -176,14 +288,14 @@ public class RegionGrowing{
         return frontiers.values().stream().mapToInt(List::size).sum();
     }
     public void setLabel(int[] xyz, int label){
-        labelPixels.get(xyz[2]-1)[xyz[0] + width*xyz[1]] = (short)label;
+        labelPixels.get(xyz[2])[xyz[0] + width*xyz[1]] = (short)label;
     }
     boolean isValid(int x, int y, int z){
-        return constraintPixels.get(z-1)[x + y*width] != 0;
+        return constraintPixels.get(z)[x + y*width] != 0;
     }
 
     int getLabel(int x, int y, int z){
-        return labelPixels.get(z-1)[x + y*width];
+        return labelPixels.get(z)[x + y*width];
     }
 
 }

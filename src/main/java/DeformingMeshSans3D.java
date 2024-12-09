@@ -27,12 +27,9 @@ import deformablemesh.SegmentationController;
 import deformablemesh.SegmentationModel;
 import deformablemesh.gui.ControlFrame;
 import deformablemesh.gui.PropertySaver;
-import deformablemesh.gui.RingController;
-import deformablemesh.meshview.MeshFrame3D;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.plugin.PlugIn;
-import jogamp.nativewindow.jawt.JAWTUtil;
 
 import java.awt.EventQueue;
 import java.io.File;

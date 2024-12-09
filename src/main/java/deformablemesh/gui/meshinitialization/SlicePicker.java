@@ -27,20 +27,31 @@ package deformablemesh.gui.meshinitialization;
 
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.DeformableMesh3D;
+import deformablemesh.geometry.FurrowTransformer;
 import deformablemesh.geometry.projectable.Projectable;
 import deformablemesh.geometry.projectable.ProjectableMesh;
 import deformablemesh.gui.Drawable;
 import deformablemesh.gui.GuiTools;
 import deformablemesh.gui.Slice3DView;
-import deformablemesh.ringdetection.FurrowTransformer;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSlider;
+import javax.swing.JViewport;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
+import java.awt.image.RescaleOp;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -63,6 +74,8 @@ public class SlicePicker{
     JScrollPane scroll;
     JSlider slider;
     int graduations = 10000;
+    float scale = 1;
+    float offset = 0;
     public SlicePicker(MeshImageStack s, double[] normal, double[] center){
 
         stack = s;
@@ -94,7 +107,12 @@ public class SlicePicker{
         for(int i = 0; i<transpose; i++){
             transformer.rotatePiOver2();
         }
-        view.setSlice(stack.createSlice(transformer));
+        BufferedImage img = stack.createSlice(transformer);
+        if(scale != 1 || offset != 0){
+            RescaleOp op = new RescaleOp(scale, offset, null);
+            img = op.filter(img, null);
+        }
+        view.setSlice(img);
         view.panel.repaint();
 
     }
@@ -125,11 +143,7 @@ public class SlicePicker{
         pos[1] = f*normal[1];
         pos[2] = f*normal[2];
         cursor.toPosition(f, normal);
-        transformer = stack.createFurrowTransform(pos, normal);
-        for(int i = 0; i<transpose; i++){
-            transformer.rotatePiOver2();
-        }
-        view.setSlice(stack.createSlice(transformer));
+        refreshSlice();
         view.panel.repaint();
 
     }
@@ -330,6 +344,16 @@ public class SlicePicker{
         Drawable d = new MeshProjection(pm, mesh);
         projectDrawingMapper.put(pm, d);
         view.addDrawable(d);
+    }
+
+    public void setImageScale(float value) {
+        scale = value;
+        refreshSlice();
+    }
+
+    public void setImageOffset(float value) {
+        offset = value;
+        refreshSlice();
     }
 
     class MeshProjection implements Drawable{

@@ -24,9 +24,7 @@
  * #L%
  */
 package deformablemesh.meshview;
-
-
-import org.scijava.java3d.BranchGroup;
+import org.jogamp.java3d.BranchGroup;
 
 /**
  * Wrapper for a branch group.  This is a stripped down version

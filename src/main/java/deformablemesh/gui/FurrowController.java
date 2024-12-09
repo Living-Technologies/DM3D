@@ -29,11 +29,11 @@ import deformablemesh.MeshImageStack;
 import deformablemesh.SegmentationController;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Furrow3D;
-import deformablemesh.geometry.projectable.ProjectableMesh;
+import deformablemesh.geometry.FurrowManageModel;
+import deformablemesh.geometry.FurrowTransformer;
 import deformablemesh.geometry.modifier.MeshModifier;
+import deformablemesh.geometry.projectable.ProjectableMesh;
 import deformablemesh.io.FurrowWriter;
-import deformablemesh.ringdetection.ContractileRingDetector;
-import deformablemesh.ringdetection.FurrowTransformer;
 import deformablemesh.track.Track;
 import ij.process.ImageProcessor;
 
@@ -45,7 +45,6 @@ import javax.swing.event.ListDataListener;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Shape;
-import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
@@ -56,15 +55,16 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- *
- * Links together the contractile ring detector,
+ * Input containing a histogram for determining the threshold and a sliced view
+ * of the current selected image. Can be used for both interacting with the
+ * currently selected mesh modifier and selecting meshes.
  *
  * Created by msmith on 4/14/14.
  */
-public class RingController implements FrameListener, ListDataListener {
-    final ContractileRingDetector detector;
+public class FurrowController implements FrameListener, ListDataListener {
+    final FurrowManageModel furrowManager;
     public SegmentationController model;
-
+    MouseAdapter currentControls;
 
     static class DoubleValue{
         double value;
@@ -95,9 +95,9 @@ public class RingController implements FrameListener, ListDataListener {
 
     MeshModifier modifier;
 
-    public RingController(SegmentationController model){
+    public FurrowController(SegmentationController model){
         this.model = model;
-        detector = new ContractileRingDetector();
+        furrowManager = new FurrowManageModel();
         sliceView = new Slice3DView();
         activateSelectMeshMode();
     }
@@ -255,11 +255,6 @@ public class RingController implements FrameListener, ListDataListener {
         return pt;
     }
 
-    public JPanel getContentPane(JFrame parent){
-        this.parent = parent;
-        return contentPane;
-    }
-
     /**
      * Creates a furrow input that is tied to this ring controller.
      *
@@ -290,8 +285,6 @@ public class RingController implements FrameListener, ListDataListener {
 
         return furrowInput;
     }
-
-    MouseAdapter currentControls;
 
     public void setSliceListener( MouseAdapter adapter){
 
@@ -384,13 +377,14 @@ public class RingController implements FrameListener, ListDataListener {
 
     }
 
+
     public void setFrame(int frame){
         currentFrame = frame;
-        detector.setFrame(frame);
-        ImageProcessor p = detector.getFurrowSlice();
+        furrowManager.setFrame(frame);
+        ImageProcessor p = furrowManager.getFurrowSlice();
         if(p!=null){
             sliceView.clear();
-            Furrow3D furrow = detector.getFurrow(frame);
+            Furrow3D furrow = furrowManager.getFurrow(frame);
             if(furrow !=null ) {
                 //manage mesh drawing!
                 List<ProjectableMesh> meshes = model.getAllTracks().stream().filter(
@@ -425,53 +419,24 @@ public class RingController implements FrameListener, ListDataListener {
             }
             histControls.refresh(p);
             sliceView.setSlice(p.getBufferedImage());
-            detector.setThresh(thresh);
-            ImageProcessor b = detector.createBinarySlice();
+            furrowManager.setThresh(thresh);
+            ImageProcessor b = furrowManager.createBinarySlice();
             sliceView.setBinary(b.getBufferedImage());
             if(modifier != null){
                 sliceView.addDrawable(modifier);
             }
             refreshFurrow();
-
         }
+
     }
+
+
     public void setThreshold(double v){
         thresh = v;
-        detector.setThresh(v);
-        ImageProcessor b = detector.createBinarySlice();
+        furrowManager.setThresh(v);
+        ImageProcessor b = furrowManager.createBinarySlice();
         sliceView.setBinary(b.getBufferedImage());
     }
-
-    public void refreshValues(){
-        final double[] dir = new double[]{
-                dx.getValue(),
-                dy.getValue(),
-                dz.getValue()
-        };
-
-        final double[] pos = new double[]{
-                px.getValue(),
-                py.getValue(),
-                pz.getValue()
-        };
-
-        final double threshold = thresh;
-        submit(() ->  detector.setThresh(threshold));
-    }
-
-
-    public ContractileRingDetector getDetector(){
-        return detector;
-    }
-
-    public void loadImage(MeshImageStack stack){
-        detector.setImageStack(stack);
-    }
-
-    public void submit(Runnable r){
-        model.submit(r::run);
-    }
-
     public void setFurrow(int frame, Furrow3D furrow) {
         double[] center = furrow.cm;
         double[] normal = furrow.normal;
@@ -483,24 +448,24 @@ public class RingController implements FrameListener, ListDataListener {
         py.setValue(center[1]);
         pz.setValue(center[2]);
 
-        detector.putFurrow(frame, furrow);
+        furrowManager.putFurrow(frame, furrow);
         frameChanged(model.getCurrentFrame());
     }
 
     public Furrow3D getFurrow() {
-        return detector.getFurrow();
+        return furrowManager.getFurrow();
     }
 
     public Furrow3D getFurrow(int i){
-        return detector.getFurrow(i);
+        return furrowManager.getFurrow(i);
     }
 
     public void writeFurrows(File f, MeshImageStack stack){
-        FurrowWriter.writeFurrows(f, stack, detector);
+        FurrowWriter.writeFurrows(f, stack, furrowManager);
     }
 
     public void refreshFurrow(){
-        Furrow3D f = detector.getFurrow(currentFrame);
+        Furrow3D f = furrowManager.getFurrow(currentFrame);
         if(f==null){
             return;
         }
@@ -514,14 +479,14 @@ public class RingController implements FrameListener, ListDataListener {
     }
 
     public void setFurrow(double[] dir, double[] pos){
-        Furrow3D furrow = detector.getFurrow();
+        Furrow3D furrow = furrowManager.getFurrow();
         if(furrow!=null) {
             furrow.showTexture(showTexture);
             furrow.setGeometry( pos, dir);
         } else{
             furrow = new Furrow3D(pos, dir);
             furrow.showTexture(showTexture);
-            detector.putFurrow(model.getCurrentFrame(), furrow);
+            furrowManager.putFurrow(model.getCurrentFrame(), furrow);
         }
         frameChanged(model.getCurrentFrame());
     }
@@ -550,11 +515,11 @@ public class RingController implements FrameListener, ListDataListener {
     }
 
     public Map<Integer, Furrow3D> getFurrows() {
-        return detector.getFurrows();
+        return furrowManager.getFurrows();
     }
 
     public void setStack(MeshImageStack stack) {
-        detector.setImageStack(stack);
+        furrowManager.setImageStack(stack);
     }
 
     public void addFrameListener(FrameListener listener){

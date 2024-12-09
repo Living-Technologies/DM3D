@@ -29,13 +29,7 @@ import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Node3D;
 import deformablemesh.track.Track;
 import deformablemesh.util.Vector3DOps;
-import ij.ImagePlus;
 import ij.measure.Calibration;
-import ij.plugin.FileInfoVirtualStack;
-
-import java.io.IOException;
-import java.nio.file.Paths;
-import java.util.Arrays;
 
 /**
  * This class will transform a mesh in normalized coordiantes of one image into the normalized coordinates of another

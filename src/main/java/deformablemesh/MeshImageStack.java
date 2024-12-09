@@ -27,20 +27,24 @@ package deformablemesh;
 
 import deformablemesh.geometry.Box3D;
 import deformablemesh.geometry.Furrow3D;
-import deformablemesh.ringdetection.FurrowTransformer;
+import deformablemesh.geometry.FurrowTransformer;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.io.FileInfo;
 import ij.measure.Calibration;
+import ij.plugin.FileInfoVirtualStack;
+import ij.plugin.FolderOpener;
+import ij.plugin.Resizer;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 
-import javax.swing.*;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
-import java.nio.FloatBuffer;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static deformablemesh.geometry.DeformableMesh3D.ORIGIN;
 
@@ -332,7 +336,7 @@ public class MeshImageStack {
         if(other.data.length != data.length
                 || other.data[0].length != data[0].length
                 || other.data[0][0].length != data[0][0].length ){
-            return;
+            throw new RuntimeException("Stack dimensions do not match");
         }
         for(int i = 0; i<data.length; i++){
             double[][] dest = data[i];
@@ -367,15 +371,6 @@ public class MeshImageStack {
             } else if(base[i]>max_dex[i]){
                 base[i] = max_dex[i];
             }
-            /*
-            outside of image is zero.
-            if(base[i]<0||base[i]>max_dex[i]){
-                //out of range
-                return 0;
-            }
-            */
-
-
             f[i] = base[i]==max_dex[i]?0:ndex[i] - base[i];
         }
 
@@ -434,6 +429,11 @@ public class MeshImageStack {
     public double getValue(int x, int y, int z){
         return data[z][y][x];
 
+    }
+
+    public int getPixelValue(int x, int y, int z){
+        ImageProcessor proc = getProcessor(CURRENT, channel, z);
+        return proc.get(x, y);
     }
 
     public BufferedImage createSlice(FurrowTransformer transformer) {
@@ -755,7 +755,82 @@ public class MeshImageStack {
             stack.addSlice(proc);
         }
         ImagePlus plus = original.createImagePlus();
+        String name = original.getTitle().replaceFirst("\\..*$", "");
+        plus.setTitle(name  + "-c" + channel + "-t" + CURRENT);
         plus.setStack(stack, 1, slices, 1);
+        return plus;
+    }
+
+    /**
+     * Returns an isotropic version of the current frame.
+     *
+     * @return an image plus with the z resolution scaled to match the resolution of
+     *         the x-y resolution.
+     */
+    public ImagePlus getCurrentFrameIso(){
+        ImagePlus plus = getCurrentFrame();
+        Calibration c = plus.getCalibration();
+        double scale = c.pixelDepth/c.pixelWidth;
+        int newZ = (int)(scale * plus.getNSlices());
+        if(newZ == plus.getNSlices()){
+            return plus;
+        }
+        Resizer resizer = new Resizer();
+        ImagePlus iso = resizer.zScale(plus, newZ, ImageProcessor.BILINEAR);
+        Calibration c2 = iso.getCalibration();
+        c2.zOrigin = c.zOrigin * iso.getNSlices()/plus.getNSlices();
+        String name = original.getTitle().replaceFirst("\\..*$", "");
+
+        iso.setTitle(name + "-iso");
+        return iso;
+    }
+
+
+    /**
+     * This will get a multi-channel isotropic scaled version of the provided frame.
+     *
+     * @param frame 0-index frame
+     */
+    public ImagePlus getStackIso(int frame){
+        ImagePlus plus = getStack(frame);
+        Calibration c = plus.getCalibration();
+        double scale = c.pixelDepth/c.pixelWidth;
+        int newZ = (int)(scale * plus.getNSlices());
+        if(newZ == plus.getNSlices()){
+            return plus;
+        }
+        Resizer resizer = new Resizer();
+        ImagePlus iso = resizer.zScale(plus, newZ, ImageProcessor.BILINEAR);
+        Calibration c2 = iso.getCalibration();
+        c2.zOrigin = c.zOrigin * iso.getNSlices()/plus.getNSlices();
+        iso.setTitle(plus.getTitle() + "-iso");
+        return iso;
+    }
+
+    /**
+     * This will get an N channel version of the provided frame.
+     *
+     * @param i 0-index time.
+     * @return
+     */
+    public ImagePlus getStack(int frame){
+        int slices = original.getNSlices();
+        int channels = original.getNChannels();
+        int py = original.getHeight();
+        int px = original.getWidth();
+        ImageStack stack = new ImageStack(px, py);
+
+
+        for(int i = 0;i<slices; i++){
+            for(int j = 0; j<channels; j++) {
+                int n = i * CHANNELS + frame * CHANNELS * slices + j + 1;
+                ImageProcessor proc = original.getStack().getProcessor(n).duplicate();
+                stack.addSlice(proc);
+            }
+        }
+        ImagePlus plus = original.createImagePlus();
+        plus.setTitle(original.getTitle() + "-t" + frame);
+        plus.setStack(stack, channels, slices, 1);
         return plus;
     }
 
@@ -771,6 +846,22 @@ public class MeshImageStack {
         }
         return n;
     }
+    public static MeshImageStack fromFolder(Path folder) throws IOException {
+        return fromFolder(folder, ".tif");
+    }
+    public static MeshImageStack fromFolder(Path folder, String filter) throws IOException {
+        List<Path> images = Files.list(folder).filter(p->p.toString().contains(filter)).collect(Collectors.toList());
+        int frames = images.size();
+        ImagePlus base = FileInfoVirtualStack.openVirtual(images.get(0).toAbsolutePath().toString());
+        Calibration c = base.getCalibration();
+        int channels = base.getNChannels();
+        int slices = base.getNSlices();
+        ImagePlus plus = FolderOpener.open(folder.toAbsolutePath().toString(), "virtual filter=" + filter);
+        plus.setDimensions(channels, slices, frames);
+        plus.setCalibration(c);
+        return new MeshImageStack(plus);
+    }
+
 
     public ImagePlus getOriginalPlus() {
         return original;

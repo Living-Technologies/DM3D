@@ -25,7 +25,10 @@
  */
 package deformablemesh.geometry.interceptable;
 
-import deformablemesh.geometry.*;
+import deformablemesh.geometry.Box3D;
+import deformablemesh.geometry.DeformableMesh3D;
+import deformablemesh.geometry.Intersection;
+import deformablemesh.geometry.Triangle3D;
 import deformablemesh.util.Vector3DOps;
 
 import java.util.ArrayList;

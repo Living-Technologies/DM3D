@@ -27,7 +27,12 @@ package deformablemesh.geometry.modifier;
 
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
-import deformablemesh.geometry.*;
+import deformablemesh.geometry.BinaryMeshGenerator;
+import deformablemesh.geometry.DeformableMesh3D;
+import deformablemesh.geometry.Furrow3D;
+import deformablemesh.geometry.FurrowTransformer;
+import deformablemesh.geometry.Node3D;
+import deformablemesh.geometry.Sphere;
 import deformablemesh.geometry.projectable.Projectable;
 import deformablemesh.geometry.projectable.ProjectableMesh;
 import deformablemesh.gui.Drawable;
@@ -37,18 +42,28 @@ import deformablemesh.meshview.CanvasView;
 import deformablemesh.meshview.DataObject;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.meshview.TexturedPlaneDataObject;
-import deformablemesh.ringdetection.FurrowTransformer;
 import deformablemesh.track.Track;
 import deformablemesh.util.Vector3DOps;
 import deformablemesh.util.actions.ActionStack;
 import ij.ImagePlus;
-import org.scijava.java3d.Shape3D;
-import org.scijava.java3d.utils.picking.PickIntersection;
-import org.scijava.java3d.utils.picking.PickResult;
-import org.scijava.vecmath.Point3d;
+import org.jogamp.java3d.Shape3D;
+import org.jogamp.java3d.utils.picking.PickIntersection;
+import org.jogamp.java3d.utils.picking.PickResult;
+import org.jogamp.vecmath.Point3d;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JPanel;
+import java.awt.Color;
+import java.awt.EventQueue;
+import java.awt.FileDialog;
+import java.awt.Graphics2D;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Shape;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
@@ -431,7 +446,6 @@ public class MeshModifier implements Drawable {
 
             try {
                 ImagePlus plus = new ImagePlus(Paths.get(args[0]).toAbsolutePath().toString());
-                mod.setImage(plus);
                 List<Track> tracks = MeshReader.loadMeshes(new File(args[1]));
                 DeformableMesh3D mesh = tracks.get(0).getMesh(tracks.get(0).getFirstFrame());
                 mod.setMesh(mesh);

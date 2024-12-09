@@ -34,7 +34,7 @@ public class Connection3D {
     final public Node3D A, B;
     double length;
 
-    Connection3D(Node3D a, Node3D b){
+    public Connection3D(Node3D a, Node3D b){
         A=a;
         B=b;
     }

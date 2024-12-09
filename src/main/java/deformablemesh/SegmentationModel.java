@@ -25,11 +25,24 @@
  */
 package deformablemesh;
 
-import deformablemesh.externalenergies.*;
-import deformablemesh.geometry.*;
+import deformablemesh.externalenergies.BrightRegionEnergy;
+import deformablemesh.externalenergies.ExternalEnergy;
+import deformablemesh.externalenergies.ImageEnergyType;
+import deformablemesh.externalenergies.PerpendicularGradientEnergy;
+import deformablemesh.externalenergies.PerpendicularIntensityEnergy;
+import deformablemesh.externalenergies.PressureForce;
+import deformablemesh.externalenergies.SofterStericMesh;
+import deformablemesh.externalenergies.StericMesh;
+import deformablemesh.externalenergies.TriangleAreaDistributor;
+import deformablemesh.geometry.BinaryMomentsOfInertia;
+import deformablemesh.geometry.Box3D;
+import deformablemesh.geometry.CurvatureCalculator;
+import deformablemesh.geometry.DeformableMesh3D;
+import deformablemesh.geometry.Furrow3D;
+import deformablemesh.geometry.Triangle3D;
 import deformablemesh.gui.FrameListener;
+import deformablemesh.gui.FurrowController;
 import deformablemesh.gui.GuiTools;
-import deformablemesh.gui.RingController;
 import deformablemesh.io.FurrowWriter;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.track.MeshTracker;
@@ -37,7 +50,6 @@ import deformablemesh.track.Track;
 import deformablemesh.util.IntensitySurfacePlot;
 import deformablemesh.util.MeshAnalysis;
 import deformablemesh.util.MeshFaceObscuring;
-import deformablemesh.util.Vector3DOps;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.FloatProcessor;
@@ -48,7 +60,13 @@ import lightgraph.Graph;
 import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -77,7 +95,7 @@ public class SegmentationModel {
 
     private double image_weight;
     private int divisions = 2;
-    private RingController ringController;
+    private FurrowController ringController;
     public ImageEnergyType energyType;
 
     Color backgroundColor = Color.WHITE;
@@ -507,8 +525,8 @@ public class SegmentationModel {
             case PerpendicularGradient:
                 erg = new PerpendicularGradientEnergy(stack, mesh, getImageWeight());
                 break;
-            case SmoothingForce:
-                erg = new SmoothingForce(mesh, getImageWeight());
+            case BrightRegionEnergy:
+                erg = new BrightRegionEnergy(stack, mesh, getImageWeight());
                 break;
             case None:
             default:
@@ -537,7 +555,7 @@ public class SegmentationModel {
     }
 
 
-    public void setRingController(RingController ringController) {
+    public void setRingController(FurrowController ringController) {
 
         this.ringController = ringController;
         frameListeners.add(
@@ -548,7 +566,7 @@ public class SegmentationModel {
         );
     }
 
-    public RingController getRingController() {
+    public FurrowController getRingController() {
         return ringController;
     }
 
@@ -675,8 +693,13 @@ public class SegmentationModel {
         return normalize;
     }
 
+    /**
+     * Creates a binary representation of the select mesh for all of the frames it exists in.
+     *
+     *
+     */
     public void createBinaryImage() {
-        ImagePlus plus = DeformableMesh3DTools.createBinaryRepresentation(stack, original_plus, tracker.getSelectedTrack().getTrack());
+        ImagePlus plus = DeformableMesh3DTools.createBinaryRepresentation(stack, tracker.getSelectedTrack().getTrack());
         plus.show();
     }
     public void createEnergyImage(){
@@ -711,7 +734,7 @@ public class SegmentationModel {
     }
 
     public void createLabelImage() {
-        ImagePlus plus = DeformableMesh3DTools.createUniqueLabelsRepresentation(stack, tracker.getAllMeshTracks());
+        ImagePlus plus = DeformableMesh3DTools.asUniqueLabels(stack, tracker.getAllMeshTracks());
         plus.setTitle(original_plus.getShortTitle() + "-labels.tif");
         plus.setOpenAsHyperStack(true);
         plus.show();

@@ -29,11 +29,25 @@ import deformablemesh.geometry.Connection3D;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Node3D;
 import deformablemesh.geometry.Triangle3D;
-import org.scijava.java3d.*;
-import org.scijava.vecmath.Color3f;
+import deformablemesh.gui.SwingJSTerm;
+import deformablemesh.io.MeshReader;
+import org.jogamp.java3d.Appearance;
+import org.jogamp.java3d.BranchGroup;
+import org.jogamp.java3d.ColoringAttributes;
+import org.jogamp.java3d.GeometryArray;
+import org.jogamp.java3d.IndexedLineArray;
+import org.jogamp.java3d.IndexedTriangleArray;
+import org.jogamp.java3d.LineAttributes;
+import org.jogamp.java3d.Material;
+import org.jogamp.java3d.Shape3D;
+import org.jogamp.java3d.TransparencyAttributes;
+import org.jogamp.vecmath.Color3f;
 
 import java.awt.Color;
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * A wrapper for all of the java3d stuff. In case it isn't available.
@@ -52,6 +66,11 @@ public class DeformableMeshDataObject implements DataObject {
     private Color color;
     int[] triangle_indexes;
     float[] normals;
+    float shininess = 64f;
+    public float amb  = 0.9f;
+    public float emm = 0;
+    public float dif = 0.85f;
+    public float spec = 0.85f;
 
     public DeformableMeshDataObject(List<Node3D> nodes, List<Connection3D> connections, List<Triangle3D> triangles, double[] positions, int[] connection_index, int[] triangle_index){
 
@@ -111,6 +130,15 @@ public class DeformableMeshDataObject implements DataObject {
         }
     }
 
+    /**
+     * Adjusts the color by either diminishing the value or lightening it.
+     * v &lt;= 0 black
+     * v = [0, 1] v*c
+     * v &gt; 1 v + (c - 1)
+     * @param c  the original color components
+     * @param v
+     * @return
+     */
     float[] adjust(float[] c, float v){
         if(v<0) return new float[]{0, 0, 0};
         if(v<1){
@@ -122,21 +150,25 @@ public class DeformableMeshDataObject implements DataObject {
                 clamp(c[2] + (v-1))
         };
     }
-
+    public void setShininess(float f){
+        shininess = f;
+        setSurfaceAppearance(createSurfaceAppearance());
+    }
     private Appearance createSurfaceAppearance() {
         Appearance a = new Appearance();
         float[] rgb = color.getRGBComponents(new float[4]);
-        Color3f ambient = new Color3f(adjust(rgb, 1));
-        Color3f emmisive = new Color3f(adjust(rgb, 0));
-        Color3f diffuse = new Color3f(adjust(rgb, 0));
 
-        Color3f specular = new Color3f(adjust(rgb, 1.66f));
+        Color3f ambient = new Color3f(adjust(rgb, amb));
+        Color3f emmisive = new Color3f(adjust(rgb, emm));
+        Color3f diffuse = new Color3f(adjust(rgb, dif));
+        Color3f specular = new Color3f(adjust(rgb, spec));
+
         Material mat = new Material(
                 ambient,
                 emmisive,
                 diffuse,
                 specular,
-                0f);
+                shininess);
         a.setMaterial(mat);
         if(rgb[3] != 1f){
             a.setTransparencyAttributes(new TransparencyAttributes(TransparencyAttributes.NICEST, 1-rgb[3]));
@@ -276,5 +308,26 @@ public class DeformableMeshDataObject implements DataObject {
         if(showSurface){
             surface_object.setAppearance(createSurfaceAppearance());
         }
+    }
+
+    public static void main(String[] args) throws IOException {
+        MeshFrame3D frame = new MeshFrame3D();
+        frame.showFrame(true);
+        frame.addLights();
+
+        SwingJSTerm term = new SwingJSTerm();
+        term.showTerminal();
+        List<DeformableMesh3D> meshes = MeshReader.loadMeshes(new File("D:\\working\\nefeli-dna\\tiff-versions\\chimera-04-both.bmf")).stream().map(t->t.getMesh(0)).collect(Collectors.toList());
+        meshes.forEach(m->{
+            m.setShowSurface(true);
+            m.create3DObject();
+            m.data_object.setShowSurface(true);
+            m.data_object.setWireColor(m.getColor());
+            m.data_object.setColor(m.getColor());
+            frame.addDataObject(m.data_object);
+        });
+        frame.setBackgroundColor(Color.BLACK);
+        term.addToScriptEngine("meshes", meshes);
+        term.addToScriptEngine("mf3d", frame);
     }
 }

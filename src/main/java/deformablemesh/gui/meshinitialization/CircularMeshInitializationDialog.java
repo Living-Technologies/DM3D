@@ -30,13 +30,20 @@ import deformablemesh.SegmentationController;
 import deformablemesh.SegmentationModel;
 import deformablemesh.externalenergies.PerpendicularGradientEnergy;
 import deformablemesh.externalenergies.PressureForce;
-import deformablemesh.geometry.*;
+import deformablemesh.geometry.Box3D;
+import deformablemesh.geometry.ConnectionRemesher;
+import deformablemesh.geometry.DeformableMesh3D;
+import deformablemesh.geometry.Furrow3D;
+import deformablemesh.geometry.RayCastMesh;
+import deformablemesh.geometry.Sphere;
 import deformablemesh.geometry.interceptable.Box3DInterceptable;
 import deformablemesh.geometry.interceptable.CompositeInterceptables;
 import deformablemesh.geometry.interceptable.Interceptable;
 import deformablemesh.geometry.projectable.Projectable;
 import deformablemesh.geometry.projectable.ProjectableMesh;
 import deformablemesh.gui.FrameListener;
+import deformablemesh.gui.GuiTools;
+import deformablemesh.gui.ReadyObserver;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.util.Vector3DOps;
 import ij.ImagePlus;
@@ -45,13 +52,37 @@ import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTabbedPane;
+import javax.swing.KeyStroke;
 import javax.swing.border.EtchedBorder;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.EventQueue;
+import java.awt.GridLayout;
+import java.awt.Image;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -192,6 +223,15 @@ public class CircularMeshInitializationDialog implements FrameListener {
         tl.setToolTipText(fullTitle);
         row.add(tl);
 
+
+        JComponent scale = GuiTools.createInputField("scale", value->{
+            initializer.pickers.values().forEach(picker -> picker.setImageScale((float)value));
+        }, 1.0, ReadyObserver.dummy);
+        JComponent offset =  GuiTools.createInputField("offset", value->{
+            initializer.pickers.values().forEach(picker -> picker.setImageOffset((float)value));
+        }, 1, ReadyObserver.dummy);
+
+
         row.add(add);
         row.add(clear);
         row.add(close);
@@ -199,6 +239,14 @@ public class CircularMeshInitializationDialog implements FrameListener {
         row.add(snapshots);
         row.add(syncToFurrow);
         row.add(refreshMeshes);
+        row.add(new JLabel("contrast settings"));
+        JPanel orow = new JPanel();
+        orow.setLayout(new BoxLayout(orow, BoxLayout.LINE_AXIS));
+        orow.add(new JLabel("scale"));
+        orow.add(scale);
+        row.add(orow);
+        row.add(offset);
+
         row.add(Box.createHorizontalStrut(tl.getWidth()));
         row.add(showCursor);
         row.add(showMeshes);
@@ -492,7 +540,6 @@ public class CircularMeshInitializationDialog implements FrameListener {
             MeshFrame3D mf3 = new MeshFrame3D();
             mf3.showFrame(true);
             controls.setMeshFrame3D(mf3);
-            controls.showVolume();
             JFrame frame = new JFrame("test");
             JButton d = new JButton("dialog");
             d.addActionListener((evt)->new CircularMeshInitializationDialog(new SegmentationController(model)).start());

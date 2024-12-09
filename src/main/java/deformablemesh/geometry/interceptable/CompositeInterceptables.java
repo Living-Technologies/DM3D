@@ -26,7 +26,6 @@
 package deformablemesh.geometry.interceptable;
 
 import deformablemesh.geometry.Intersection;
-import deformablemesh.geometry.interceptable.Interceptable;
 
 import java.util.ArrayList;
 import java.util.Collection;

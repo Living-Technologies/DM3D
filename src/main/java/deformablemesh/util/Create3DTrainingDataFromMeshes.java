@@ -26,17 +26,12 @@
 package deformablemesh.util;
 
 import deformablemesh.DeformableMesh3DTools;
-import deformablemesh.MeshImageStack;
 import deformablemesh.io.MeshReader;
-import deformablemesh.io.MeshWriter;
 import deformablemesh.track.Track;
-import deformablemesh.util.connectedcomponents.ConnectedComponents2D;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.ImageStack;
-import ij.measure.Calibration;
-import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
@@ -48,7 +43,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public class Create3DTrainingDataFromMeshes extends Create3DTrainingData{

@@ -45,9 +45,9 @@ class HistogramInput {
     final JPanel panel;
     final int border = 5;
     Histogram gram;
-    final RingController rc;
+    final FurrowController rc;
     Color highlight = new Color(0, 0, 0, 175);
-    public HistogramInput(RingController rc){
+    public HistogramInput(FurrowController rc){
         this.rc = rc;
         Graphics2D g2d = img.createGraphics();
         g2d.setColor(Color.WHITE);

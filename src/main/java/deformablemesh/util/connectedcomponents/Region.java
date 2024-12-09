@@ -28,6 +28,7 @@ package deformablemesh.util.connectedcomponents;
 import deformablemesh.MeshImageStack;
 import deformablemesh.gui.Drawable;
 import deformablemesh.meshview.DataObject;
+import deformablemesh.meshview.MultiChannelVolumeTexture;
 import deformablemesh.meshview.VolumeDataObject;
 import deformablemesh.util.ColorSuggestions;
 import ij.ImageStack;
@@ -77,16 +78,37 @@ public class Region {
         hz = hz+1;
         this.pts = pts;
     }
+    public void validate(){
+        for(int[] pt: pts){
+            lx = pt[0]<lx?pt[0]:lx;
+            ly = pt[1]<ly?pt[1]:ly;
+            lz = pt[2]<lz?pt[2]:lz;
 
+            hx = pt[0]>hx?pt[0]:hx;
+            hy = pt[1]>hy?pt[1]:hy;
+            hz = pt[2]>hz?pt[2]:hz;
+            center[0] += pt[0];
+            center[1] += pt[1];
+            center[2] += pt[2];
+        }
+        center[0] = center[0]/pts.size();
+        center[1] = center[1]/pts.size();
+        center[2] = center[2]/pts.size();
+
+        hx = hx+1;
+        hy = hy+1;
+        hz = hz+1;
+    }
     public double[] getSize(){
 
         return new double[]{
-                hx - lx + 1,
-                hy - ly + 1,
-                hz - lz + 1
+                hx - lx,
+                hy - ly,
+                hz - lz
         };
 
     }
+
     public double[] getLowCorner(){
         return new double[]{lx, ly, lz};
     }
@@ -95,7 +117,9 @@ public class Region {
     }
     public DataObject getDataObject(MeshImageStack stack){
         if(dataObject==null){
-            dataObject = new VolumeDataObject(c);
+            int[] dims = {stack.getWidthPx(), stack.getHeightPx(), stack.getNSlices()};
+            MultiChannelVolumeTexture texture = new MultiChannelVolumeTexture(dims);
+            dataObject = new VolumeDataObject(c, texture);
             dataObject.setTextureData(stack, pts);
             double[] corner = stack.getNormalizedCoordinate(new double[]{lx-stack.offsets[0]*0.5, ly-stack.offsets[0]*0.5, lz-stack.offsets[0]*0.5});
             dataObject.setPosition(corner[0], corner[1], corner[2]);
@@ -384,6 +408,13 @@ public class Region {
         }
         return stack;
     }
+
+    /**
+     * Applies a connected component algorithm on the current set of of pixels.
+     * This is useful for labelled regions that have disjoint labels.
+     *
+     * @return Regions that have been separated.
+     */
     public List<Region> split(){
         ImageStack stack = getLocalBinaryPixels();
 
@@ -402,5 +433,25 @@ public class Region {
         }
 
         return finished;
+    }
+
+    /**
+     * Gets the integer dimensions of an image that would contain the points of this
+     * region.
+     *
+     * The range is calculate as high - low + 1. That means if the high and low pixel value
+     * are the same, then the size is 1px wide.
+     *
+     * @return {w, h, d}
+     */
+    public int[] getDimensions() {
+        return new int[]{
+                hx - lx,
+                hy - ly,
+                hz - lz
+        };
+    }
+
+    public static void main(String[] args){
     }
 }

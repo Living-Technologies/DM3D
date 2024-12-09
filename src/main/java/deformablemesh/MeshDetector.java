@@ -25,8 +25,12 @@
  */
 package deformablemesh;
 
+import Jama.EigenvalueDecomposition;
+import Jama.Matrix;
 import deformablemesh.geometry.Box3D;
+import deformablemesh.geometry.ConnectionRemesher;
 import deformablemesh.geometry.DeformableMesh3D;
+import deformablemesh.geometry.Node3D;
 import deformablemesh.geometry.RayCastMesh;
 import deformablemesh.simulations.FillingBinaryImage;
 import deformablemesh.util.connectedcomponents.ConnectedComponents3D;
@@ -34,7 +38,6 @@ import deformablemesh.util.connectedcomponents.Region;
 import deformablemesh.util.connectedcomponents.RegionGrowing;
 import ij.ImagePlus;
 import ij.ImageStack;
-import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
@@ -54,6 +57,10 @@ public class MeshDetector {
     public double max_overlap = 0.3;
     int thresholdLevel = -1;
     int nextLevel = 0;
+    public static int MAX_LABELLED_REGIONS = 100000;
+    double minL = -1;
+    double maxL = -1;
+
     public MeshDetector(MeshImageStack mis){
         this.mis = mis;
     }
@@ -70,7 +77,7 @@ public class MeshDetector {
 
         List<DeformableMesh3D> guessed;
         if(spheres){
-            guessed = spheres(regions);
+            guessed = ellipses(regions);
         } else{
             guessed = fillBinaryBlobs(regions);
         }
@@ -189,22 +196,34 @@ public class MeshDetector {
             for(int i = 0; i<mis.getWidthPx(); i++){
                 for(int j = 0; j<mis.getHeightPx(); j++){
                     int px2 = proc.get(i, j);
-                    if( ! checker.isBackground(px2) ) {
-                        pxRegions.computeIfAbsent(px2, k->new ArrayList<>()).add(new int[]{i, j, z});
+                    if(!checker.isBackground(px2)){
+                        pxRegions.computeIfAbsent(px2, p -> new ArrayList<>()).add(new int[]{i, j, z});
                     }
-
                 }
+            }
+            if(pxRegions.size() > MAX_LABELLED_REGIONS){
+                throw new RuntimeException("Too many unique labelled regions!");
             }
         }
         List<Region> regions = new ArrayList<>();
         for(Integer label: pxRegions.keySet()){
             Region r = new Region(label, pxRegions.get(label));
             List<Region> split = r.split();
+            if(split.size() > 1){
+                String s = split.stream().map(g->Integer.toString(g.getPoints().size())).collect(Collectors.joining(","));
+                System.out.println("splits: " + s);
+            }
             for(Region sr: split){
                 if(sr.getPoints().size() > 2){
                     regions.add(sr);
+                    if(regions.size() > MAX_LABELLED_REGIONS){
+                        throw new RuntimeException(
+                                "Too many labelled regions. Change MAX_LABELLED_REGIONS" +
+                                "if this is incorrect.");
+                    }
                 }
             }
+
         }
         return regions;
     }
@@ -213,16 +232,141 @@ public class MeshDetector {
         List<DeformableMesh3D> meshes = new ArrayList<>(regions.size());
 
         for(Region region : regions){
-            double[] center = mis.getNormalizedCoordinate(region.getCenter());
 
-            double volume = mis.getNormalizedVolume(region.calculateVolume());
-            double r = Math.cbrt(volume*3/Math.PI/4);
-            DeformableMesh3D m = RayCastMesh.sphereRayCastMesh(2);
-            m.translate(center);
-            m.scale(r, center);
-            meshes.add(m);
+            meshes.add(createSphere(region, mis));
         }
         return meshes;
+    }
+    public List<DeformableMesh3D> ellipses(List<Region> regions){
+        List<DeformableMesh3D> meshes = new ArrayList<>(regions.size());
+
+        for(Region region : regions){
+
+            meshes.add(createEllipse(region, mis));
+        }
+        return meshes;
+    }
+
+
+    static DeformableMesh3D createSphere(Region region, MeshImageStack mis){
+        double[] center = mis.getNormalizedCoordinate(region.getCenter());
+
+        double volume = mis.getNormalizedVolume(region.calculateVolume());
+        double r = Math.cbrt(volume*3/Math.PI/4);
+        DeformableMesh3D m = RayCastMesh.sphereRayCastMesh(2);
+        m.translate(center);
+        m.scale(r, center);
+        return m;
+    }
+    public static DeformableMesh3D createEllipse(Region region, MeshImageStack mis){
+        double[] aves = {0, 0, 0};
+        int n = region.getPoints().size();
+        List<double[]> points = region.getPoints().stream().map(
+                pt->mis.getNormalizedCoordinate(new double[]{pt[0], pt[1], pt[2]})
+        ).collect(Collectors.toList());
+        for(double[] pt: points){
+            aves[0] += pt[0];
+            aves[1] += pt[1];
+            aves[2] += pt[2];
+        }
+        aves[0] = aves[0] / n;
+        aves[1] = aves[1] / n;
+        aves[2] = aves[2] / n;
+
+        double[][] covar = new double[3][3];
+        for(double[] pt: points){
+            double dx = pt[0] - aves[0];
+            double dy = pt[1] - aves[1];
+            double dz = pt[2] - aves[2];
+
+            covar[0][0] += dx*dx;
+            covar[0][1] += dx*dy;
+            covar[0][2] += dx*dz;
+
+            covar[1][0] += dy*dx;
+            covar[1][1] += dy*dy;
+            covar[1][2] += dy*dz;
+
+            covar[2][0] += dz*dx;
+            covar[2][1] += dz*dy;
+            covar[2][2] += dz*dz;
+
+        }
+        Matrix m = new Matrix(covar);
+        EigenvalueDecomposition evd = new EigenvalueDecomposition(m);
+        Matrix v = evd.getV();
+        Matrix d = evd.getD();
+
+
+        double lx = Math.sqrt(d.get(0, 0)*15/4/n);
+        double ly = Math.sqrt(d.get(1, 1)*15/4/n);
+        double lz = Math.sqrt(d.get(2, 2)*15/4/n);
+
+        //If the determinate is less than 0 there is an 'improper rotation'.
+        //because the ellipse is symmetric along the axis we can just take
+        //the negative of the rotation.
+        double factor = v.det() > 0 ? 1 : -1;
+        DeformableMesh3D mesh = ellipsoidMesh(lx, ly, lz);
+        Matrix vector = new Matrix(3, 1);
+        for(Node3D node: mesh.nodes){
+            double[] c = node.getCoordinates();
+            vector.set(0, 0, c[0]);
+            vector.set( 1, 0, c[1]);
+            vector.set( 2, 0, c[2]);
+
+            Matrix si =  v.times(vector);
+
+            c[0] = si.get(0, 0)*factor;
+            c[1] = si.get(1, 0)*factor;
+            c[2] = si.get( 2, 0)*factor;
+            node.setPosition(c);
+        }
+        mesh.translate(aves);
+        return mesh;
+    }
+
+
+    /**
+     * Creates an elliptical mesh with the semi major axis provided.
+     * @param lx
+     * @param ly
+     * @param lz
+     * @return
+     */
+    static DeformableMesh3D ellipsoidMesh(double lx, double ly, double lz){
+        DeformableMesh3D mesh = RayCastMesh.sphereRayCastMesh(2);
+        mapEllipse(mesh, lx, ly, lz);
+        ConnectionRemesher remesher = new ConnectionRemesher();
+
+        double mstar = Math.sqrt( 15 * Math.pow( Math.cbrt(Math.PI*lx*ly*lz*4/3), 2) / 250 );
+        remesher.setMinAndMaxLengths(2*mstar/3, 4*mstar/3);
+        mesh = remesher.remesh(mesh);
+        mapEllipse(mesh, lx, ly, lz);
+        return mesh;
+    }
+
+    private static void mapEllipse(DeformableMesh3D mesh, double lx, double ly, double lz){
+        for(Node3D node: mesh.nodes){
+            double[] ray = node.getCoordinates();
+            double cosPhi = ray[2];
+            double sinPhi = Math.sqrt(1 - cosPhi*cosPhi);
+            double sinTheta,cosTheta;
+            if(sinPhi == 0){
+                sinTheta = 1;
+                cosTheta = 0;
+            }else {
+                sinTheta = ray[1]/sinPhi;
+                cosTheta = ray[0]/sinPhi;
+            }
+
+            double ir2 = sinPhi*sinPhi*cosTheta*cosTheta/(lx*lx) +
+                    sinPhi*sinPhi*sinTheta*sinTheta/(ly*ly) +
+                    cosPhi*cosPhi/(lz*lz);
+            double r = Math.sqrt(1/ir2);
+            node.setPosition(new double[]{
+                    r*sinPhi*cosTheta, r*sinPhi*sinTheta, r*cosPhi
+            });
+        }
     }
 
     List<DeformableMesh3D> fillBinaryBlobs(List<Region> regions){
@@ -230,27 +374,15 @@ public class MeshDetector {
 
         for (Region region : regions) {
             int label = region.getLabel();
-            List<int[]> rs = region.getPoints();
 
-            //Collections.sort(rs, (a,b)->Integer.compare(a[2], b[2]));
-            ImagePlus original = mis.original;
-            ImagePlus plus = original.createImagePlus();
-            int w = original.getWidth();
-            int h = original.getHeight();
-            ImageStack new_stack = new ImageStack(w, h);
+            DeformableMesh3D mesh;
 
-            for (int dummy = 0; dummy < original.getNSlices(); dummy++) {
-                new_stack.addSlice(new ByteProcessor(w, h));
-            }
-            for (int[] pt : rs) {
-                new_stack.getProcessor(pt[2] + 1).set(pt[0], pt[1], 1);
+            if(minL <= 0 || minL >= maxL){
+                mesh = FillingBinaryImage.fillBinaryWithMesh(mis, region);
+            }else{
+                mesh = FillingBinaryImage.fillBinaryWithMesh(mis, region, minL, maxL);
             }
 
-            plus.setStack(new_stack);
-            plus.setTitle("label: " + label);
-            //plus.show();
-
-            DeformableMesh3D mesh = FillingBinaryImage.fillBinaryWithMesh(plus, rs);
             mesh.clearEnergies();
             guessed.add(mesh);
         }

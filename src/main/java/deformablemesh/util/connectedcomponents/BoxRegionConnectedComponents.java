@@ -38,7 +38,11 @@ import ij.process.ImageProcessor;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * For combining tiled regions of connected components.
@@ -216,7 +220,7 @@ public class BoxRegionConnectedComponents {
             plus.setTitle("label: " + label);
             //plus.show();
 
-            DeformableMesh3D mesh = FillingBinaryImage.fillBinaryWithMesh(plus, rs);
+            DeformableMesh3D mesh = FillingBinaryImage.fillBinaryWithMesh(new MeshImageStack(plus), region);
             mesh.clearEnergies();
             guessed.add(mesh);
         }

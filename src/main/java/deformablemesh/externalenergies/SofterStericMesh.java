@@ -27,8 +27,8 @@ package deformablemesh.externalenergies;
 
 import deformablemesh.geometry.CurvatureCalculator;
 import deformablemesh.geometry.DeformableMesh3D;
-import deformablemesh.geometry.interceptable.InterceptingMesh3D;
 import deformablemesh.geometry.Intersection;
+import deformablemesh.geometry.interceptable.InterceptingMesh3D;
 import deformablemesh.util.Vector3DOps;
 
 import java.util.List;

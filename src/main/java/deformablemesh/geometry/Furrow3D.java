@@ -27,10 +27,13 @@ package deformablemesh.geometry;
 
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.interceptable.Interceptable;
-import deformablemesh.meshview.*;
-import deformablemesh.ringdetection.FurrowTransformer;
+import deformablemesh.meshview.DataObject;
+import deformablemesh.meshview.FurrowPlaneDataObject;
+import deformablemesh.meshview.MeshFrame3D;
+import deformablemesh.meshview.SphereDataObject;
+import deformablemesh.meshview.TexturedPlane;
 import deformablemesh.util.Vector3DOps;
-import org.scijava.java3d.Shape3D;
+import org.jogamp.java3d.Shape3D;
 
 import java.util.ArrayList;
 import java.util.Arrays;

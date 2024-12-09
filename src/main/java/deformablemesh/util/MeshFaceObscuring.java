@@ -27,7 +27,10 @@ package deformablemesh.util;
 
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
-import deformablemesh.geometry.*;
+import deformablemesh.geometry.CurvatureCalculator;
+import deformablemesh.geometry.DeformableMesh3D;
+import deformablemesh.geometry.Intersection;
+import deformablemesh.geometry.Triangle3D;
 import deformablemesh.geometry.interceptable.InterceptingMesh3D;
 import deformablemesh.gui.GuiTools;
 import deformablemesh.io.MeshReader;
@@ -39,7 +42,13 @@ import lightgraph.GraphPoints;
 import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**

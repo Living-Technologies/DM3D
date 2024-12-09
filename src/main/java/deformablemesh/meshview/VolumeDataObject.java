@@ -26,11 +26,10 @@
 package deformablemesh.meshview;
 
 import deformablemesh.MeshImageStack;
-import org.scijava.java3d.BranchGroup;
-import org.scijava.java3d.Transform3D;
-import org.scijava.java3d.TransformGroup;
-import org.scijava.vecmath.Color3f;
-import org.scijava.vecmath.Vector3d;
+import org.jogamp.java3d.BranchGroup;
+import org.jogamp.java3d.Transform3D;
+import org.jogamp.java3d.TransformGroup;
+import org.jogamp.vecmath.Vector3d;
 
 import java.awt.Color;
 import java.util.IntSummaryStatistics;
@@ -42,14 +41,13 @@ import java.util.List;
 public class VolumeDataObject implements DataObject {
     Color color;
     Sizeable3DSurface surface;
-    MultiChannelVolumeTexture volume;
-    double[][][] texture_data;
+    final MultiChannelVolumeTexture volume;
     double scale;
     /*size of the backing texture block, (w, h, d), essentially pixels.*/
     int[] sizes;
     double[] offsets;
     double[] lengths;
-
+    TextureProducer textureProducer;
     BranchGroup branchGroup;
     TransformGroup tg;
     double min  = 0;
@@ -57,10 +55,19 @@ public class VolumeDataObject implements DataObject {
 
     double tLow = 1;
     double tHigh = 1;
-
-    public VolumeDataObject(Color c) {
+    int dex = -1;
+    public VolumeDataObject(Color c, MultiChannelVolumeTexture tex) {
         color = c;
         offsets = new double[]{0,0,0};
+        volume = tex;
+
+    }
+
+    public void setGeometry(Sizeable3DSurface surface){
+        this.surface = surface;
+    }
+    public Sizeable3DSurface getGeometry(){
+        return surface;
     }
 
     public void setColor(Color c){
@@ -91,42 +98,6 @@ public class VolumeDataObject implements DataObject {
     /**
      * For creating a volume representing the all of the pixes of the provided mesh image stack.
      *
-     */
-    public void setTextureData(VolumeDataObject vdo, int[] low, int[] high){
-        int lowx = low[0];
-        int highx = high[0] - 1;
-        int lowy = low[1];
-        int highy = high[1] - 1;
-        int lowz = low[2];
-        int highz = high[2] - 1;
-
-        int d = highz - lowz + 1;
-        int h = highy - lowy + 1;
-        int w = highx - lowx + 1;
-
-        //create a new one if there isn't one, or if the dimensions do not match.
-        if(texture_data==null||d!=texture_data[0][0].length||h!=texture_data[0].length||w!=texture_data.length){
-            texture_data = new double[w][h][d];
-        }
-
-        sizes = new int[]{w, h, d};
-        double[] unit = {sizes[0], sizes[1], sizes[2]};
-        //size of the texture backing data in normalized units.
-        lengths = vdo.lengths;
-        for(int z = 0; z<d; z++){
-            for(int y = 0; y<h; y++){
-                for(int x = 0; x<w; x++){
-                    texture_data[x][y][z] = vdo.texture_data[low[0] +  x][low[1] + y][low[2] + z];
-                }
-            }
-        }
-        offsets = vdo.offsets;
-        updateVolume();
-    }
-
-    /**
-     * For creating a volume representing the all of the pixes of the provided mesh image stack.
-     *
      * @param stack
      */
     public void setTextureData(MeshImageStack stack){
@@ -141,30 +112,19 @@ public class VolumeDataObject implements DataObject {
         int h = highy - lowy + 1;
         int w = highx - lowx + 1;
 
-        //create a new one if there isn't one, or if the dimensions do not match.
-        if(texture_data==null||d!=texture_data[0][0].length||h!=texture_data[0].length||w!=texture_data.length){
-            texture_data = new double[w][h][d];
-        }
-
         sizes = new int[]{w, h, d};
         double[] unit = {sizes[0], sizes[1], sizes[2]};
         //size of the texture backing data in normalized units.
         lengths = stack.scaleToNormalizedLength(new double[]{sizes[0], sizes[1], sizes[2]});
-        for(int z = 0; z<d; z++){
-            for(int y = 0; y<h; y++){
-                for(int x = 0; x<w; x++){
-                    texture_data[x][h - y - 1][z] = stack.getValue(x, y, z);
-                }
-            }
-        }
+
         setPosition(0, 0, -stack.offsets[2]);
+        textureProducer = stack::getValue;
         updateVolume();
     }
 
 
     /**
      * For creating a volume that shows part of an image stack.
-     * #TODO fix: this shouldn't change anything regarding the geometry.
      *
      * @param stack
      * @param pts
@@ -182,20 +142,22 @@ public class VolumeDataObject implements DataObject {
         int h = highy - lowy + 1;
         int w = highx - lowx + 1;
 
-        //create a new one if there isn't one, or if the dimensions do not match.
-        if(texture_data==null||d!=texture_data[0][0].length||h!=texture_data[0].length||w!=texture_data.length){
-            texture_data = new double[w][h][d];
-        }
         sizes = new int[]{w, h, d};
 
-        for(int[] pt: pts){
-            texture_data[pt[0]-lowx][h - pt[1] + lowy - 1][pt[2]-lowz-1] = 255;
-        }
+        textureProducer = (x, y, z) -> {
+            for(int[] pt : pts){
+                if(x == pt[0] && y == pt[1] && z == pt[2]){
+                    return 1.0;
+                }
+            }
+            return 0.0;
+        };
         lengths = stack.scaleToNormalizedLength(new double[]{sizes[0], sizes[1], sizes[2]});
         updateVolume();
     }
 
     public void setMinMaxRange(double min, double max){
+        System.out.println("Setting min and Max for: " + dex);
         this.min = min;
         this.max = max;
         updateVolume();
@@ -222,11 +184,12 @@ public class VolumeDataObject implements DataObject {
      */
     public void updateVolume(){
         Color volumeColor = color;
-        if(volume != null){
-            volume.updateTextureData(0, texture_data, min, max, DataCanvas.getComponents(volumeColor));
-        } else {
-            volume = new MultiChannelVolumeTexture(texture_data, min, max, DataCanvas.getComponents(volumeColor));
+        if(dex == -1){
+            dex = volume.addChannel(textureProducer, min, max, DataCanvas.getComponents(volumeColor));
+        } else{
+            volume.updateTextureData(dex, textureProducer, min, max, DataCanvas.getComponents(volumeColor));
         }
+
 
         if(surface==null){
             /*
@@ -249,13 +212,12 @@ public class VolumeDataObject implements DataObject {
             branchGroup = new BranchGroup();
             branchGroup.addChild(tg);
             branchGroup.setCapability(BranchGroup.ALLOW_DETACH);
-
         }
 
     }
 
     public void showAsLabeledVolume(){
-        volume.setVolumePainter(0, new LabeledVoxelPainter(0));
+        volume.setVolumePainter(dex, new LabeledVoxelPainter(0));
     }
 
     @Override
@@ -271,5 +233,9 @@ public class VolumeDataObject implements DataObject {
     }
     public double[] getMinMax() {
         return new double[] {min, max};
+    }
+
+    public void unlinkFromTexture() {
+        volume.removeChannel(dex);
     }
 }

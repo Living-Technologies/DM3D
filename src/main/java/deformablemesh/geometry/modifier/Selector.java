@@ -27,14 +27,14 @@ package deformablemesh.geometry.modifier;
 
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Node3D;
-import deformablemesh.geometry.projectable.Projectable;
 import deformablemesh.geometry.Sphere;
+import deformablemesh.geometry.projectable.Projectable;
 import deformablemesh.meshview.DataObject;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.util.Vector3DOps;
-import org.scijava.java3d.utils.picking.PickIntersection;
-import org.scijava.java3d.utils.picking.PickResult;
-import org.scijava.vecmath.Point3d;
+import org.jogamp.java3d.utils.picking.PickIntersection;
+import org.jogamp.java3d.utils.picking.PickResult;
+import org.jogamp.vecmath.Point3d;
 
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;

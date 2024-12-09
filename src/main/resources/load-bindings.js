@@ -56,22 +56,40 @@ FileInfoVirtualStack = Java.type("ij.plugin.FileInfoVirtualStack");
 Files = Java.type("java.nio.file.Files");
 Paths = Java.type("java.nio.file.Paths");
 FolderOpener = Java.type("ij.plugin.FolderOpener");
+IJ = Java.type("ij.IJ");
 
-function loadFolderOfVolumes( name ){
+function loadFolderOfVolumes( name , filter){
+
     images = Files.list(Paths.get(name)).filter( function(p){
-            return p.toString().contains(".tif");
+            var v = true;
+            if( filter === undefined ){
+                v = p.toString().contains(".tif");
+            } else{
+                s = p.toString();
+                v = s.contains(filter)
+            }
+            return v;
         }).toList();
     count = images.size();
     one = FileInfoVirtualStack.openVirtual(images.get(0).toAbsolutePath().toString());
     slices = one.getNSlices();
     channels = one.getNChannels();
+    cal = one.getCalibration();
+    var options;
+    if(filter === undefined ){
+        options = "virtual";
+    } else{
+        options = "virtual filter=" + filter;
+    }
 
-    plus = FolderOpener.open(name , "virtual");
+    plus = FolderOpener.open(name , options);
     total = plus.getStack().size();
 
     if(channels*slices*count != total){
-        echo("inconsistencies!")
+        echo("inconsistencies!" + channels + ", " + slices + ", " + count + " :: " + total);
     }
+	plus.setCalibration(cal);
+	plus.setTitle(Paths.get(name).getFileName().toString());
     plus.setDimensions(channels, slices, count);
     plus.setOpenAsHyperStack(true);
     plus.show();
@@ -124,7 +142,6 @@ function restartOffscreenCanvas(){
   mf3d = controls.getMeshFrame3D();
   can = mf3d.getCanvas();
   can.destroyOffscreenCanvas();
-  can.createOffscreenCanvas();
 }
 
 function normalizeColors(){

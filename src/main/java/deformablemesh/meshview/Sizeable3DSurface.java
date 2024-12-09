@@ -25,10 +25,20 @@
  */
 package deformablemesh.meshview;
 
-import org.scijava.java3d.*;
-import org.scijava.vecmath.Point3f;
-import org.scijava.vecmath.Vector3f;
-import org.scijava.vecmath.Vector4f;
+import org.jogamp.java3d.Appearance;
+import org.jogamp.java3d.BranchGroup;
+import org.jogamp.java3d.Material;
+import org.jogamp.java3d.PolygonAttributes;
+import org.jogamp.java3d.QuadArray;
+import org.jogamp.java3d.Shape3D;
+import org.jogamp.java3d.TexCoordGeneration;
+import org.jogamp.java3d.Texture3D;
+import org.jogamp.java3d.Transform3D;
+import org.jogamp.java3d.TransformGroup;
+import org.jogamp.java3d.TransparencyAttributes;
+import org.jogamp.vecmath.Point3f;
+import org.jogamp.vecmath.Vector3f;
+import org.jogamp.vecmath.Vector4f;
 
 /**
  * Recreation of the 3D surface, such that the scale is set.
@@ -237,24 +247,14 @@ public class Sizeable3DSurface  implements DataObject{
         appear.setTexture(tex);
     }
 
-
-
-
-
-
     public BranchGroup getBranchGroup(){
         if(BG==null){
             BG = new BranchGroup();
             BG.setCapability(BranchGroup.ALLOW_DETACH);
-
             tg = new TransformGroup();
             tg.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
             Transform3D tt = new Transform3D();
-
             tt.setTranslation(OFFSET);
-
-
-
             tg.setTransform(tt);
             tg.addChild(surface);
             BG.addChild(tg);

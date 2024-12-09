@@ -1,6 +1,5 @@
 package deformablemesh.util.connectedcomponents;
 
-import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ShortProcessor;
 import org.junit.Assert;

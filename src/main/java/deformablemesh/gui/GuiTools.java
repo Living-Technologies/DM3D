@@ -30,16 +30,60 @@ import deformablemesh.SegmentationController;
 import ij.ImagePlus;
 import ij.WindowManager;
 
-import javax.swing.*;
+import javax.swing.BoxLayout;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JDialog;
+import javax.swing.JEditorPane;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.ListCellRenderer;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.text.JTextComponent;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.BasicStroke;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Desktop;
+import java.awt.Dimension;
+import java.awt.EventQueue;
+import java.awt.FileDialog;
+import java.awt.Frame;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.RenderingHints;
+import java.awt.Window;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.util.stream.IntStream;
 
@@ -132,6 +176,7 @@ public class GuiTools {
         field.setText(displayFormat(initial));
         field.setEnabled(false);
         field.setHorizontalAlignment(JTextField.RIGHT);
+        field.setMaximumSize(field.getPreferredSize());
 
         field.addMouseListener(new MouseAdapter(){
             @Override
@@ -243,8 +288,8 @@ public class GuiTools {
     }
 
     private static String getFaqHTML(){
-        try {
-            BufferedReader r = new BufferedReader(new InputStreamReader(Thread.currentThread().getClass().getResourceAsStream("/help.html"), Charset.forName("UTF8")));
+        try (InputStream stream = GuiTools.class.getResourceAsStream("/help.html")) {
+            BufferedReader r = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8));
             StringBuilder b = new StringBuilder();
             String s;
 
@@ -411,31 +456,102 @@ public class GuiTools {
 
 
     }
+    private static class ImagePlusComboBoxRenderer extends JLabel implements ListCellRenderer<ImagePlus> {
+        @Override
+        public Component getListCellRendererComponent(JList<? extends ImagePlus> list, ImagePlus value, int index, boolean isSelected, boolean cellHasFocus) {
+            setOpaque(true);
+            if (isSelected) {
+                setBackground(list.getSelectionBackground());
+                setForeground(list.getSelectionForeground());
+            }
+            else {
+                setBackground(list.getBackground());
+                setForeground(list.getForeground());
+            }
 
+            setFont(list.getFont());
+
+            setText( value==null ? " " : value.getTitle());
+
+            return this;
+        }
+    }
+    public static JComboBox<ImagePlus> getAvailableImages(){
+        int[] titles = WindowManager.getIDList();
+        int n = titles==null ? 0 : titles.length;
+        ImagePlus[] images = new ImagePlus[n];
+        for(int i = 0; i<images.length; i++){
+            images[i] = WindowManager.getImage(titles[i]);
+        }
+        JComboBox<ImagePlus> box = new JComboBox<>(images);
+
+        box.setRenderer(new ImagePlusComboBoxRenderer());
+        return box;
+    }
+
+    public static void centerComponent(Frame frame, Component c){
+        if(frame == null){
+            //TODO center to something
+            return;
+        }
+        int w = c.getWidth();
+        int h = c.getHeight();
+        int ox = frame.getX();
+        int oy = frame.getY();
+        int fw = frame.getWidth();
+        int fh = frame.getHeight();
+        int dx = (fw - w)/2;
+        int dy = (fh - h)/2;
+        int x = ox + dx;
+        int y = oy + dy;
+        if(x < 0 ) x = 0;
+        if(y < 0 ) y = 0;
+
+        c.setLocation(x, y);
+
+    }
+    static public ImagePlus selectOpenImage(Frame parent, String title){
+        JDialog log = new JDialog(parent, title, true);
+        JPanel content = new JPanel(new BorderLayout());
+
+        JPanel cd = new JPanel();
+        cd.setLayout(new BoxLayout(cd, BoxLayout.LINE_AXIS));
+        JComboBox<ImagePlus> plus = getAvailableImages();
+        String promptText;
+        if(plus.getItemCount() == 0){
+            promptText = "there are no open images!";
+        } else{
+            promptText = "Select open image";
+        }
+        JLabel prompt = new JLabel(promptText);
+        ImagePlus[] result = new ImagePlus[1];
+
+        JButton accept = new JButton("accept");
+        JButton cancel = new JButton("cancel");
+        cancel.addActionListener(evt->{
+            log.setVisible(false);
+        });
+
+        accept.addActionListener(evt->{
+            int dex = plus.getSelectedIndex();
+            ImagePlus choice = plus.getItemAt(dex);
+            result[0] = choice;
+            log.setVisible(false);
+        });
+        cd.add(accept);
+        cd.add(cancel);
+        content.add(prompt, BorderLayout.NORTH);
+        content.add(plus, BorderLayout.CENTER);
+        content.add(cd, BorderLayout.SOUTH);
+        log.setContentPane(content);
+        log.pack();
+        centerComponent(parent, log);
+        log.setVisible(true);
+
+        return result[0];
+    }
     static public ImagePlus selectOpenImage(Frame parent){
-        String[] imageLabels = WindowManager.getImageTitles();
-
-        if(imageLabels.length==0) return null;
-
-        Object[] choices = new Object[imageLabels.length];
-        for(int i = 0; i<choices.length; i++){
-            choices[i] = imageLabels[i];
-        }
-
-        Object option = JOptionPane.showInputDialog(
-                parent,
-                "Choose from open images:",
-                "Choose Open Image",
-                JOptionPane.QUESTION_MESSAGE,
-                null,
-                choices,
-                choices[0]
-        );
-        if(option instanceof String) {
-            ImagePlus plus = WindowManager.getImage((String) option);
-            return plus;
-        }
-        return null;
+       return selectOpenImage(parent, "Select Open Image");
     }
 
     private static Image icon;
