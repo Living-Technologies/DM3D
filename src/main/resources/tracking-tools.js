@@ -6,8 +6,12 @@ add = function(){
     }
     echo(selectedTracks.size() + " meshes selected");
 }
+
 controls.setHotKey("5", add);
 
+controls.setHotKey("5", function(){
+    controls.autotrackAvailableTracks();
+})
 controls.setHotKey("6", function(){
     rc = controls.getRingController();
     rc.sculptClicked();

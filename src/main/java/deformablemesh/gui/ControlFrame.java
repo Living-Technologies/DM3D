@@ -167,10 +167,18 @@ public class ControlFrame implements ReadyObserver, FrameListener {
 
         frame.pack();
         frame.setVisible(true);
+        if(terminal != null){
+            terminal.addToScriptEngine("controlFrame", this);
+        }
         instance=frame;
         segmentationController.addFrameListener(this);
 
     }
+
+    public void setVisible(boolean v){
+        frame.setVisible(v);
+    }
+
     public void shutdownControllerOnClose(){
         frame.addWindowListener(new WindowAdapter() {
             @Override

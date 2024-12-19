@@ -67,7 +67,7 @@ public class RegionGrowing{
                 }
             }
             for(int[] pt: edges){
-                //ok because literally the same point.
+                //ok because literally the same point (by ref.).
                 points.remove(pt);
                 setLabel(pt, 0);
             }
