@@ -2,7 +2,7 @@ package deformablemesh.geometry;
 
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
-import deformablemesh.experimental.Imglib2MeshBenchMark;
+import deformablemesh.gimli2b.Imglib2MeshBenchMark;
 import deformablemesh.geometry.topology.TopoCheck;
 import deformablemesh.geometry.topology.TopologyValidationError;
 import deformablemesh.meshview.MeshFrame3D;

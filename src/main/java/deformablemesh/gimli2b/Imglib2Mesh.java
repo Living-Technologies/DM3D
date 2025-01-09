@@ -1,4 +1,4 @@
-package deformablemesh.experimental;
+package deformablemesh.gimli2b;
 
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshDetector;
@@ -21,6 +21,7 @@ import ij.plugin.FileInfoVirtualStack;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
+
 import net.imglib2.RandomAccess;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
@@ -152,6 +153,8 @@ public class Imglib2Mesh {
 
         return dm3d;
     }
+
+
 
     /**
      * The mesh returned from the marching cubes algorithm, each triangle points to
