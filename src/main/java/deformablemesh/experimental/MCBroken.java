@@ -17,9 +17,6 @@ import net.imglib2.img.array.ArrayImg;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.basictypeaccess.array.ByteArray;
 import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.mesh.Mesh;
-import net.imglib2.mesh.Vertex;
-import net.imglib2.mesh.alg.MarchingCubesRealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 
 import java.awt.Color;
@@ -44,37 +41,5 @@ public class MCBroken {
     }
     public static void main(String[] args){
         Img<UnsignedByteType> img = image();
-        Mesh mesh = MarchingCubesRealType.calculate(img, 1);
-        for(Vertex v : mesh.vertices()){
-            System.out.println(v.x() + ", " + v.y() + ", " + v.z());
-        }
-        ImagePlus plus = ImageJFunctions.wrap(img, "debuggles");
-        plus.setDimensions(1, 9, 1);
-        plus.show();
-        MeshFrame3D mf3d = new MeshFrame3D();
-        mf3d.showFrame(true);
-        mf3d.addLights();
-        mf3d.setBackgroundColor(new Color(200, 200, 200));
-
-        MeshImageStack mis = new MeshImageStack(plus);
-        Imglib2Mesh.ImageSpaceTransformer ist = new Imglib2Mesh.ImageSpaceTransformer(mis);
-        DeformableMesh3D dm3d = Imglib2Mesh.convertMesh(mesh, ist);
-        dm3d.create3DObject();
-        dm3d.data_object.setWireColor(Color.BLUE);
-        mf3d.addDataObject(dm3d.data_object);
-        int[] dims = {mis.getWidthPx(), mis.getHeightPx(), mis.getNFrames()};
-        MultiChannelVolumeTexture texture = new MultiChannelVolumeTexture(dims);
-        ChannelVolume cv = new ChannelVolume(mis, Color.BLACK, texture, null);
-        VolumeDataObject vdo = cv.getVolumeDataObject();
-        vdo.setMinMaxRange(0, 1);
-        vdo.setTransparencyTrim(0, 10);
-        mf3d.addDataObject(cv.getVolumeDataObject());
-
-        List<Region> r = new MeshDetector(mis).getRegionsFromLabelledImage();
-        BinaryMeshGenerator generator = new BinaryMeshGenerator();
-        DeformableMesh3D voxel = generator.voxelMesh(r.get(0), mis);
-        voxel.create3DObject();
-        voxel.setColor(Color.BLUE);
-        mf3d.addDataObject(voxel.data_object);
     }
 }

@@ -38,7 +38,7 @@ import java.util.concurrent.ExecutionException;
 public class N5Examples {
     N5Writer n5;
     final static String dataset = "Interleukin_10IL_9CTRL_xy05-iso";
-    N5Examples(String writerName){
+    N5Examples(String writerName) throws IOException {
         n5 = new N5FSWriter(writerName);
     }
 

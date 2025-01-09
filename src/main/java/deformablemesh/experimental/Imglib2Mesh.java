@@ -27,13 +27,6 @@ import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImg;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.basictypeaccess.array.ByteArray;
-import net.imglib2.mesh.Mesh;
-import net.imglib2.mesh.Triangle;
-import net.imglib2.mesh.Triangles;
-import net.imglib2.mesh.Vertex;
-import net.imglib2.mesh.alg.MarchingCubesRealType;
-import net.imglib2.mesh.alg.MeshConnectedComponents;
-import net.imglib2.mesh.impl.nio.BufferMesh;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 
 import java.awt.Color;
@@ -98,122 +91,6 @@ public class Imglib2Mesh {
 
     }
 
-    /**
-     * This converts a Mesh that has been derived from a marching cubes algorithm into
-     * a DeformableMesh3D which expects the coordinates to be in normalized coordinates.
-     *
-     * @param mesh
-     * @param transformer
-     * @return
-     */
-    static DeformableMesh3D convertMesh(Mesh mesh, ImageSpaceTransformer transformer){
-        if(mesh == null || mesh.vertices().size() == 0){
-            return null;
-        }
-
-        Triangles triangles = mesh.triangles();
-        int vertices = mesh.vertices().size();
-
-        double[] positions = new double[3*vertices];
-        int dex = 0;
-        for(Vertex v: mesh.vertices()){
-            positions[ dex*3 ] = transformer.getX(v.x());
-            positions[ dex*3 + 1] = transformer.getY(v.y());
-            positions[ dex*3 + 2 ] = transformer.getZ(v.z());
-            dex++;
-        }
-
-        int[] indexes = new int[3*triangles.size()];
-        int i = 0;
-        Set<DeformableMesh3DTools.Con> connections = new HashSet<>();
-        for(Triangle t: triangles){
-
-            int i0 = (int)t.vertex0();
-            int i1 = (int)t.vertex1();
-            int i2 = (int)t.vertex2();
-
-            indexes[i++] = i0;
-            indexes[i++] = i1;
-            indexes[i++] = i2;
-
-            connections.add(new DeformableMesh3DTools.Con(i0, i1));
-            connections.add(new DeformableMesh3DTools.Con(i1, i2));
-            connections.add(new DeformableMesh3DTools.Con(i2, i0));
-        }
-
-        int[] cindexes = new int[2*connections.size()];
-        i = 0;
-        for(DeformableMesh3DTools.Con c: connections){
-            cindexes[i++] = c.a;
-            cindexes[i++] = c.b;
-        }
-
-        DeformableMesh3D dm3d = new DeformableMesh3D(positions, cindexes, indexes);
-
-        return dm3d;
-    }
-
-    /**
-     * The mesh returned from the marching cubes algorithm, each triangle points to
-     * their own vertexes. The vertexes that are at the same location need to be
-     * reduced to a single vertex and the associated triangles need to have their
-     * indexes updated.
-     *
-     * @param mesh mesh to be transformed.
-     * @param transformer this is only used to describe the extents of the images space
-     *                    the vertexes are kept track of with a backing array.
-     * @return
-     */
-    static Mesh removeDuplicateVertices(Mesh mesh, ImageSpaceTransformer transformer){
-        Triangles triangles = mesh.triangles();
-        int vertices = mesh.vertices().size();
-
-        if(vertices == 0){
-            return null;
-        }
-
-        double[] positions = new double[3*vertices];
-
-        //List<VertexPosition> check = new ArrayList<>();
-        int[][][] space = new int[transformer.d][transformer.h][transformer.w];
-        int[] map = new int[vertices];
-        int dex = 0;
-        for(Vertex v: mesh.vertices()){
-            int i = (int)v.index();
-            int i2;
-
-            //the location of the vertex
-            int sx = (int)v.x();
-            int sy = (int)v.y();
-            int sz = (int)v.z();
-            if( Math.pow(sx - v.x(), 2) + Math.pow(sy - v.y(), 2) + Math.pow(sz - v.z(), 2) > 0 ){
-                System.out.println("non-integer vertex: " + v.x() + ", " + v.y() + ", " + v.z());
-            }
-            i2 = space[sz][sy][sx] - 1;
-            if( i2 < 0){
-                space[sz][sy][sx] = dex + 1;
-                positions[ dex*3 ] = v.x();
-                positions[ dex*3 + 1] = v.y();
-                positions[ dex*3 + 2 ] = v.z();
-                map[i] =  dex;
-                dex++;
-            } else{
-                map[i] = i2;
-            }
-        }
-
-        BufferMesh fin = new BufferMesh(dex, triangles.size());
-        for(int i = 0; i<dex; i++){
-            fin.vertices().add(positions[3*i], positions[3*i+1], positions[3*i+2]);
-        }
-        for(Triangle t: triangles){
-            int i0 = map[(int)t.vertex0()];
-            int i1 = map[(int)t.vertex1()];
-            int i2 = map[(int)t.vertex2()];
-            fin.triangles().add(i0, i1, i2);
-        }
-        return fin;
-    }
 
     /**
      * Creates a mask of the provided region.
@@ -275,17 +152,6 @@ public class Imglib2Mesh {
 
             ist.update(r);
 
-            Mesh mesh = removeDuplicateVertices(
-                    MarchingCubesRealType.calculate(img, 1), ist );
-
-            if(mesh != null) {
-                for(Mesh bm : MeshConnectedComponents.iterable(mesh)){
-                    DeformableMesh3D dm3d = convertMesh(bm, ist);
-                    if(dm3d.calculateVolume() > 0){
-                        meshes.add(dm3d);
-                    }
-                }
-            }
         }
         return meshes;
     }
@@ -334,26 +200,8 @@ public class Imglib2Mesh {
             r.validate();
             Img<UnsignedByteType> img = image(r);
 
-            Mesh mesh = MarchingCubesRealType.calculate(img, 1);
-
             ist.update(r);
 
-            mesh = removeDuplicateVertices(mesh, ist);
-            if(mesh != null) {
-                for(Mesh bm : MeshConnectedComponents.iterable(mesh)){
-                    DeformableMesh3D dm3d = convertMesh(bm, ist);
-                    if(dm3d.calculateVolume() > 0){
-                        /*try {
-                            List<DeformableMesh3D> checked = topoCheck(dm3d);
-                            meshes.addAll(checked);
-                        }  catch(Exception e){
-                            e.printStackTrace();
-                            meshes.add(dm3d);
-                        }*/
-                        meshes.add(dm3d);
-                    }
-                }
-            }
         }
 
         return meshes;
