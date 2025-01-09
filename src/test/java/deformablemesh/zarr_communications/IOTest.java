@@ -10,6 +10,7 @@ import ij.process.ShortProcessor;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;
@@ -136,6 +137,14 @@ public class IOTest {
             throw new RuntimeException(e);
         }
     }
+    static Path getTempZarrPath(String s) throws IOException {
+        Path p0 = Files.createTempDirectory(s);
+        Path zarrPath = p0.getParent().resolve(p0.getFileName() + ".zarr");
+        Files.move(p0, zarrPath);
+        return zarrPath;
+
+    }
+
 
     @Test
     public void testXYZ() throws Exception {
@@ -145,16 +154,16 @@ public class IOTest {
         int t = 1;
         int c = 1;
 
-        Path p = Files.createTempDirectory("xyz");
+        Path zarrPath = getTempZarrPath("xyz");
         try {
             ImagePlus plus = generic(w, h, z, t, c);
-            System.out.println(p.toAbsolutePath());
-            SaveImageToZarr.saveToZarr(plus, p);
-            ImagePlus round = LoadZarr.load3DStackFromZarrFile(p.toString()).get(0);
+            System.out.println(zarrPath.toAbsolutePath());
+            SaveImageToZarr.saveToZarr(plus, zarrPath);
+            ImagePlus round = LoadZarr.load3DStackFromZarrFile(zarrPath.toString()).get(0);
             validate(w, h, z, t, c, plus);
             validate(w, h, z, t, c, round);
         } finally{
-            deleteTempZarrFolder(p);
+            deleteTempZarrFolder(zarrPath);
         }
     }
 
@@ -166,7 +175,7 @@ public class IOTest {
         int t = 2;
         int c = 1;
 
-        Path p = Files.createTempDirectory("xyzt");
+        Path p = getTempZarrPath("xyzt");
         try {
             ImagePlus plus = generic(w, h, z, t, c);
             System.out.println(p.toAbsolutePath());
@@ -187,7 +196,7 @@ public class IOTest {
         int t = 1;
         int c = 2;
 
-        Path p = Files.createTempDirectory("xyzc");
+        Path p = getTempZarrPath("xyzc");
         try {
             ImagePlus plus = generic(w, h, z, t, c);
             System.out.println(p.toAbsolutePath());
@@ -207,7 +216,7 @@ public class IOTest {
         int t = 3;
         int c = 2;
 
-        Path p = Files.createTempDirectory("xyzct");
+        Path p = getTempZarrPath("xyzct");
         try {
             ImagePlus plus = generic(w, h, z, t, c);
             System.out.println(p.toAbsolutePath());

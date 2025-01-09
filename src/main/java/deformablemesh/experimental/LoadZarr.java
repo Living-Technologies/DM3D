@@ -13,11 +13,14 @@ import org.janelia.saalfeldlab.n5.ij.N5IJUtils;
 import org.janelia.saalfeldlab.n5.universe.N5Factory;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class LoadZarr {
@@ -72,7 +75,6 @@ public class LoadZarr {
             throw new RuntimeException(e);
         }
     }
-
     public static List<ImagePlus> load3DStackFromZarrFile( String location ) throws IOException {
         N5Factory factory = new N5Factory();
         N5Reader reader = factory.openReader(location);
@@ -80,10 +82,21 @@ public class LoadZarr {
         List<ImagePlus> pluses = new ArrayList<>();
         String baseName = Paths.get(location).getFileName().toString();
         for(String s: sets){
-            Path attrs = Paths.get(location, s).getParent().resolve(".zattrs");
+            Path parent = Paths.get(location, s).getParent();
+            Path attrs = parent.resolve(".zattrs");
+            if(!Files.exists(attrs)){
+                //Possibly n5 data structure!
+                attrs = parent.resolve("attributes.json");
+            }
             List<MultiScaleSpatial> things = getSpatialAttributes(attrs);
+            Map<String, Class<?>> attributes = reader.listAttributes(s);
+            Set<String> keys = attributes.keySet();
+            for( String att : attributes.keySet() ){
+                System.out.println("\t*" + att + ", " + reader.getAttribute(s, att, attributes.get(att)));
 
-            long[] shape = reader.getAttribute(s, "shape", long[].class);
+            };
+            String shapeKey = keys.contains("shape") ? "shape" : "dimensions";
+            long[] shape = reader.getAttribute(s, shapeKey, long[].class);
             System.out.println("read shape: " + Arrays.toString(shape));
             ImagePlus img = N5IJUtils.load(reader, s);
             int n = shape.length;
