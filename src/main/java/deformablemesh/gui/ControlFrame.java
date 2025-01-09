@@ -1422,8 +1422,8 @@ public class ControlFrame implements ReadyObserver, FrameListener {
     }
 
     public JMenu createMenuTrainingDataExport(){
-        JMenuItem generateStarDist = new JMenuItem("stardist");
-        generateStarDist.addActionListener(new ModelAction(segmentationController::generateStardistTrainingData));
+        //JMenuItem generateStarDist = new JMenuItem("stardist");
+        //generateStarDist.addActionListener(new ModelAction(segmentationController::generateStardistTrainingData));
         JMenuItem generateCellPose = new JMenuItem("cellpose");
         generateCellPose.addActionListener(new ModelAction(segmentationController::generateCellposeTrainingData));
         JMenuItem generateActiveUnet = new JMenuItem("active-unet");
@@ -1431,7 +1431,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
 
         JMenu menu = new JMenu("training labels");
         menu.add(generateActiveUnet);
-        menu.add(generateStarDist);
+        //menu.add(generateStarDist);
         menu.add(generateCellPose);
 
         return menu;
