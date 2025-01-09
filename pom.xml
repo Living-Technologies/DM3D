@@ -131,19 +131,16 @@
 			<classifier>${scijava.natives.classifier.jogl}</classifier>
 		</dependency>
 		<dependency>
-			<groupId>org.jogamp.java3d</groupId>
-			<artifactId>java3d-core</artifactId>
-			<version>1.7.2</version>
+			<groupId>org.scijava</groupId>
+			<artifactId>j3dcore</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.jogamp.java3d</groupId>
-			<artifactId>java3d-utils</artifactId>
-			<version>1.7.2</version>
-		</dependency>
-		<dependency>
-			<groupId>org.jogamp.java3d</groupId>
+			<groupId>org.scijava</groupId>
 			<artifactId>vecmath</artifactId>
-			<version>1.7.2</version>
+		</dependency>
+		<dependency>
+			<groupId>org.scijava</groupId>
+			<artifactId>j3dutils</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.janelia.saalfeldlab</groupId>

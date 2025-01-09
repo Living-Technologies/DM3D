@@ -33,7 +33,7 @@ import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.meshview.SphereDataObject;
 import deformablemesh.meshview.TexturedPlane;
 import deformablemesh.util.Vector3DOps;
-import org.jogamp.java3d.Shape3D;
+import org.scijava.java3d.Shape3D;
 
 import java.util.ArrayList;
 import java.util.Arrays;

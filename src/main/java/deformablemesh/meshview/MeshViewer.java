@@ -28,9 +28,9 @@ package deformablemesh.meshview;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.io.MeshReader;
 import deformablemesh.track.Track;
-import org.jogamp.java3d.Appearance;
-import org.jogamp.java3d.Material;
-import org.jogamp.vecmath.Color3f;
+import org.scijava.java3d.Appearance;
+import org.scijava.java3d.Material;
+import org.scijava.vecmath.Color3f;
 
 import javax.swing.BoxLayout;
 import javax.swing.Icon;

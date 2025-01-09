@@ -27,13 +27,13 @@ package deformablemesh.meshview;
 
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.DeformableMesh3D;
-import org.jogamp.java3d.Appearance;
-import org.jogamp.java3d.Material;
-import org.jogamp.java3d.PolygonAttributes;
-import org.jogamp.java3d.Shape3D;
-import org.jogamp.java3d.TexCoordGeneration;
-import org.jogamp.java3d.TransparencyAttributes;
-import org.jogamp.vecmath.Vector4f;
+import org.scijava.java3d.Appearance;
+import org.scijava.java3d.Material;
+import org.scijava.java3d.PolygonAttributes;
+import org.scijava.java3d.Shape3D;
+import org.scijava.java3d.TexCoordGeneration;
+import org.scijava.java3d.TransparencyAttributes;
+import org.scijava.vecmath.Vector4f;
 
 import java.awt.Color;
 

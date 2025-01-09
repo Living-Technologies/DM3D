@@ -35,12 +35,12 @@ import java.awt.image.WritableRaster;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jogamp.java3d.ImageComponent;
-import org.jogamp.java3d.ImageComponent3D;
-import org.jogamp.java3d.Texture;
-import org.jogamp.java3d.Texture3D;
-import org.jogamp.vecmath.Color3f;
-import org.jogamp.vecmath.Vector4f;
+import org.scijava.java3d.ImageComponent;
+import org.scijava.java3d.ImageComponent3D;
+import org.scijava.java3d.Texture;
+import org.scijava.java3d.Texture3D;
+import org.scijava.vecmath.Color3f;
+import org.scijava.vecmath.Vector4f;
 
 public class MultiChannelVolumeTexture extends Texture3D {
     private List<TextureProducer> textures = new ArrayList<>();

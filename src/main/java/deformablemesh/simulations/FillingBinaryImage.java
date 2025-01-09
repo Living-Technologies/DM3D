@@ -40,7 +40,7 @@ import deformablemesh.util.connectedcomponents.Region;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ByteProcessor;
-import org.jogamp.java3d.utils.picking.PickResult;
+import org.scijava.java3d.utils.picking.PickResult;
 
 import java.awt.Color;
 import java.awt.event.MouseEvent;

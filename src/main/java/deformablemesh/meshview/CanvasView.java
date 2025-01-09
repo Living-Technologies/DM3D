@@ -26,7 +26,7 @@
 package deformablemesh.meshview;
 
 
-import org.jogamp.java3d.utils.picking.PickResult;
+import org.scijava.java3d.utils.picking.PickResult;
 
 import java.awt.event.MouseEvent;
 
