@@ -41,6 +41,7 @@ import deformablemesh.geometry.Node3D;
 import deformablemesh.geometry.RayCastMesh;
 import deformablemesh.geometry.interceptable.Interceptable;
 import deformablemesh.geometry.interceptable.InterceptingMesh3D;
+import deformablemesh.geometry.topology.TopoCheck;
 import deformablemesh.gui.FrameListener;
 import deformablemesh.gui.FurrowController;
 import deformablemesh.gui.GuiTools;
@@ -1105,6 +1106,12 @@ public class SegmentationController {
         ).collect(Collectors.toList());
         startNewMeshTracks( meshes );
     }
+
+    public List<DeformableMesh3D> repairTopology( DeformableMesh3D mesh){
+        TopoCheck tc = new TopoCheck(mesh);
+        return tc.repairMesh();
+    }
+
     /**
      *
      * Generates meshes from a labelled image with a default relax steps and remesh

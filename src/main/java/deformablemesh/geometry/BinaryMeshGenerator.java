@@ -86,10 +86,21 @@ public class BinaryMeshGenerator {
 
         List<long[]> triangles = new ArrayList<>(points.size()*3);
 
-        long tw = stack.getWidthPx() + 1;
-        long th = stack.getHeightPx() + 1;
-        long td = stack.getNSlices() + 1;
-
+        //long tw = stack.getWidthPx() + 1;
+        //long th = stack.getHeightPx() + 1;
+        //long td = stack.getNSlices() + 1;
+        double[] lc = r.getLowCorner();
+        //lc = new double[]{0, 0, 0};
+        double[] up = r.getHighCorner();
+        long lx = (long)lc[0];
+        long ly = (long)lc[1];
+        long lz = (long)lc[2];
+        long hx = (long)up[0];
+        long hy = (long)up[1];
+        long hz = (long)up[2];
+        long tw = hx - lx + 1;
+        long th = hy - ly + 1;
+        long td = hz - lz + 1;
         for(int[] pt: points){
             for(int i = 0; i<2; i++){
                 int xi = pt[0] + 2*i - 1;
@@ -97,10 +108,10 @@ public class BinaryMeshGenerator {
                 if(xi == w || xi < 0 || stack.getValue(xi, pt[1], pt[2]) != label){
                     long delta = i;
 
-                    long ia = (th*tw)*pt[2] + tw*pt[1] + pt[0] + delta;
-                    long ib = (th*tw)*pt[2] + tw*(pt[1] + 1) + pt[0] + delta;
-                    long ic = (th*tw)*(pt[2] + 1) + tw*(pt[1] + 1) + pt[0] + delta;
-                    long id = (th*tw)*(pt[2] + 1) + tw*pt[1] + pt[0] + delta;
+                    long ia = (th*tw)*(pt[2]-lz) + tw*(pt[1] - ly) + pt[0] - lx + delta;
+                    long ib = (th*tw)*(pt[2]-lz) + tw*(pt[1] + 1 - ly) + pt[0] - lx + delta;
+                    long ic = (th*tw)*(pt[2] + 1 - lz) + tw*(pt[1] + 1 - ly) + pt[0] - lx + delta;
+                    long id = (th*tw)*(pt[2] + 1 - lz) + tw*(pt[1] - ly) + pt[0] - lx + delta;
 
                     long[][] pair = getQuadTriangles(ia, ib, ic, id, delta==0);
                     triangles.add(pair[0]);
@@ -112,10 +123,10 @@ public class BinaryMeshGenerator {
                 int yi = pt[1] + 2*j - 1;
                 if(yi == h || yi < 0 || stack.getValue(pt[0], yi, pt[2]) != label){
                     long delta = j;
-                    long ia = ( th * tw ) * pt[2] + tw * ( pt[1]  + delta ) + pt[0];
-                    long ib = ( th * tw ) * ( pt[2] + 1 ) + tw*( pt[1]  + delta ) + pt[0];
-                    long ic = ( th * tw ) * ( pt[2] + 1 ) + tw * ( pt[1] + delta ) + pt[0] + 1;
-                    long id = (th*tw) * pt[2] + tw * ( pt[1] + delta ) + pt[0] + 1;
+                    long ia = ( th * tw ) * (pt[2] - lz) + tw * ( pt[1]  + delta - ly) + pt[0] - lx;
+                    long ib = ( th * tw ) * ( pt[2] + 1 - lz) + tw*( pt[1]  + delta - ly) + pt[0] - lx;
+                    long ic = ( th * tw ) * ( pt[2] + 1 - lz) + tw * ( pt[1] + delta - ly) + pt[0] - lx + 1;
+                    long id = (th*tw) * (pt[2] - lz) + tw * ( pt[1] + delta - ly) + pt[0] - lx + 1;
 
                     long[][] pair = getQuadTriangles(ia, ib, ic, id, delta == 0);
                     triangles.add(pair[0]);
@@ -129,10 +140,10 @@ public class BinaryMeshGenerator {
                 if( zdex<0 || zdex == d || stack.getValue(pt[0], pt[1], zdex) != label){
                     //voxel.add(generateVoxelPlane(stack, pt, new double[]{0, 0, 2*k - 1}));
                     long delta = k;
-                    long ia = ( th * tw )*(pt[2] + delta) + tw * ( pt[1] ) + pt[0];
-                    long ib = ( th * tw )*(pt[2] + delta) + tw * ( pt[1] ) + pt[0] + 1;
-                    long ic = ( th * tw )*(pt[2] + delta) + tw * ( pt[1] + 1 ) + pt[0] + 1;
-                    long id = ( th * tw )*(pt[2] + delta) + tw * ( pt[1] + 1 ) + pt[0];
+                    long ia = ( th * tw )*(pt[2] - lz + delta) + tw * ( pt[1] - ly ) + pt[0] - lx;
+                    long ib = ( th * tw )*(pt[2] - lz + delta) + tw * ( pt[1] - ly  ) + pt[0] - lx + 1;
+                    long ic = ( th * tw )*(pt[2] - lz + delta) + tw * ( pt[1] - ly  + 1 ) + pt[0] - lx + 1;
+                    long id = ( th * tw )*(pt[2] - lz + delta) + tw * ( pt[1] - ly  + 1 ) + pt[0] - lx;
 
                     long[][] pair = getQuadTriangles(ia, ib, ic, id, delta == 0);
                     triangles.add(pair[0]);
@@ -151,7 +162,7 @@ public class BinaryMeshGenerator {
                     int x = (int) (l % tw);
                     int y = (int) ((l / tw) % th);
                     int z = (int) (l / (tw * th));
-                    meshPoints.add(stack.getNormalizedCoordinate(new double[]{x, y, z}));
+                    meshPoints.add(stack.getNormalizedCoordinate(new double[]{x + lx, y + ly, z + lz}));
                     map[(int) l] = meshPoints.size();
                 }
             }
@@ -605,11 +616,11 @@ public class BinaryMeshGenerator {
     public static void main(String[] args) throws IOException {
         es = Executors.newFixedThreadPool(4);
         new ImageJ();
-        String loc = Paths.get("D:/working/zarr-communications/xyzt_cp-masks.zarr").toAbsolutePath().toString();
-        List<ImagePlus> pluses = LoadZarr.load3DStackFromZarrFile(loc);
-        //ImagePlus plus = FileInfoVirtualStack.openVirtual(new File(args[0]).getAbsolutePath());
+        //String loc = Paths.get("D:/working/zarr-communications/xyzt_cp-masks.zarr").toAbsolutePath().toString();
+        //List<ImagePlus> pluses = LoadZarr.load3DStackFromZarrFile(loc);
+        ImagePlus plus = FileInfoVirtualStack.openVirtual(new File(args[0]).getAbsolutePath());
         //ImagePlus plus = ImageJFunctions.wrap(MCBroken.image(), "3x3x3-blob");
-        ImagePlus plus = pluses.get(0);
+        //ImagePlus plus = pluses.get(0);
         //plus.setDimensions(1, 9, 1);
         MeshImageStack mis = new MeshImageStack(plus);
 
@@ -645,10 +656,10 @@ public class BinaryMeshGenerator {
                         t.addMesh(frame, mesh);
                         broken.add(t);
                     } else{
-                        //Add non-broken meshes to be saved.
-                        //Track t = new Track("blue- " + err.size() + " " + err.stream().map(Object::toString).collect(Collectors.joining("-")));
-                        //t.addMesh(frame, mesh);
-                        //broken.add(t);
+                        //Add non-broken meshes for validation.
+                        Track t = new Track("blue- " + err.size() + " " + err.stream().map(Object::toString).collect(Collectors.joining("-")));
+                        t.addMesh(frame, mesh);
+                        broken.add(t);
                     }
                     return err;
                 } ) );
