@@ -75,7 +75,6 @@ public class LoadZarr {
             throw new RuntimeException(e);
         }
     }
-
     public static List<ImagePlus> load3DStackFromZarrFile( String location ) throws IOException {
         N5Factory factory = new N5Factory();
         N5Reader reader = factory.openReader(location);
@@ -83,9 +82,11 @@ public class LoadZarr {
         List<ImagePlus> pluses = new ArrayList<>();
         String baseName = Paths.get(location).getFileName().toString();
         for(String s: sets){
-            Path attrs = Paths.get(location, s).getParent().resolve(".zattrs");
+            Path parent = Paths.get(location, s).getParent();
+            Path attrs = parent.resolve(".zattrs");
             if(!Files.exists(attrs)){
-                attrs = Paths.get(location, s).getParent().resolve("attributes.json");
+                //Possibly n5 data structure!
+                attrs = parent.resolve("attributes.json");
             }
             List<MultiScaleSpatial> things = getSpatialAttributes(attrs);
             Map<String, Class<?>> attributes = reader.listAttributes(s);
