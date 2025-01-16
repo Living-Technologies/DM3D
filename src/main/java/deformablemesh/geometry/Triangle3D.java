@@ -149,4 +149,42 @@ public class Triangle3D {
         return (A.index==node.index) || (B.index==node.index) || (C.index==node.index);
 
     }
+
+    /**
+     * Checks the provided direction, if c.A is pointed in same direction as the
+     * triangle then the result is +1 if it is pointed in the opposite direction then
+     * it is -1.
+     *
+     * @param con provides the nodes and their relative order.
+     * @return
+     */
+    public int direction(Connection3D con) {
+        int ai = con.A.index;
+        int bi = con.B.index;
+
+        if(A.index == ai){
+            if(B.index == bi){
+                return 1;
+            } else if(C.index == bi){
+                return -1;
+            }
+        } else if (B.index == ai){
+            if(C.index == bi){
+                return 1;
+            } else if(A.index == bi){
+                return -1;
+            }
+        } else if (C.index == ai){
+            if(A.index == bi){
+                return 1;
+            } else if(B.index == bi){
+                return -1;
+            }
+        }
+        throw new RuntimeException(
+            "Connection is not in triangle. Connection ( " + ai + ", " + bi
+             + " ) not in ( " + A.index + ", " + B.index + ", " + C.index + " )"
+        );
+
+    }
 }

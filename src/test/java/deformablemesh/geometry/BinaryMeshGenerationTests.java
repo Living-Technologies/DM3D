@@ -249,9 +249,9 @@ public class BinaryMeshGenerationTests {
     public void shellTest(){
         ImagePlus o = shell();
         MeshImageStack mis = new MeshImageStack(o);
-        List<DeformableMesh3D> meshes = new BinaryMeshGenerator().generateRawVoxelMeshes(mis);
+        List<DeformableMesh3D> meshes = BinaryMeshGenerator.generateRawVoxelMeshes(mis);
         Assert.assertEquals(1, meshes.size());
-        List<DeformableMesh3D> innerOuter = Imglib2MeshBenchMark.connectedComponents(meshes.get(0));
+        List<DeformableMesh3D> innerOuter = TopoCheck.connectedComponents(meshes.get(0));
         for(DeformableMesh3D mesh : innerOuter) {
             int nerrors, nodes, triangles, connections;
             double volume;

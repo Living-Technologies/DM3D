@@ -7,10 +7,13 @@ import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
+import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.NumericType;
+import net.imglib2.view.IntervalView;
+import net.imglib2.view.MixedTransformView;
 import net.imglib2.view.Views;
 import org.janelia.saalfeldlab.n5.DataType;
 import org.janelia.saalfeldlab.n5.DatasetAttributes;
@@ -50,20 +53,56 @@ public class SaveImageToZarr {
         }
         return DataType.FLOAT32;
     }
+
+    static <T extends NativeType<T> & NumericType<T>> RandomAccessibleInterval<T>  getXYZCTRandomAccessIntervale(ImagePlus plus){
+        RandomAccessibleInterval<T> img = ImageJFunctions.wrap(plus);
+
+        System.out.println("Starting shape: " + Arrays.toString(img.dimensionsAsLongArray()));
+        if(plus.getNChannels() > 1){
+            //switches channesl with z.
+            img = Views.moveAxis(img, 2, 3);
+        } else{
+            //add a channel.
+            img = Views.addDimension(img, 0L, 0L);
+            if( plus.getNFrames() > 1 ){
+                //switch time to last position.
+                img = Views.moveAxis(img, 3, 4);
+            }
+        }
+        if(plus.getNFrames() == 1){
+            //adds time frame.
+            img = Views.addDimension(img, 0L, 0L);
+        }
+        System.out.println("finished shape: " + Arrays.toString(img.dimensionsAsLongArray()));
+        return img;
+    }
+    public static <T extends NativeType<T> & NumericType<T>> void appendToZarr(ImagePlus plus, Path op) throws Exception{
+        N5Factory factory = new N5Factory();
+        factory.zarrDimensionSeparator("/");
+
+        try( N5Writer writer = factory.openWriter(op.toString()) ) {
+            RandomAccessibleInterval<T> img = getXYZCTRandomAccessIntervale(plus);
+
+            String datasetPath = "";
+            String arrayDatasetPath = "/s0";
+
+            String shapeKey = "shape";
+            long[] shape = writer.getAttribute(datasetPath + arrayDatasetPath, shapeKey, long[].class);
+            int n = shape.length - 1;
+
+            long[] translation = new long[shape.length];
+            translation[n] = shape[n];
+            //N5Utils.save(img, writer,datasetPath + arrayDatasetPath, blocks, new BloscCompression());
+
+            N5Utils.saveRegion(Views.translate(img,translation ), writer, datasetPath + arrayDatasetPath);
+        }
+    }
     public static <T extends NativeType<T> & NumericType<T>> void saveToZarr(ImagePlus plus, Path op) throws Exception {
         N5Factory factory = new N5Factory();
         factory.zarrDimensionSeparator("/");
 
         try( N5Writer writer = factory.openWriter(op.toString()) ){
-            RandomAccessibleInterval<T> img;
-            if(plus.getNChannels() > 1){
-                img = Views.moveAxis((RandomAccessibleInterval<T>) ImageJFunctions.wrap(plus), 2, 3);
-            } else{
-                img = ImageJFunctions.wrap(plus);
-            }
-
-            System.out.println("RAI shape: " + Arrays.toString(img.dimensionsAsLongArray()));
-            //System.out.println("RAI shape: " + Arrays.toString(img2.dimensionsAsLongArray()));
+            RandomAccessibleInterval<T> img = getXYZCTRandomAccessIntervale(plus);
             Calibration cb = plus.getCalibration();
             String datasetPath = "";
             String arrayDatasetPath = "/s0";
@@ -94,7 +133,8 @@ public class SaveImageToZarr {
             axes[spatial + 2] = new Axis(Axis.SPACE, "z", cb.getZUnit());
 
             //c (if present.)
-            if(plus.getNChannels()  > 1){
+            //TODO always saving with 5 axes no need to check.
+            if(plus.getNChannels()  > 0){
                 spatial++;
                 blocks[3] = 1;
                 scale[3] = 1;
@@ -102,7 +142,7 @@ public class SaveImageToZarr {
                 axes[3] = new Axis(Axis.CHANNEL, "c", null, true);
             }
 
-            if(plus.getNFrames() > 1){
+            if(plus.getNFrames() > 0){
                 blocks[spatial + 3] = 1;
                 double ds = cb.frameInterval == 0 ? 1 : cb.frameInterval;
                 scale[spatial + 3] = ds;
@@ -149,7 +189,6 @@ public class SaveImageToZarr {
     public static void main(String[] args) throws Exception {
         //Path p = Paths.get(IJ.getFilePath("select image to convert")).toAbsolutePath();
         Path p = Paths.get("D:\\working\\zarr-communications\\cxyz.tif");
-
         String name = p.getFileName().toString();
         String outName = name.replaceAll("\\.[^.]*$", ".zarr");
         Path op = p.getParent().resolve(outName);

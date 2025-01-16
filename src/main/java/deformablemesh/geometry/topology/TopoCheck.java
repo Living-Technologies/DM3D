@@ -60,6 +60,11 @@ public class TopoCheck {
         errors.add( tve );
     }
 
+    /**
+     * Creates a new open surface error corresponding to the Connection3D at the
+     * provided index
+     * @param i index of the connection3d in mesh.connections
+     */
     void openSurfaceError(int i){
         Connection3D c = mesh.connections.get(i);
         String message = "Connection " + i + " borders one triangle";
@@ -145,6 +150,15 @@ public class TopoCheck {
                 fourBy.add(con);
             }
         }
+    }
+
+    int consistentWinding( Connection3D con ){
+        List<Triangle3D> tri = connectionToTriangle.get(con);
+        int sum = 0;
+        for(Triangle3D t : tri){
+            sum += t.direction(con);
+        }
+        return sum;
     }
 
     static class SortedT{
@@ -902,7 +916,7 @@ public class TopoCheck {
 
     public List<TopologyValidationError> validate(){
         resetMappings();
-        List<DeformableMesh3D> splits = Imglib2MeshBenchMark.connectedComponents(mesh);
+        List<DeformableMesh3D> splits = connectedComponents(mesh);
         if(splits.size() > 1){
             errors.add(new TopologyValidationError("multiple disconnected meshes: " + splits.size()));
         }

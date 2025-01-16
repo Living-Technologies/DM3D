@@ -125,7 +125,7 @@ public class IOTest {
      *
      * @param p
      */
-    private static void deleteTempZarrFolder(Path p){
+    static void deleteTempZarrFolder(Path p){
         try {
             if (Files.isDirectory(p)) {
                 try (Stream<Path> paths = Files.list(p)) {

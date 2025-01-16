@@ -207,6 +207,10 @@ public class MeshImageStack {
         return unit;
     }
 
+    public Calibration getImageJCalibration(){
+        return original.getCalibration();
+    }
+
     /**
      * given a length in px, px, slices this scales the length to normalized
      * coordinate values.
@@ -737,7 +741,7 @@ public class MeshImageStack {
         return new MeshImageStack(plus);
     }
     /**
-     * Returns a duplcate single channel image plus of the current frame.
+     * Returns a duplicate single channel image plus of the current frame.
      *
      * @return ImagePlus created by the original image contain one channel,
      * all of the slices and a single time frame. Duplicate processors.

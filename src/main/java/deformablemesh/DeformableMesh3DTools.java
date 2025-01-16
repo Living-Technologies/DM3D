@@ -1469,9 +1469,9 @@ public class DeformableMesh3DTools {
         }
 
 
-        int w = stack.original.getWidth();
-        int h = stack.original.getHeight();
-        int n = stack.original.getNSlices();
+        int w = stack.getWidthPx();
+        int h = stack.getHeightPx();
+        int n = stack.getNSlices();
 
         ImageStack timeStack = new ImageStack(w, h);
 

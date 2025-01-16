@@ -2,15 +2,24 @@ package deformablemesh.experimental;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.measure.Calibration;
+import org.janelia.saalfeldlab.n5.DatasetAttributes;
 import org.janelia.saalfeldlab.n5.N5Reader;
 import org.janelia.saalfeldlab.n5.ij.N5IJUtils;
 import org.janelia.saalfeldlab.n5.universe.N5Factory;
+import org.janelia.saalfeldlab.n5.universe.N5MetadataUtils;
+import org.janelia.saalfeldlab.n5.universe.metadata.N5DefaultSingleScaleMetadata;
+import org.janelia.saalfeldlab.n5.universe.metadata.N5Metadata;
+import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.NgffSingleScaleAxesMetadata;
+import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadata;
+import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMultiScaleMetadata;
+import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.coordinateTransformations.CoordinateTransformation;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -66,34 +75,65 @@ public class LoadZarr {
 
     }
     private static List<MultiScaleSpatial> getSpatialAttributes(Path json){
+        System.out.println("reading" + json);
         ObjectMapper mapper = new ObjectMapper();
         try {
             Stuff stuff = mapper.readValue(json.toFile(), new TypeReference<Stuff>(){});
-            System.out.println(stuff.multiscales);
             return stuff.multiscales;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
+
     public static List<ImagePlus> load3DStackFromZarrFile( String location ) throws IOException {
         N5Factory factory = new N5Factory();
         N5Reader reader = factory.openReader(location);
-        String[] sets = reader.deepListDatasets("/");
+
         List<ImagePlus> pluses = new ArrayList<>();
-        String baseName = Paths.get(location).getFileName().toString();
+        Path origin = Paths.get(location);
+        String baseName = origin.getFileName().toString();
+
+        N5Metadata rootMetadata = N5MetadataUtils.parseMetadata(reader, "/");
+        System.out.println("root metadata: " + rootMetadata);
+        if(rootMetadata instanceof OmeNgffMetadata){
+            OmeNgffMetadata metadata = (OmeNgffMetadata)rootMetadata;
+            for ( OmeNgffMultiScaleMetadata md : metadata.multiscales ){
+                System.out.println(md);
+            }
+        }
+        String[] sets = reader.deepListDatasets("/");
         for(String s: sets){
-            Path parent = Paths.get(location, s).getParent();
-            Path attrs = parent.resolve(".zattrs");
+            N5Metadata n5md = N5MetadataUtils.parseMetadata(reader, s);
+            System.out.println(n5md);
+            if(n5md instanceof N5DefaultSingleScaleMetadata){
+                N5DefaultSingleScaleMetadata def = (N5DefaultSingleScaleMetadata) n5md;
+                Map<String, Object> objs = def.getAttributes().asMap();
+                for(Map.Entry<String, Object> row : objs.entrySet()){
+                    System.out.println("row: " + row);
+                }
+            } else if(n5md instanceof NgffSingleScaleAxesMetadata){
+                NgffSingleScaleAxesMetadata ngffmd = (NgffSingleScaleAxesMetadata)n5md;
+                System.out.println(Arrays.toString(ngffmd.getAxes()));
+                System.out.println(Arrays.toString(ngffmd.getScale()));
+                System.out.println(Arrays.toString(ngffmd.getTranslation()));
+
+            }
+
+            Path attrs = origin.resolve(".zattrs");
             if(!Files.exists(attrs)){
                 //Possibly n5 data structure!
-                attrs = parent.resolve("attributes.json");
+                attrs = origin.resolve("attributes.json");
             }
             List<MultiScaleSpatial> things = getSpatialAttributes(attrs);
+
             Map<String, Class<?>> attributes = reader.listAttributes(s);
             Set<String> keys = attributes.keySet();
             for( String att : attributes.keySet() ){
-                System.out.println("\t*" + att + ", " + reader.getAttribute(s, att, attributes.get(att)));
-
+                try {
+                    System.out.println("\t*" + att + ", " + reader.getAttribute(s, att, attributes.get(att)));
+                } catch(Exception e){
+                    System.out.println("\t% could not get " + s + "/" + att);
+                }
             };
             String shapeKey = keys.contains("shape") ? "shape" : "dimensions";
             long[] shape = reader.getAttribute(s, shapeKey, long[].class);
@@ -104,6 +144,9 @@ public class LoadZarr {
             int channels = 1;
             int slices = 1;
 
+            if(things != null){
+
+            }
             MultiScaleSpatial mss = things.get(0);
 
             Calibration cb = img.getCalibration();
@@ -180,11 +223,11 @@ public class LoadZarr {
         return pluses;
     }
     public static void main(String[] args) throws IOException {
-        new ImageJ();
-        String location = IJ.getDirectory("select zarr folder");
-
+        //new ImageJ();
+        //String location = IJ.getDirectory("select zarr folder");
+        String location = "D:\\working\\zarr-communications\\xyz-py.zarr";
         List<ImagePlus> ps = load3DStackFromZarrFile(location);
-        ps.forEach(ImagePlus::show);
+        //ps.forEach(ImagePlus::show);
 
     }
 }

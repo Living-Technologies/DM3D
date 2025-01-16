@@ -535,12 +535,13 @@ public class    MeshFrame3D {
     }
 
     /**
-     * In case something goes wronge. this is a bit extreme though.
+     * In case something goes wrong. this is a bit extreme though.
      */
     public void purgeCanvas(){
         clearTransients();
         observedObjects.clear();
         canvas.removeAll();
+        transformed.clear();
     }
 
     public void observeObject(Object key, DataObject obj){

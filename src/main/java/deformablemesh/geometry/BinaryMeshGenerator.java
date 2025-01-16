@@ -86,9 +86,6 @@ public class BinaryMeshGenerator {
 
         List<long[]> triangles = new ArrayList<>(points.size()*3);
 
-        //long tw = stack.getWidthPx() + 1;
-        //long th = stack.getHeightPx() + 1;
-        //long td = stack.getNSlices() + 1;
         double[] lc = r.getLowCorner();
         //lc = new double[]{0, 0, 0};
         double[] up = r.getHighCorner();
@@ -196,6 +193,16 @@ public class BinaryMeshGenerator {
         return new long[][]{t1, t2};
     }
 
+    /**
+     * @Depracated
+     *
+     * This is a way to construct the positions. It is not as efficient as the long[][] version.
+     * I'm not sure why, I think because the topology repair is so slow.
+     * @param origin
+     * @param nx
+     * @param ny
+     * @return
+     */
     static public DeformableMesh3D getQuad(double[] origin, double[] nx, double[] ny){
 
         double[] positions = {
