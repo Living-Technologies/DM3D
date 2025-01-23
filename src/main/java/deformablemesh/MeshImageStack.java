@@ -74,15 +74,17 @@ public class MeshImageStack {
     public double[] scale_values;
     public double[] offsets;
     public double[] pixel_dimensions;
-    int[] max_dex;
+    protected int[] max_dex;
     ImagePlus original;
-    int channel = 0;
+    protected int channel = 0;
     public int CURRENT = 0;
-    int FRAMES,SLICES, CHANNELS;
+    protected int FRAMES;
+    protected int SLICES;
+    protected int CHANNELS;
 
     public double MIN_VALUE;
     public double MAX_VALUE;
-    final private double PX;
+    protected double PX;
 
     /**
      * Creates a null mesh image stack.

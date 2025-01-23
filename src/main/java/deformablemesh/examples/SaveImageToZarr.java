@@ -9,6 +9,7 @@ import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.img.VirtualStackAdapter;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.NumericType;
@@ -55,8 +56,8 @@ public class SaveImageToZarr {
     }
 
     static <T extends NativeType<T> & NumericType<T>> RandomAccessibleInterval<T>  getXYZCTRandomAccessIntervale(ImagePlus plus){
-        RandomAccessibleInterval<T> img = ImageJFunctions.wrap(plus);
-
+        //RandomAccessibleInterval<T> img = ImageJFunctions.wrap(plus);
+        RandomAccessibleInterval<T> img = (RandomAccessibleInterval<T>)VirtualStackAdapter.wrap(plus);
         System.out.println("Starting shape: " + Arrays.toString(img.dimensionsAsLongArray()));
         if(plus.getNChannels() > 1){
             //switches channesl with z.
