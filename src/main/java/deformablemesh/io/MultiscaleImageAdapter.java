@@ -171,11 +171,13 @@ public class MultiscaleImageAdapter<T extends NumericType<T> & NativeType<T>> {
     public ImagePlus getMipMapAsPlus(int level){
         ImagePlus plus = new ImagePlus();
         plus.setTitle(getTitle());
+
         ImageStack stack = getImageStack(level);
         System.out.println(stack.size() + " E " + images.getNChannels() + ", " + images.getNSlices(level) + ", " + images.getNFrames());
         plus.setStack(stack, images.getNChannels(), images.getNSlices(level), images.getNFrames());
         Calibration cb = plus.getCalibration();
         images.calibrate(cb, level);
+        plus.setOpenAsHyperStack(true);
         return plus;
     }
 

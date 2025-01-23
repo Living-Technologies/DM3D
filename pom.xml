@@ -11,7 +11,7 @@
 
 	<groupId>org.livingtech</groupId>
 	<artifactId>dm3d</artifactId>
-	<version>1.3.3-SNAPSHOT</version>
+	<version>1.3.3</version>
 
 	<name>Deforming Mesh</name>
 	<description>Triangulated surface for deforming in 3D.</description>
