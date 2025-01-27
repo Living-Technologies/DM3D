@@ -104,14 +104,14 @@ public class LoadZarr {
         }
         Path attrs = origin.resolve(".zattrs");
         List<MultiScaleSpatial> things = getSpatialAttributes(attrs);
-        System.out.println("resolution levels!" + things.size());
+        MultiScaleSpatial mss = things.get(0);
+        System.out.println("resolution levels!" + things.get(0).datasets.size());
         //only works for one set.
         List<Axis> axes = things.get(0).axes.stream().map(t->new Axis(t.type, t.name, t.unit)).collect(Collectors.toList());
         MultiscaleImageAdapter<T> adapter = new MultiscaleImageAdapter<>(axes);
         for(String s: sets){
             int mipmap =adapter.getNextLevel();
 
-            MultiScaleSpatial mss = things.get(mipmap);
             CachedCellImg<T, ?> cachedCellImg = N5Utils.open(reader, s);
             long[] dims = cachedCellImg.dimensionsAsLongArray();
 
@@ -370,12 +370,15 @@ public class LoadZarr {
         new ImageJ();
         //String location = IJ.getDirectory("select zarr folder");
         //String location = "D:\\working\\zarr-communications\\xyz-py.zarr";
-        String location = Paths.get("D:/working/sonnen/3D_small_organoid/3D_small_organoid.zarr").toAbsolutePath().toString();
+        String location = Paths.get("D:\\working\\low_res_segmentation\\testing.zarr").toAbsolutePath().toString();
         //List<ImagePlus> ps = load3DStackFromZarrFile(location);
         //ps.forEach(ImagePlus::show);
         //List<ImagePlus> sac = load3DStackFromZarrFile(location);
-        ImagePlus plus = load3DStack(location);
-        plus.setOpenAsHyperStack(true);
-        plus.show();
+        //ImagePlus plus = load3DStack(location);
+        List<ImagePlus> pluses = load3DStackFromZarrFile(location);
+        for (ImagePlus plus : pluses) {
+            plus.setOpenAsHyperStack(true);
+            plus.show();
+        }
     }
 }

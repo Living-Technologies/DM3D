@@ -162,6 +162,7 @@ public class SaveImageToZarr {
                     scale,
                     translation, axes, da
             );
+
             final OmeNgffMultiScaleMetadataMutable ms = new OmeNgffMultiScaleMetadataMutable(datasetPath);
             ms.addChild(metadata);
             double[] identity = new double[dimensions.length];
