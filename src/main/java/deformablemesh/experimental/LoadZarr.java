@@ -126,11 +126,23 @@ public class LoadZarr {
                 }
             }
             adapter.addResolution(cachedCellImg, scale, offset);
+            adapter.addDataSetLabel(s);
         }
         adapter.setTitle(location);
         return adapter;
     }
-    public static <T extends NumericType<T> & NativeType<T>> List<Source<T>> load3DSourceAndConverter(String location ) throws IOException {
+
+    public static <T extends NumericType<T> & NativeType<T>> List<Source<T>> load3DSource(String location ) throws IOException {
+        MultiscaleImageAdapter<T> msia = load3DZarrFile(location);
+        List<Source<T>> sources = new ArrayList<>();
+        for(int i = 0; i<msia.getNChannels(); i++){
+            sources.add(msia.getAsBdvSource(i));
+        }
+        return sources;
+
+    }
+
+    public static <T extends NumericType<T> & NativeType<T>> List<Source<T>> load3DSourceDep(String location ) throws IOException {
         N5Factory factory = new N5Factory();
         N5Reader reader = factory.openReader(location);
 

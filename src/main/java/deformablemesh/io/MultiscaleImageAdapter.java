@@ -1,22 +1,20 @@
 package deformablemesh.io;
 
+import bdv.util.RandomAccessibleIntervalMipmapSource4D;
 import bdv.viewer.Source;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.measure.Calibration;
+import mpicbg.spim.data.sequence.DefaultVoxelDimensions;
 import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.img.VirtualStackAdapter;
-import net.imglib2.img.display.imagej.ImageJVirtualStack;
 import net.imglib2.img.display.imagej.ImageJVirtualStackARGB;
 import net.imglib2.img.display.imagej.ImageJVirtualStackFloat;
 import net.imglib2.img.display.imagej.ImageJVirtualStackUnsignedByte;
 import net.imglib2.img.display.imagej.ImageJVirtualStackUnsignedShort;
+import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.ARGBType;
-import net.imglib2.type.numeric.IntegerType;
 import net.imglib2.type.numeric.NumericType;
-import net.imglib2.type.numeric.RealType;
-import net.imglib2.type.numeric.integer.ShortType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
@@ -25,10 +23,9 @@ import org.janelia.saalfeldlab.n5.universe.metadata.axes.Axis;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static deformablemesh.io.VirtualMeshReader.frames;
 
 public class MultiscaleImageAdapter<T extends NumericType<T> & NativeType<T>> {
     String title;
@@ -36,6 +33,7 @@ public class MultiscaleImageAdapter<T extends NumericType<T> & NativeType<T>> {
         List<double[]> scales = new ArrayList<>();
         List<double[]> offsets = new ArrayList<>();
         List<RandomAccessibleInterval<V>> data = new ArrayList<>();
+        List<String> datasetLabels = new ArrayList<>();
         List<Axis> axes = new ArrayList<>();
         int tDex = -1;
         int cDex = -1;
@@ -101,13 +99,15 @@ public class MultiscaleImageAdapter<T extends NumericType<T> & NativeType<T>> {
         images = new MultiscaleImage<>();
         setAxes(axes);
     }
+    public int getNChannels(){
+        return images.getNChannels();
+    }
+    public void setTitle(String title){
+        this.title = title;
+    }
 
     public String getTitle(){
         return title;
-    }
-
-    public void setTitle(String title){
-        this.title = title;
     }
 
     private void setAxes(List<Axis> axes){
@@ -165,6 +165,10 @@ public class MultiscaleImageAdapter<T extends NumericType<T> & NativeType<T>> {
         throw new RuntimeException("Cannot map data type to ImageJ 1 datatype: " + t.getClass());
     }
 
+    public void addDataSetLabel(String dataSetLabel){
+        images.datasetLabels.add(dataSetLabel);
+    }
+
     public int getMipMapLevels(){
         return images.data.size();
     }
@@ -182,7 +186,32 @@ public class MultiscaleImageAdapter<T extends NumericType<T> & NativeType<T>> {
     }
 
     public Source<T> getAsBdvSource(int channel){
-        return null;
+        int n = getMipMapLevels();
+        RandomAccessibleInterval<T>[] levels = new RandomAccessibleInterval[n];
+        AffineTransform3D[] transforms = new AffineTransform3D[n];
+        T type = images.data.get(0).getType();
+        for(int i = 0; i<getMipMapLevels(); i++){
+            RandomAccessibleInterval<T> rai = (RandomAccessibleInterval<T>)Views.hyperSlice(images.data.get(i), 3, channel);
+            levels[i] = rai;
+
+            double[] scale = images.scales.get(i);
+            double[] offset = images.offsets.get(i);
+
+
+            AffineTransform3D a = new AffineTransform3D();
+            a.scale(scale[images.xDex], scale[images.yDex], scale[images.zDex]);
+            a.translate(offset[images.xDex], offset[images.yDex], offset[images.zDex]);
+            transforms[i] = a;
+        }
+        DefaultVoxelDimensions vd = new DefaultVoxelDimensions(4);
+        RandomAccessibleIntervalMipmapSource4D<T> source = new RandomAccessibleIntervalMipmapSource4D<>(
+                levels,
+                type,
+                transforms,
+                vd,
+                title, false
+        );
+        return source;
     }
 
 }

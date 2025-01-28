@@ -56,6 +56,14 @@ import static deformablemesh.geometry.DeformableMesh3D.ORIGIN;
  * Date: 7/3/13
  */
 public class MeshImageStack {
+    String shortTitle = "";
+    public void setShortTitle(String s){
+        shortTitle = s;
+    }
+    public String getShortTitle(){
+        return shortTitle;
+    }
+
     public static class ImageRegion3D{
         final int lx, ly, lz, hx, hy, hz;
         ImageRegion3D (int lx, int ly, int lz, int hx, int hy, int hz){
@@ -75,6 +83,7 @@ public class MeshImageStack {
     public double[] offsets;
     public double[] pixel_dimensions;
     protected int[] max_dex;
+    protected int[] dims;
     ImagePlus original;
     protected int channel = 0;
     public int CURRENT = 0;
@@ -98,6 +107,7 @@ public class MeshImageStack {
         PX=1;
         data = new double[1][1][1];
         max_dex = new int[3];
+        dims = new int[3];
         FRAMES = 999;
     }
 
@@ -112,15 +122,16 @@ public class MeshImageStack {
         SLICES = original.getNSlices();
         FRAMES = original.getNFrames();
         CHANNELS = original.getNChannels();
+        int py = original.getHeight();
+        int px = original.getWidth();
 
         CURRENT=frame;
         this.channel = channel;
-        int py = original.getHeight();
-        int px = original.getWidth();
 
         data = new double[SLICES][py][px];
 
         max_dex = new int[]{px-1, py-1, SLICES-1};
+        dims = new int[]{px, py, SLICES};
 
         FileInfo info = original.getFileInfo();
 
@@ -163,6 +174,7 @@ public class MeshImageStack {
                 nPx[1] < nPx[2] ? nPx[1] : nPx[2];
 
         copyValues();
+        shortTitle = original.getShortTitle();
     }
 
     public MeshImageStack(ImagePlus original){
@@ -186,17 +198,11 @@ public class MeshImageStack {
     }
 
     public int getWidthPx(){
-        if(original==null){
-            return 0;
-        }
-        return original.getWidth();
+        return dims[0];
     }
 
     public int getHeightPx(){
-        if(original==null){
-            return 0;
-        }
-        return original.getHeight();
+        return dims[1];
     }
 
     public String getUnits(){

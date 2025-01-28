@@ -42,7 +42,8 @@ public class ChannelVolume implements FrameListener {
         vdo.setGeometry(geom);
         this.stack = stack;
         vdo.setTextureData(stack);
-        name = "ChannelVolume(" + stack.getOriginalPlus().getShortTitle() + ", " + c + ")";
+
+        name = "ChannelVolume(" + stack.getShortTitle() + ", " + c + ")";
     }
 
     @Override

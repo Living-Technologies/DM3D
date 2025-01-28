@@ -1,25 +1,26 @@
 package deformablemesh.gimli2b;
 
 import bdv.viewer.Source;
-import bdv.viewer.SourceAndConverter;
 import deformablemesh.MeshImageStack;
 import deformablemesh.experimental.LoadZarr;
-import ij.io.FileInfo;
-import net.imglib2.RandomAccessibleInterval;
+import deformablemesh.meshview.ChannelVolume;
+import deformablemesh.meshview.MeshFrame3D;
+import ij.ImagePlus;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.NumericType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
-import org.janelia.saalfeldlab.n5.N5Reader;
-import org.janelia.saalfeldlab.n5.N5URI;
-import org.janelia.saalfeldlab.n5.universe.N5Factory;
-import org.janelia.saalfeldlab.n5.universe.N5MetadataUtils;
-import org.janelia.saalfeldlab.n5.universe.metadata.N5Metadata;
 
+import javax.swing.AbstractAction;
+import javax.swing.JComponent;
+import javax.swing.KeyStroke;
+import java.awt.Color;
+import java.awt.Container;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -64,7 +65,7 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T>> extends M
         long[] dims = source.getSource(0, 0).dimensionsAsLongArray();
         System.out.println(Arrays.toString(dims));
         SLICES=(int)dims[2];
-
+        this.dims = new int[]{(int)dims[0], (int)dims[1], (int)dims[2]};
         //TODO is there a way to get the number of frames from the source.
         int nFrames = 0;
         while(source.isPresent(nFrames)){
@@ -136,9 +137,62 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T>> extends M
 
     public static void main(String[] args) throws IOException {
         String location = "D:\\working\\sonnen\\3D_small_organoid\\3D_small_organoid.zarr";
-        List<Source<UnsignedByteType>> sources = LoadZarr.<UnsignedByteType>load3DSourceAndConverter(location);
-        MeshImageStack2<UnsignedByteType> mist = new MeshImageStack2<>(sources);
-        System.out.println(mist.getInterpolatedValue(0.0,0.0,0.0));
+        //List<Source<UnsignedByteType>> sources = LoadZarr.<UnsignedByteType>load3DSource(location);
+        //MeshImageStack2<UnsignedByteType> mist = new MeshImageStack2<>(sources);
+        List<ImagePlus> pluses = LoadZarr.load3DStackFromZarrFile(location);
+        MeshImageStack mist = new MeshImageStack(pluses.get(0));
+        MeshFrame3D frame = new MeshFrame3D();
+        frame.showFrame(true);
+        frame.setBackgroundColor(new Color(0, 0, 50));
+        ChannelVolume cv = frame.getMultiChannelVolumeObject(mist, new Color(255, 0, 255) );
+        cv.getVolumeDataObject().setMinMaxRange(0.1, 0.5);
+
+        JComponent comp = (JComponent)frame.getJFrame().getContentPane();
+        int[] fc = new int[2];
+
+        comp.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0, false), "up");
+        comp.getActionMap().put("up", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.out.println("keying");
+                fc[1] = (fc[1] + 1)%mist.getNChannels();
+                mist.setChannel(fc[1]);
+                cv.frameChanged(fc[0]);
+            }
+        });
+
+        comp.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0, false), "down");
+        comp.getActionMap().put("down", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.out.println("keying");
+                fc[1] = fc[1] > 0 ? fc[1] - 1 : mist.getNChannels() - 1;
+                mist.setChannel(fc[1]);
+                cv.frameChanged(fc[0]);
+            }
+        });
+
+        comp.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0, false), "left");
+        comp.getActionMap().put("left", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.out.println("keying");
+                fc[0] = fc[0] > 0 ? fc[0] - 1 : mist.getNFrames() - 1;
+                cv.frameChanged(fc[0]);
+            }
+        });
+
+        comp.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0, false), "right");
+        comp.getActionMap().put("right", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.out.println("keying");
+                fc[0] = (fc[0] + 1)%mist.getNChannels();
+                cv.frameChanged(fc[0]);
+            }
+        });
+
+
     }
 
 }
