@@ -6,11 +6,18 @@ import deformablemesh.experimental.LoadZarr;
 import deformablemesh.meshview.ChannelVolume;
 import deformablemesh.meshview.MeshFrame3D;
 import ij.ImagePlus;
+import net.imglib2.Cursor;
+import net.imglib2.IterableInterval;
+import net.imglib2.RandomAccess;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
+import net.imglib2.type.Type;
 import net.imglib2.type.numeric.NumericType;
+import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
+import net.imglib2.view.Views;
 
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
@@ -24,7 +31,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-public class MeshImageStack2<T extends NumericType<T> & NativeType<T>> extends MeshImageStack {
+public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType<T>> extends MeshImageStack {
     interface Converter{
         double get(Object value);
     }
@@ -45,6 +52,7 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T>> extends M
     Converter converter;
     //Each channel is a source
     List<Source<T>> sources;
+    double[] buffer = new double[0];
     public MeshImageStack2(List<Source<T>> sources){
         //The assumption is each source is a channel for the same volume
         this.sources = sources;
@@ -115,6 +123,7 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T>> extends M
                 nPx[0] < nPx[2] ? nPx[0] : nPx[2] :
                 nPx[1] < nPx[2] ? nPx[1] : nPx[2];
         this.converter = getConverter(source.getType());
+        copyValues();
     }
     Converter getConverter(T type){
         if(type instanceof UnsignedByteType){
@@ -126,21 +135,29 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T>> extends M
     }
     @Override
     public void copyValues(){
-
+        int n = dims[2]*dims[1]*dims[0];
+        if(buffer.length != n) {
+            buffer = new double[n];
+        }
+        RandomAccessibleInterval<T> rai = sources.get(channel).getSource(CURRENT, 0);
+        Cursor< T > cur = rai.cursor();
+        for(int i = 0; i<n; i++){
+            cur.fwd();
+            buffer[i] = cur.get().getRealDouble();
+        }
     }
 
     @Override
     public double getValue(int x, int y, int z){
-        T px = sources.get(channel).getSource(CURRENT, 0).getAt(x, y, z);
-        return converter.get(px);
+        return buffer[x + y*dims[0] + z*dims[0]*dims[1]];
     }
 
     public static void main(String[] args) throws IOException {
         String location = "D:\\working\\sonnen\\3D_small_organoid\\3D_small_organoid.zarr";
-        //List<Source<UnsignedByteType>> sources = LoadZarr.<UnsignedByteType>load3DSource(location);
-        //MeshImageStack2<UnsignedByteType> mist = new MeshImageStack2<>(sources);
-        List<ImagePlus> pluses = LoadZarr.load3DStackFromZarrFile(location);
-        MeshImageStack mist = new MeshImageStack(pluses.get(0));
+        List<Source<UnsignedByteType>> sources = LoadZarr.<UnsignedByteType>load3DSource(location);
+        MeshImageStack2<UnsignedByteType> mist = new MeshImageStack2<>(sources);
+        //List<ImagePlus> pluses = LoadZarr.load3DStackFromZarrFile(location);
+        //MeshImageStack mist = new MeshImageStack(pluses.get(0));
         MeshFrame3D frame = new MeshFrame3D();
         frame.showFrame(true);
         frame.setBackgroundColor(new Color(0, 0, 50));
@@ -154,10 +171,12 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T>> extends M
         comp.getActionMap().put("up", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                System.out.println("keying");
+                long start = System.nanoTime();
+                System.out.println("up");
                 fc[1] = (fc[1] + 1)%mist.getNChannels();
                 mist.setChannel(fc[1]);
-                cv.frameChanged(fc[0]);
+                cv.getVolumeDataObject().setTextureData(mist);
+                System.out.println( ((System.nanoTime() - start)*1e-9) + "to change");
             }
         });
 
@@ -165,10 +184,12 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T>> extends M
         comp.getActionMap().put("down", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                System.out.println("keying");
+                long start = System.nanoTime();
+                System.out.println("down");
                 fc[1] = fc[1] > 0 ? fc[1] - 1 : mist.getNChannels() - 1;
                 mist.setChannel(fc[1]);
-                cv.frameChanged(fc[0]);
+                cv.getVolumeDataObject().setTextureData(mist);
+                System.out.println( ((System.nanoTime() - start)*1e-9) + "to change");
             }
         });
 
@@ -176,9 +197,11 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T>> extends M
         comp.getActionMap().put("left", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                System.out.println("keying");
+                long start = System.nanoTime();
+                System.out.println("left");
                 fc[0] = fc[0] > 0 ? fc[0] - 1 : mist.getNFrames() - 1;
                 cv.frameChanged(fc[0]);
+                System.out.println( ((System.nanoTime() - start)*1e-9) + "to change");
             }
         });
 
@@ -186,9 +209,11 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T>> extends M
         comp.getActionMap().put("right", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                System.out.println("keying");
-                fc[0] = (fc[0] + 1)%mist.getNChannels();
+                long start = System.nanoTime();
+                System.out.println("right");
+                fc[0] = (fc[0] + 1)%mist.getNFrames();
                 cv.frameChanged(fc[0]);
+                System.out.println( ((System.nanoTime() - start)*1e-9) + "to change");
             }
         });
 
