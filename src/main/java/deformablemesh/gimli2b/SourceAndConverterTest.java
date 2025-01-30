@@ -8,7 +8,7 @@ import ij.ImagePlus;
  * "SourceAndConverter"
  */
 public class SourceAndConverterTest {
-    static <T extends NatNumType<T>> SourceAndConverter<T> build(ImagePlus plus){
+    static <T> SourceAndConverter<T> build(ImagePlus plus){
         return null;
     }
     public static void main(String[] args){

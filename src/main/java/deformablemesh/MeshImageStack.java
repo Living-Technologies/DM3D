@@ -76,7 +76,7 @@ public class MeshImageStack {
         }
     };
 
-    public double[][][] data;
+    public double[] data;
 
     public double SCALE;
     public double[] scale_values;
@@ -105,7 +105,7 @@ public class MeshImageStack {
         offsets=new double[]{0,0,0};
         pixel_dimensions=new double[]{1,1,1};
         PX=1;
-        data = new double[1][1][1];
+        data = new double[1];
         max_dex = new int[3];
         dims = new int[3];
         FRAMES = 999;
@@ -128,7 +128,7 @@ public class MeshImageStack {
         CURRENT=frame;
         this.channel = channel;
 
-        data = new double[SLICES][py][px];
+        data = new double[SLICES*py*px];
 
         max_dex = new int[]{px-1, py-1, SLICES-1};
         dims = new int[]{px, py, SLICES};
@@ -331,7 +331,7 @@ public class MeshImageStack {
                     double v = proc.getPixelValue(k,j);
                     if(v<MIN_VALUE) MIN_VALUE=v;
                     else if(v>MAX_VALUE) MAX_VALUE=v;
-                    data[i][j][k] = v;
+                    data[k + j*px + i*px*py] = v;
                 }
             }
         }
@@ -345,23 +345,10 @@ public class MeshImageStack {
      * @param other
      */
     public void copyValues(MeshImageStack other){
-        if(other.data.length != data.length
-                || other.data[0].length != data[0].length
-                || other.data[0][0].length != data[0][0].length ){
+        if( other.data.length != data.length ){
             throw new RuntimeException("Stack dimensions do not match");
         }
-        for(int i = 0; i<data.length; i++){
-            double[][] dest = data[i];
-            double[][] src = other.data[i];
-            for(int j = 0; j<dest.length; j++){
-                double[] line = dest[j];
-                double[] sline = src[j];
-                for(int k = 0; k<line.length; k++){
-                    line[k] = sline[k];
-                }
-            }
-        }
-
+        System.arraycopy(other.data, 0, data, 0, data.length);
     }
 
     public double getInterpolatedValue(double x, double y, double z){
@@ -439,8 +426,7 @@ public class MeshImageStack {
      * @return the backing double
      */
     public double getValue(int x, int y, int z){
-        return data[z][y][x];
-
+        return data[x + y*dims[0] + z*dims[1]*dims[0]];
     }
 
     public int getPixelValue(int x, int y, int z){
@@ -526,22 +512,23 @@ public class MeshImageStack {
         double sumy = 0;
         double sumz = 0;
         double[] r = new double[3];
-        for(int i = 0; i<data[0][0].length; i++){
-            for(int j = 0; j<data[0].length; j++){
-                for(int k = 0; k<data.length; k++){
-                    r[0] = i;
-                    r[1] = j;
-                    r[2] = k;
-                    double v = getValue(i,j,k);
-                    double[] nr = getNormalizedCoordinate(r);
-                    sum += v;
-                    sumx += nr[0]*v;
-                    sumy += nr[1]*v;
-                    sumz += nr[2]*v;
-
-                }
-            }
+        int slice = dims[0]*dims[1];
+        int line = dims[0];
+        for(int s = 0; s<data.length; s++){
+            int k = s/slice;
+            int j = (s%slice)/line;
+            int i = s%line;
+            r[0] = i;
+            r[1] = j;
+            r[2] = k;
+            double v = getValue(i,j,k);
+            double[] nr = getNormalizedCoordinate(r);
+            sum += v;
+            sumx += nr[0]*v;
+            sumy += nr[1]*v;
+            sumz += nr[2]*v;
         }
+
         return new double[]{sumx/sum, sumy/sum, sumz/sum};
     }
 
@@ -846,18 +833,6 @@ public class MeshImageStack {
         return plus;
     }
 
-    public double[] getIntensityValues() {
-        double[] n = new double[data.length*data[0].length*data[0][0].length];
-        final int row = data[0][0].length;
-        final int frame = data[0].length*row;
-
-        for(int slice = 0; slice<data.length; slice++){
-            for(int line = 0; line<data[0].length; line++){
-                System.arraycopy(data[slice][line], 0, n,slice*frame + line*row,  row);
-            }
-        }
-        return n;
-    }
     public static MeshImageStack fromFolder(Path folder) throws IOException {
         return fromFolder(folder, ".tif");
     }

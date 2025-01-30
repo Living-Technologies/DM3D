@@ -154,10 +154,10 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
 
     public static void main(String[] args) throws IOException {
         String location = "D:\\working\\sonnen\\3D_small_organoid\\3D_small_organoid.zarr";
-        List<Source<UnsignedByteType>> sources = LoadZarr.<UnsignedByteType>load3DSource(location);
-        MeshImageStack2<UnsignedByteType> mist = new MeshImageStack2<>(sources);
-        //List<ImagePlus> pluses = LoadZarr.load3DStackFromZarrFile(location);
-        //MeshImageStack mist = new MeshImageStack(pluses.get(0));
+        //List<Source<UnsignedByteType>> sources = LoadZarr.<UnsignedByteType>load3DSource(location);
+        //MeshImageStack2<UnsignedByteType> mist = new MeshImageStack2<>(sources);
+        List<ImagePlus> pluses = LoadZarr.load3DStackFromZarrFile(location);
+        MeshImageStack mist = new MeshImageStack(pluses.get(0));
         MeshFrame3D frame = new MeshFrame3D();
         frame.showFrame(true);
         frame.setBackgroundColor(new Color(0, 0, 50));
