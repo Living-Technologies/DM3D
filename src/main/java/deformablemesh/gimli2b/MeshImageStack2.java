@@ -47,13 +47,14 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
         double[] op2 = new double[3];
         at.apply(new double[]{1, 1, 1}, scale);
         at.apply(new double[]{0, 0, 0}, op2);
-        System.out.println(Arrays.toString( scale ) + " and " + Arrays.toString(op2));
         System.out.println("scale: "  + (scale[0] - op2[0]) + ", "  + (scale[1] - op2[1]) + ", "  + (scale[2] - op2[2]) + ", " );
         scale[0] = scale[0] - op2[0];
         scale[1] = scale[1] - op2[1];
         scale[2] = scale[2] - op2[2];
         long[] dims = source.getSource(0, 0).dimensionsAsLongArray();
-        System.out.println(Arrays.toString(dims));
+
+        System.out.println("transform: " + Arrays.toString( scale ) + " and " + Arrays.toString(op2));
+        System.out.println("shape: " + Arrays.toString(dims));
         SLICES=(int)dims[2];
         this.dims = new int[]{(int)dims[0], (int)dims[1], (int)dims[2]};
         //TODO is there a way to get the number of frames from the source.
@@ -67,7 +68,7 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
         CURRENT=0;
         channel = 0;
         int py = (int)dims[1];
-        int px = (int)dims[2];
+        int px = (int)dims[0];
 
         max_dex = new int[]{px-1, py-1, SLICES-1};
 
@@ -105,6 +106,7 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
                 nPx[0] < nPx[2] ? nPx[0] : nPx[2] :
                 nPx[1] < nPx[2] ? nPx[1] : nPx[2];
         copyValues();
+        System.out.println("offsets: " + Arrays.toString(offsets));
     }
 
 
@@ -129,10 +131,10 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
 
     public static void main(String[] args) throws IOException {
         String location = "D:\\working\\sonnen\\3D_small_organoid\\3D_small_organoid.zarr";
-        //List<Source<UnsignedByteType>> sources = LoadZarr.<UnsignedByteType>load3DSource(location);
-        //MeshImageStack2<UnsignedByteType> mist = new MeshImageStack2<>(sources);
-        List<ImagePlus> pluses = LoadZarr.load3DStackFromZarrFile(location);
-        MeshImageStack mist = new MeshImageStack(pluses.get(0));
+        List<Source<UnsignedByteType>> sources = LoadZarr.<UnsignedByteType>load3DSource(location);
+        MeshImageStack2<UnsignedByteType> mist = new MeshImageStack2<>(sources);
+        //List<ImagePlus> pluses = LoadZarr.load3DStackFromZarrFile(location);
+        //MeshImageStack mist = new MeshImageStack(pluses.get(0));
         MeshFrame3D frame = new MeshFrame3D();
         frame.showFrame(true);
         frame.setBackgroundColor(new Color(0, 0, 50));
