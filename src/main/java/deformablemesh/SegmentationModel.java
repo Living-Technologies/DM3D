@@ -326,16 +326,38 @@ public class SegmentationModel {
         int frame = plus.getNFrames() > getCurrentFrame() ? getCurrentFrame() : 0;
         setOriginalPlus(plus, frame, channel);
     }
+    public void setMeshImageStack(MeshImageStack stack){
+        original_plus = stack.getOriginalPlus();
+        this.stack = stack;
+        notifyFrameListeners();
+    }
+
+    /**
+     * Checks if the frame is valid, and if the current
+     * @param frame
+     * @param channel
+     */
+    public void setFrameAndChannel(int frame, int channel){
+        boolean notify = false;
+        if( frame>=0 && frame< stack.getNFrames() && frame != stack.CURRENT ) {
+            notify = true;
+        }
+
+        if(channel >= 0 && channel < stack.getNChannels() && channel != stack.channel){
+            notify = true;
+        }
+
+
+        if(notify) {
+            stack.setFrameAndChannel(frame, channel);
+            notifyFrameListeners();
+        }
+    }
 
     public void setOriginalPlus(ImagePlus plus, int frame, int channel){
         original_plus = plus;
         stack = new MeshImageStack(original_plus, frame, channel);
-
-        if(stack.CURRENT != getCurrentFrame()){
-            setFrame(stack.CURRENT);
-        } else {
-            notifyFrameListeners();
-        }
+        notifyFrameListeners();
     }
 
     public void nextFrame(){
@@ -344,7 +366,7 @@ public class SegmentationModel {
         stack.nextFrame();
 
         if (i != stack.CURRENT) {
-                notifyFrameListeners();
+            notifyFrameListeners();
         }
     }
 
@@ -356,7 +378,6 @@ public class SegmentationModel {
         }
 
     }
-
     public void setFrame(final int i){
         if( i>=0 && i< stack.FRAMES && i != stack.CURRENT ) {
             stack.setFrame(i);

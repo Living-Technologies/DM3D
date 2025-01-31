@@ -32,24 +32,6 @@ import java.util.Arrays;
 import java.util.List;
 
 public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType<T>> extends MeshImageStack {
-    interface Converter{
-        double get(Object value);
-    }
-    static class UBConverter implements Converter{
-        @Override
-        public double get(Object ubt){
-            return ((UnsignedByteType)ubt).get();
-        }
-    }
-
-    static class SConverter implements Converter{
-        @Override
-        public double get(Object value){
-            return ((UnsignedShortType)value).get();
-        }
-    }
-
-    Converter converter;
     //Each channel is a source
     List<Source<T>> sources;
     double[] buffer = new double[0];
@@ -122,17 +104,10 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
         PX = nPx[0] < nPx[1] ?
                 nPx[0] < nPx[2] ? nPx[0] : nPx[2] :
                 nPx[1] < nPx[2] ? nPx[1] : nPx[2];
-        this.converter = getConverter(source.getType());
         copyValues();
     }
-    Converter getConverter(T type){
-        if(type instanceof UnsignedByteType){
-            return new UBConverter();
-        } else if(type instanceof UnsignedShortType){
-            return new SConverter();
-        }
-        throw new RuntimeException( "Cannot handle: " + type.getClass());
-    }
+
+
     @Override
     public void copyValues(){
         int n = dims[2]*dims[1]*dims[0];

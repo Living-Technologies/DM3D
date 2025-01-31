@@ -55,11 +55,11 @@ public class BoundingBoxTransformer {
      */
     public BoundingBoxTransformer( MeshImageStack source, MeshImageStack destination){
         this.source = source;
-        Calibration cal = source.original.getCalibration();
+        Calibration cal = source.getImageJCalibration();
         //origin in real units
         o1 = new double[]{ cal.xOrigin * cal.pixelWidth, cal.yOrigin * cal.pixelHeight, cal.zOrigin * cal.pixelDepth};
         this.destination = destination;
-        cal = destination.original.getCalibration();
+        cal = destination.getImageJCalibration();
         o2 = new double[]{ cal.xOrigin * cal.pixelWidth, cal.yOrigin * cal.pixelHeight, cal.zOrigin * cal.pixelDepth};
 
     }
@@ -74,7 +74,7 @@ public class BoundingBoxTransformer {
     public double[] transform(double[] pt3){
         //px, px, slice
         double[] r1 = source.getImageCoordinates(pt3);
-        Calibration cal = source.original.getCalibration();
+        Calibration cal = source.getImageJCalibration();
 
         //real unit coordinate.
         r1[0] = r1[0]*cal.pixelWidth;
@@ -86,7 +86,7 @@ public class BoundingBoxTransformer {
 
         //real coordinates destination space
         double[] r2 = Vector3DOps.add(R, o2, 1);
-        cal = destination.original.getCalibration();
+        cal = destination.getImageJCalibration();
 
         r2[0] = r2[0]/cal.pixelWidth;
         r2[1] = r2[1]/cal.pixelHeight;

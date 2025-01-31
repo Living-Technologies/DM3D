@@ -190,7 +190,7 @@ public class SaveImageToZarr {
     }
     public static void main(String[] args) throws Exception {
         //Path p = Paths.get(IJ.getFilePath("select image to convert")).toAbsolutePath();
-        Path p = Paths.get("D:\\working\\zarr-communications\\cxyz.tif");
+        Path p = Paths.get("");
         String name = p.getFileName().toString();
         String outName = name.replaceAll("\\.[^.]*$", ".zarr");
         Path op = p.getParent().resolve(outName);

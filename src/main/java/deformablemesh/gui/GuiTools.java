@@ -27,6 +27,7 @@ package deformablemesh.gui;
 
 import deformablemesh.Deforming3DMesh_Plugin;
 import deformablemesh.SegmentationController;
+import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 
@@ -85,6 +86,9 @@ import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static deformablemesh.gui.ControlFrame.instance;
@@ -97,7 +101,14 @@ import static deformablemesh.gui.ControlFrame.instance;
  */
 public class GuiTools {
     public static Color SELECTED_MESH_COLOR = Color.WHITE;
+    public static List<ImagePlus> openImages(){
+        FileDialog fd = new FileDialog(IJ.getInstance(), "Select Image to Open");
+        fd.setVisible(true);
+        File[] files = fd.getFiles();
 
+        return Arrays.stream(files).map(File::getAbsolutePath).map(ImagePlus::new).collect(Collectors.toList());
+
+    }
 //    final static String versionHTML = getVersionHTML();
     public static void createTextOuputPane(String s){
         final JFrame frame = new JFrame();

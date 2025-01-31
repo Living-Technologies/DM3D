@@ -569,8 +569,8 @@ public class SegmentationController {
             long finished = System.currentTimeMillis() - start;
             System.out.println("finished in " + (finished/1000.0) + " seconds");
         }
-        ImagePlus transformed = stack.original.createImagePlus();
-        transformed.setTitle(stack.original.getShortTitle() +  "-transformed.tif");
+        ImagePlus transformed = stack.getOriginalPlus().createImagePlus();
+        transformed.setTitle(stack.getShortTitle() +  "-transformed.tif");
         transformed.setStack(result, 1, stack.getNSlices(), stack.getNFrames());
         transformed.setOpenAsHyperStack(true);
         transformed.show();
@@ -736,7 +736,7 @@ public class SegmentationController {
      * @param finish 0 based time frame. Last frame inclusive.
      */
     public void generateTrainingData(int start, int finish){
-        ImagePlus original = getMeshImageStack().original;
+        ImagePlus original = getMeshImageStack().getOriginalPlus();
         List<Track> tracks = getAllTracks();
         Path baseFolder = Paths.get(IJ.getDirectory("Select root folder"));
         Path labelPath = baseFolder.resolve("labels");
@@ -809,7 +809,7 @@ public class SegmentationController {
 
         File labelFolder = labelPath.toFile();
         File imageFolder = imagePath.toFile();
-        String name = stack.original.getTitle().replace(".tif", "");
+        String name = stack.getShortTitle().replace(".tif", "");
 
         for(int i = first; i<=last; i++){
             ImagePlus image = stack.getStackIso(i);
@@ -2456,7 +2456,9 @@ public class SegmentationController {
     }
 
     public void selectChannel(int c){
-        setOriginalPlus(model.original_plus, c);
+        submit(()->{
+            model.setFrameAndChannel(getCurrentFrame(), c);
+        });
     }
 
 
@@ -2787,6 +2789,12 @@ public class SegmentationController {
     public void loadImage(String file_name){
         ImagePlus plus = new ImagePlus(file_name);
         setOriginalPlus(plus);
+    }
+
+    public void setMeshImageStack(MeshImageStack image){
+
+        model.setMeshImageStack(image);
+
     }
 
 

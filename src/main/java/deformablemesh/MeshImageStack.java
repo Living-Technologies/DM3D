@@ -84,7 +84,7 @@ public class MeshImageStack {
     public double[] pixel_dimensions;
     protected int[] max_dex;
     protected int[] dims;
-    ImagePlus original;
+    private ImagePlus original;
     protected int channel = 0;
     public int CURRENT = 0;
     protected int FRAMES;
@@ -219,6 +219,9 @@ public class MeshImageStack {
         return original.getCalibration();
     }
 
+    public ImagePlus createImagePlus(){
+        return original.createImagePlus();
+    }
     /**
      * given a length in px, px, slices this scales the length to normalized
      * coordinate values.
@@ -294,7 +297,29 @@ public class MeshImageStack {
             copyValues();
         }
     }
+    public void setFrameAndChannel(int frame, int channel){
+        boolean change = false;
 
+        if( frame != CURRENT && frame < FRAMES && frame >= 0 ){
+            CURRENT=frame;
+            change = true;
+        } else{
+            System.out.println("warning: requested frame out of range.");
+        }
+
+        if(channel >= 0 && channel < CHANNELS ){
+            if(this.channel != channel){
+                this.channel = channel;
+                change = true;
+            } else{
+                System.out.println("warning: requested channel out of range.");
+            }
+        }
+
+        if(change){
+            copyValues();
+        }
+    }
     public void setChannel(int c){
         if(c >= 0 && c < CHANNELS ){
             if(channel != c){

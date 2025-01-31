@@ -893,7 +893,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
                     segmentationController.setOriginalPlus(pluses[0]);
                 }
             } catch( Exception e){
-                //oh well!
+                e.printStackTrace();
             } finally {
                 finished();
             }
@@ -1303,10 +1303,12 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         load.addActionListener(evt->{
             Path folder = Paths.get(IJ.getDirectory("select zarr folder"));
             try {
-                List<ImagePlus> pluses = LoadZarr.load3DStackFromZarrFile(folder.toString());
-                for(ImagePlus plus: pluses){
-                    plus.show();
-                }
+                //List<ImagePlus> pluses = LoadZarr.load3DStackFromZarrFile(folder.toString());
+                //for(ImagePlus plus: pluses){
+                //    plus.show();
+                //}
+                MeshImageStack zStack = LoadZarr.loadMeshImageStack2(folder);
+                segmentationController.setMeshImageStack(zStack);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -1696,11 +1698,13 @@ public class ControlFrame implements ReadyObserver, FrameListener {
     }
 
     public void openImage(){
-        ImagePlus plus = IJ.openImage();
-        if(plus == null){
+        List<ImagePlus> pluses = GuiTools.openImages();
+
+        if(pluses.size() == 0 ){
             finished();
             return;
         }
+        ImagePlus plus = pluses.get(0);
 
         int channel = 0;
         if(plus.getNChannels()>1){
@@ -1718,7 +1722,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             channel = (Integer)channelChoice - 1;
         }
         segmentationController.setOriginalPlus(plus, channel);
-        plus.show();
+        pluses.forEach(ImagePlus::show);
     }
     File getOpenFile(String title){
         FileDialog fd = new FileDialog(frame, title);
