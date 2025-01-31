@@ -1413,9 +1413,9 @@ public class DeformableMesh3DTools {
         return ret;
     }
 
-    public static ImagePlus createMosaicRepresentation(MeshImageStack stack, ImagePlus original_plus, List<Track> allMeshTracks) {
+    public static ImagePlus createMosaicRepresentation(MeshImageStack stack, List<Track> allMeshTracks) {
 
-        ImagePlus plus = original_plus.createImagePlus();
+        ImagePlus plus = stack.createImagePlus();
 
         Set<Integer> frames = new TreeSet<>();
 
@@ -1429,9 +1429,9 @@ public class DeformableMesh3DTools {
         }
 
 
-        int w = original_plus.getWidth();
-        int h = original_plus.getHeight();
-        int n = original_plus.getNSlices();
+        int w = stack.getWidthPx();
+        int h = stack.getHeightPx();
+        int n = stack.getNSlices();
 
         ImageStack timeStack = new ImageStack(w, h);
 
@@ -1628,7 +1628,7 @@ public class DeformableMesh3DTools {
         );
 
         long start = System.currentTimeMillis();
-        ImagePlus p1 = createMosaicRepresentation(new MeshImageStack(plus), plus, tracks);
+        ImagePlus p1 = createMosaicRepresentation(new MeshImageStack(plus), tracks);
         p1.setTitle("first");
         p1.setOpenAsHyperStack(true);
         p1.show();

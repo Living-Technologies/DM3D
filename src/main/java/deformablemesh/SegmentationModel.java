@@ -85,7 +85,6 @@ public class SegmentationModel {
     boolean reshape = true;
     volatile boolean stop = false;
     volatile int deformations;
-    ImagePlus original_plus;
 
     MeshImageStack stack;
     MeshTracker tracker;
@@ -327,7 +326,6 @@ public class SegmentationModel {
         setOriginalPlus(plus, frame, channel);
     }
     public void setMeshImageStack(MeshImageStack stack){
-        original_plus = stack.getOriginalPlus();
         this.stack = stack;
         notifyFrameListeners();
     }
@@ -355,8 +353,7 @@ public class SegmentationModel {
     }
 
     public void setOriginalPlus(ImagePlus plus, int frame, int channel){
-        original_plus = plus;
-        stack = new MeshImageStack(original_plus, frame, channel);
+        stack = new MeshImageStack(plus, frame, channel);
         notifyFrameListeners();
     }
 
@@ -697,10 +694,10 @@ public class SegmentationModel {
 
     Pattern p = Pattern.compile("(\\.\\w+)$");
     public String getShortImageName() {
-        if(original_plus==null){
-            return "ImageNull";
+        if(stack==null){
+            return "Null Image";
         }
-        String original = original_plus.getTitle();
+        String original = stack.getShortTitle();
         Matcher m = p.matcher(original);
         int l = 0;
         if(m.find()){
@@ -709,6 +706,12 @@ public class SegmentationModel {
         return original.substring(0, original.length()-l);
     }
 
+    public int getNFrames(){
+        if(stack == null){
+            return -1;
+        }
+        return stack.getNFrames();
+    }
 
     public double getNormalizeWeight() {
         return normalize;
@@ -723,40 +726,17 @@ public class SegmentationModel {
         ImagePlus plus = DeformableMesh3DTools.createBinaryRepresentation(stack, tracker.getSelectedTrack().getTrack());
         plus.show();
     }
-    public void createEnergyImage(){
-        if(!hasSelectedMesh()) return;
-        List<ExternalEnergy> energies = getExternalEnergies();
-        ImagePlus plus = original_plus.createImagePlus();
-        int w = original_plus.getWidth();
-        int h = original_plus.getHeight();
-        ImageStack newStack = new ImageStack(w, h);
-
-        for(int i = 1; i<=stack.getNSlices(); i++){
-            ImageProcessor proc = new FloatProcessor(w, h);
-            for(int j = 0; j<w; j++){
-                for(int k = 0; k<h; k++){
-                    double[] nc = stack.getNormalizedCoordinate(new double[]{j, k, i});
-                    double e = energies.stream().mapToDouble(ee -> ee.getEnergy(nc)).sum();
-                    proc.setf(j, k, (float)e);
-                }
-            }
-            newStack.addSlice(proc);
-        }
-        plus.setStack(newStack, 1, stack.getNSlices(), 1);
-        plus.show();
-
-    }
 
     public void createMosaicImage() {
-        ImagePlus plus = DeformableMesh3DTools.createMosaicRepresentation(stack, original_plus, tracker.getAllMeshTracks());
-        plus.setTitle(original_plus.getShortTitle() + "-mosaic.tif");
+        ImagePlus plus = DeformableMesh3DTools.createMosaicRepresentation(stack, tracker.getAllMeshTracks());
+        plus.setTitle(stack.getShortTitle() + "-mosaic.tif");
         plus.setOpenAsHyperStack(true);
         plus.show();
     }
 
     public void createLabelImage() {
         ImagePlus plus = DeformableMesh3DTools.asUniqueLabels(stack, tracker.getAllMeshTracks());
-        plus.setTitle(original_plus.getShortTitle() + "-labels.tif");
+        plus.setTitle(stack.getShortTitle() + "-labels.tif");
         plus.setOpenAsHyperStack(true);
         plus.show();
     }
@@ -823,10 +803,6 @@ public class SegmentationModel {
         return stack.pixel_dimensions[2]/stack.pixel_dimensions[1];
     }
 
-    public int[] getOriginalStackDimensions() {
-        return new int[]{original_plus.getWidth(), original_plus.getHeight(), original_plus.getNSlices()};
-    }
-
     public Box3D getBounds(){
         return stack.getLimits();
     }
@@ -859,7 +835,7 @@ public class SegmentationModel {
         builder.append("#\n");
         builder.append("#Frame\tVolume\tArea\t<I>\tc_x\tc_y\tc_z\tdmean\tdmax\tdmin\t");
         builder.append("lambda1\tlambda2\tlambda3\tv1_x\tv1_y\tv1_z\tv2_x\tv2_y\tv2_z\tv3_x\tv3_y\tv3_z\n");
-        for(int j = 0; j<original_plus.getNFrames(); j++){
+        for(int j = 0; j<stack.getNFrames(); j++){
             if(!track.containsKey(j)){
                 continue;
             }
@@ -903,7 +879,7 @@ public class SegmentationModel {
 
     public boolean hasNextFrame() {
         //internally 0 indexed compared to ij and display, which is 1 based.
-        return original_plus.getNFrames()-1>getCurrentFrame();
+        return stack.getNFrames()-1>getCurrentFrame();
 
     }
 
@@ -917,7 +893,7 @@ public class SegmentationModel {
        StringBuilder builds = new StringBuilder("#position and normal using the image units.\n");
        builds.append("#frame\tx(unit)\ty(unit)\tz(unit)nx\tny\tnz\n");
 
-       for(int i = 0; i<original_plus.getNFrames(); i++){
+       for(int i = 0; i<stack.getNFrames(); i++){
            Furrow3D f = ringController.getFurrow(i);
 
            if(f==null){continue;}

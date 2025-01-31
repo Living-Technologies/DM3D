@@ -424,7 +424,7 @@ public class FrameToFrameDisplacement {
             t.addMesh(0, mesh);
             tracks.add(t);
         }
-        ImagePlus mos = DeformableMesh3DTools.createMosaicRepresentation(mis, plus, tracks);
+        ImagePlus mos = DeformableMesh3DTools.createMosaicRepresentation(mis, tracks);
         mos.setDimensions(1, d, 1);
 
         return mos;

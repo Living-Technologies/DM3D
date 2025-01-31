@@ -300,20 +300,20 @@ public class MeshImageStack {
     public void setFrameAndChannel(int frame, int channel){
         boolean change = false;
 
-        if( frame != CURRENT && frame < FRAMES && frame >= 0 ){
+        if( frame >= FRAMES || frame < 0 ){
+            System.out.println("warning: requested frame out of range.");
+        } else if(frame != CURRENT ){
             CURRENT=frame;
             change = true;
-        } else{
-            System.out.println("warning: requested frame out of range.");
         }
 
         if(channel >= 0 && channel < CHANNELS ){
             if(this.channel != channel){
                 this.channel = channel;
                 change = true;
-            } else{
-                System.out.println("warning: requested channel out of range.");
             }
+        } else{
+            System.out.println("warning: requested channel out of range.");
         }
 
         if(change){
