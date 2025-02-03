@@ -136,10 +136,15 @@ public class LoadZarr {
     }
 
     public static <T extends NumericType<T> & NativeType<T> & RealType<T> > MeshImageStack loadMeshImageStack2(Path location) throws IOException {
-        String s = location.toAbsolutePath().toString();
-        List< Source<T> > sources = LoadZarr.load3DSource(s);
-        MeshImageStack stack = new MeshImageStack2<T>(sources);
-        return stack;
+        MultiscaleImageAdapter<T> msia = load3DZarrFile(location.toAbsolutePath().toString());
+        List<Source<T>> sources = new ArrayList<>();
+        for(int i = 0; i<msia.getNChannels(); i++){
+            sources.add(msia.getAsBdvSource(i));
+        }
+        MeshImageStack2<T> mist = new MeshImageStack2<>(sources);
+        Calibration ij = mist.getImageJCalibration();
+        msia.calibrateUnits(ij);
+        return mist;
     }
 
     public static <T extends NumericType<T> & NativeType<T>> List<Source<T>> load3DSource(String location ) throws IOException {

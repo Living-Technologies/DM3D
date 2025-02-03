@@ -29,6 +29,18 @@ import java.util.stream.Collectors;
 
 public class MultiscaleImageAdapter<T extends NumericType<T> & NativeType<T>> {
     String title;
+
+    /**
+     * Calibrates the provided calibration, with the intent of setting the units.
+     * The scale is set to the 0'th multiscale values.
+     *
+     *
+     * @param ij ImagePlus calibration object it will be modified.
+     */
+    public void calibrateUnits(Calibration ij) {
+        images.calibrate(ij, 0);
+    }
+
     static class MultiscaleImage<V>{
         List<double[]> scales = new ArrayList<>();
         List<double[]> offsets = new ArrayList<>();

@@ -215,6 +215,10 @@ public class MeshImageStack {
         return unit;
     }
 
+    public MeshImageStack duplicate(){
+        return new MeshImageStack(original);
+    }
+
     public Calibration getImageJCalibration(){
         return original.getCalibration();
     }

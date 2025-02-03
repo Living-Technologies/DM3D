@@ -5,18 +5,30 @@ import deformablemesh.MeshImageStack;
 import deformablemesh.experimental.LoadZarr;
 import deformablemesh.meshview.ChannelVolume;
 import deformablemesh.meshview.MeshFrame3D;
+import deformablemesh.util.ColorSuggestions;
+import ij.ImageJ;
 import ij.ImagePlus;
+import ij.ImageStack;
+import ij.measure.Calibration;
 import net.imglib2.Cursor;
 import net.imglib2.IterableInterval;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.img.display.imagej.ImageJVirtualStack;
+import net.imglib2.img.display.imagej.ImageJVirtualStackARGB;
+import net.imglib2.img.display.imagej.ImageJVirtualStackFloat;
+import net.imglib2.img.display.imagej.ImageJVirtualStackUnsignedByte;
+import net.imglib2.img.display.imagej.ImageJVirtualStackUnsignedShort;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.Type;
+import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.NumericType;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.type.numeric.integer.IntType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
+import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 
 import javax.swing.AbstractAction;
@@ -28,6 +40,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -35,6 +48,7 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
     //Each channel is a source
     List<Source<T>> sources;
     double[] buffer = new double[0];
+    Calibration ijCalibration;
     public MeshImageStack2(List<Source<T>> sources){
         //The assumption is each source is a channel for the same volume
         this.sources = sources;
@@ -107,8 +121,104 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
                 nPx[1] < nPx[2] ? nPx[1] : nPx[2];
         copyValues();
         System.out.println("offsets: " + Arrays.toString(offsets));
-    }
 
+        ijCalibration = new Calibration();
+        calibrate(ijCalibration);
+    }
+    @Override
+    public MeshImageStack duplicate(){
+        return new MeshImageStack2<T>(sources);
+    }
+    @Override
+    public ImagePlus getOriginalPlus(){
+        ImagePlus original = new ImagePlus();
+        original.setTitle(getShortTitle());
+        //how to make the stack?
+        Source<T> source = sources.get(0);
+        List<RandomAccessibleInterval<T>> timeStacked = new ArrayList<>();
+        for(int i = 0; i<getNFrames(); i++){
+            List<RandomAccessibleInterval<T>> zstacks = new ArrayList<>();
+            for(int j = 0; j<getNChannels(); j++){
+                RandomAccessibleInterval<T> rai = sources.get(j).getSource(i, 0);
+                rai = Views.addDimension(rai, 0, 0);
+                System.out.println(Arrays.toString(rai.dimensionsAsLongArray()));
+                zstacks.add(rai);
+            }
+
+            timeStacked.add(
+                    Views.addDimension(
+                            Views.concatenate(3, zstacks), 0, 0
+                    )
+                );
+        }
+        RandomAccessibleInterval<T> stacked = Views.concatenate(4, timeStacked);
+        //RandomAccessibleInterval<T> stacked = sources.get(0).getSource(0, 0);
+        //stacked = (RandomAccessibleInterval<T>) Views.addDimension(stacked).getSource();
+
+        System.out.println("source size: " + Arrays.toString(stacked.dimensionsAsLongArray()));
+        stacked = Views.moveAxis(stacked, 2, 3);
+        System.out.println("source size: " + Arrays.toString(stacked.dimensionsAsLongArray()));
+        Type<T> t = stacked.getType();
+        ImageStack ij1Stack;
+        if(t instanceof UnsignedByteType){
+            ij1Stack = ImageJVirtualStackUnsignedByte.wrap((RandomAccessibleInterval<? extends UnsignedByteType>) stacked );
+        } else if( t instanceof UnsignedShortType){
+            ij1Stack = ImageJVirtualStackUnsignedShort.wrap((RandomAccessibleInterval<? extends UnsignedShortType>) stacked );
+        } else if( t instanceof FloatType){
+            ij1Stack = ImageJVirtualStackFloat.wrap((RandomAccessibleInterval<? extends FloatType>) stacked );
+        } else if( t instanceof IntType){
+            RandomAccessibleInterval<? extends ARGBType> rai2 = (RandomAccessibleInterval)stacked;
+            ij1Stack = ImageJVirtualStackARGB.wrap((RandomAccessibleInterval<ARGBType>) rai2);
+        } else{
+                ij1Stack = new ImageJVirtualStack<T>(stacked, stacked.getType().getBitsPerPixel()){
+                    //TODO Subclassing to access protected constructor.
+                 };
+        }
+        System.out.println(ij1Stack.size() + ", " + Arrays.toString(stacked.dimensionsAsLongArray()));
+        original.setCalibration(ijCalibration);
+        original.setStack(ij1Stack, getNChannels(), getNSlices(), getNFrames());
+        original.setOpenAsHyperStack(true);
+
+        return original;
+    }
+    double[] getScale(){
+        Source<T> source = sources.get(0);
+        AffineTransform3D at = new AffineTransform3D();
+        source.getSourceTransform(0,0,at);
+        double[] scale = new double[3];
+        double[] op2 = new double[3];
+        at.apply(new double[]{1, 1, 1}, scale);
+        at.apply(new double[]{0, 0, 0}, op2);
+        scale[0] = scale[0] - op2[0];
+        scale[1] = scale[1] - op2[1];
+        scale[2] = scale[2] - op2[2];
+        return scale;
+    }
+    double[] getTranslation(){
+        Source<T> source = sources.get(0);
+        AffineTransform3D at = new AffineTransform3D();
+        source.getSourceTransform(0,0,at);
+        return  at.getTranslation();
+    }
+    public void calibrate(Calibration c){
+        AffineTransform3D at = new AffineTransform3D();
+
+        double[] scale = getScale();
+        double[] translation = getTranslation();
+        c.frameInterval = -1;
+        c.pixelWidth = scale[0];
+        c.pixelHeight = scale[1];
+        c.pixelDepth = scale[2];
+        c.xOrigin = translation[0];
+        c.yOrigin = translation[1];
+        c.zOrigin = translation[2];
+        System.out.println(Arrays.toString(scale) + ", " + Arrays.toString(translation));
+
+    }
+    @Override
+    public Calibration getImageJCalibration(){
+        return ijCalibration;
+    }
 
     @Override
     public void copyValues(){
@@ -130,45 +240,34 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
     }
 
     public static void main(String[] args) throws IOException {
-        String location = "D:\\working\\sonnen\\3D_small_organoid\\3D_small_organoid.zarr";
-        List<Source<UnsignedByteType>> sources = LoadZarr.<UnsignedByteType>load3DSource(location);
-        MeshImageStack2<UnsignedByteType> mist = new MeshImageStack2<>(sources);
-        //List<ImagePlus> pluses = LoadZarr.load3DStackFromZarrFile(location);
-        //MeshImageStack mist = new MeshImageStack(pluses.get(0));
+        new ImageJ();
+        String location = "D:\\working\\jari\\230125-O5-c35-t1-49rpt-360nm.zarr";
+        //List<Source<UnsignedByteType>> sources = LoadZarr.<UnsignedByteType>load3DSource(location);
+        //MeshImageStack2<UnsignedByteType> mist = new MeshImageStack2<>(sources);
+
+        //mist.getOriginalPlus().show();
+        List<ImagePlus> pluses = LoadZarr.load3DStackFromZarrFile(location);
+        MeshImageStack mist = new MeshImageStack(pluses.get(0));
         MeshFrame3D frame = new MeshFrame3D();
         frame.showFrame(true);
         frame.setBackgroundColor(new Color(0, 0, 50));
-        ChannelVolume cv = frame.getMultiChannelVolumeObject(mist, new Color(255, 0, 255) );
-        cv.getVolumeDataObject().setMinMaxRange(0.1, 0.5);
+        List<MeshImageStack> stacks = new ArrayList<>();
+        stacks.add(mist);
+        for(int channel = 1; channel < mist.getNChannels(); channel++){
+            MeshImageStack next = mist.duplicate();
+            next.setChannel(channel);
+            stacks.add(next);
+        }
+        List<ChannelVolume> cVolumes = new ArrayList<>();
+        for(MeshImageStack stack : stacks){
+            Color color = ColorSuggestions.getSuggestion();
+            ChannelVolume cv = frame.getMultiChannelVolumeObject(stack, color );
+            cv.getVolumeDataObject().setMinMaxRange(0.2, 0.6);
+            cVolumes.add(cv);
+        }
 
         JComponent comp = (JComponent)frame.getJFrame().getContentPane();
         int[] fc = new int[2];
-
-        comp.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0, false), "up");
-        comp.getActionMap().put("up", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                long start = System.nanoTime();
-                System.out.println("up");
-                fc[1] = (fc[1] + 1)%mist.getNChannels();
-                mist.setChannel(fc[1]);
-                cv.getVolumeDataObject().setTextureData(mist);
-                System.out.println( ((System.nanoTime() - start)*1e-9) + "to change");
-            }
-        });
-
-        comp.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0, false), "down");
-        comp.getActionMap().put("down", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                long start = System.nanoTime();
-                System.out.println("down");
-                fc[1] = fc[1] > 0 ? fc[1] - 1 : mist.getNChannels() - 1;
-                mist.setChannel(fc[1]);
-                cv.getVolumeDataObject().setTextureData(mist);
-                System.out.println( ((System.nanoTime() - start)*1e-9) + "to change");
-            }
-        });
 
         comp.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0, false), "left");
         comp.getActionMap().put("left", new AbstractAction() {
@@ -177,7 +276,11 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
                 long start = System.nanoTime();
                 System.out.println("left");
                 fc[0] = fc[0] > 0 ? fc[0] - 1 : mist.getNFrames() - 1;
-                cv.frameChanged(fc[0]);
+
+                for(ChannelVolume cv : cVolumes){
+                    cv.frameChanged(fc[0]);
+                }
+
                 System.out.println( ((System.nanoTime() - start)*1e-9) + "to change");
             }
         });
@@ -189,7 +292,7 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
                 long start = System.nanoTime();
                 System.out.println("right");
                 fc[0] = (fc[0] + 1)%mist.getNFrames();
-                cv.frameChanged(fc[0]);
+                cVolumes.forEach(cv -> cv.frameChanged(fc[0]));
                 System.out.println( ((System.nanoTime() - start)*1e-9) + "to change");
             }
         });
