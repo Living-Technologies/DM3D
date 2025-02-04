@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import deformablemesh.MeshImageStack;
 import deformablemesh.gimli2b.MeshImageStack2;
 import deformablemesh.io.MultiscaleImageAdapter;
+import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -86,7 +87,6 @@ public class LoadZarr {
 
     }
     private static List<MultiScaleSpatial> getSpatialAttributes(Path json){
-        System.out.println("reading" + json);
         ObjectMapper mapper = new ObjectMapper();
         try {
             Stuff stuff = mapper.readValue(json.toFile(), new TypeReference<Stuff>(){});
@@ -108,7 +108,6 @@ public class LoadZarr {
         Path attrs = origin.resolve(".zattrs");
         List<MultiScaleSpatial> things = getSpatialAttributes(attrs);
         MultiScaleSpatial mss = things.get(0);
-        System.out.println("resolution levels!" + things.get(0).datasets.size());
         //only works for one set.
         List<Axis> axes = things.get(0).axes.stream().map(t->new Axis(t.type, t.name, t.unit)).collect(Collectors.toList());
         MultiscaleImageAdapter<T> adapter = new MultiscaleImageAdapter<>(axes);
@@ -169,13 +168,7 @@ public class LoadZarr {
 
     public static void main(String[] args) throws IOException {
         new ImageJ();
-        //String location = IJ.getDirectory("select zarr folder");
-        //String location = "D:\\working\\zarr-communications\\xyz-py.zarr";
-        String location = Paths.get("D:\\working\\low_res_segmentation\\testing.zarr").toAbsolutePath().toString();
-        //List<ImagePlus> ps = load3DStackFromZarrFile(location);
-        //ps.forEach(ImagePlus::show);
-        //List<ImagePlus> sac = load3DStackFromZarrFile(location);
-        //ImagePlus plus = load3DStack(location);
+        String location = IJ.getDirectory("select zarr folder");
         List<ImagePlus> pluses = load3DStackFromZarrFile(location);
         for (ImagePlus plus : pluses) {
             plus.setOpenAsHyperStack(true);

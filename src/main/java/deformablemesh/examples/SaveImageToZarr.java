@@ -1,5 +1,6 @@
 package deformablemesh.examples;
 
+import ij.IJ;
 import ij.ImagePlus;
 import ij.measure.Calibration;
 import ij.process.ByteProcessor;
@@ -58,7 +59,6 @@ public class SaveImageToZarr {
     static <T extends NativeType<T> & NumericType<T>> RandomAccessibleInterval<T>  getXYZCTRandomAccessIntervale(ImagePlus plus){
         //RandomAccessibleInterval<T> img = ImageJFunctions.wrap(plus);
         RandomAccessibleInterval<T> img = (RandomAccessibleInterval<T>)VirtualStackAdapter.wrap(plus);
-        System.out.println("Starting shape: " + Arrays.toString(img.dimensionsAsLongArray()));
         if(plus.getNChannels() > 1){
             //switches channesl with z.
             img = Views.moveAxis(img, 2, 3);
@@ -74,7 +74,6 @@ public class SaveImageToZarr {
             //adds time frame.
             img = Views.addDimension(img, 0L, 0L);
         }
-        System.out.println("finished shape: " + Arrays.toString(img.dimensionsAsLongArray()));
         return img;
     }
     public static <T extends NativeType<T> & NumericType<T>> void appendToZarr(ImagePlus plus, Path op) throws Exception{
@@ -150,8 +149,6 @@ public class SaveImageToZarr {
                 axes[spatial + 3] = new Axis(Axis.TIME, "t", cb.getTimeUnit());
             }
 
-            System.out.println(Arrays.toString(scale));
-            System.out.println(Arrays.toString(translation));
             DataType type = getDataType(plus);
             DatasetAttributes da = new DatasetAttributes(
                     dimensions,
@@ -189,10 +186,13 @@ public class SaveImageToZarr {
         }
     }
     public static void main(String[] args) throws Exception {
-        //Path p = Paths.get(IJ.getFilePath("select image to convert")).toAbsolutePath();
-        Path p = Paths.get("");
+        Path p = Paths.get(IJ.getFilePath("select image to convert")).toAbsolutePath();
+        //Path p = Paths.get("");
         String name = p.getFileName().toString();
         String outName = name.replaceAll("\\.[^.]*$", ".zarr");
+        if(!outName.endsWith(".zarr")){
+            outName = outName + ".zarr";
+        }
         Path op = p.getParent().resolve(outName);
         ImagePlus plus = new ImagePlus(p.toAbsolutePath().toString());
         System.out.println("writing to zarr " + op);
