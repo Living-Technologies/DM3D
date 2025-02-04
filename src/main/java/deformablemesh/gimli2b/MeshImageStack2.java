@@ -11,9 +11,13 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.measure.Calibration;
 import net.imglib2.Cursor;
+import net.imglib2.Interval;
 import net.imglib2.IterableInterval;
 import net.imglib2.RandomAccess;
+import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.algorithm.blocks.BlockSupplier;
+import net.imglib2.algorithm.blocks.convert.Convert;
 import net.imglib2.img.display.imagej.ImageJVirtualStack;
 import net.imglib2.img.display.imagej.ImageJVirtualStackARGB;
 import net.imglib2.img.display.imagej.ImageJVirtualStackFloat;
@@ -28,7 +32,9 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.IntType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
+import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 
 import javax.swing.AbstractAction;
@@ -40,6 +46,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -47,8 +54,23 @@ import java.util.List;
 public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType<T>> extends MeshImageStack {
     //Each channel is a source
     List<Source<T>> sources;
-    double[] buffer = new double[0];
     Calibration ijCalibration;
+    public Interval getInterval(){
+        return new Interval(){
+            @Override
+            public int numDimensions() {
+                return 3;
+            }
+            @Override
+            public long min(int i) {
+                return 0;
+            }
+            @Override
+            public long max(int i) {
+                return max_dex[i];
+            }
+        };
+    }
     public MeshImageStack2(List<Source<T>> sources){
         //The assumption is each source is a channel for the same volume
         this.sources = sources;
@@ -212,42 +234,43 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
         c.xOrigin = translation[0];
         c.yOrigin = translation[1];
         c.zOrigin = translation[2];
-        System.out.println(Arrays.toString(scale) + ", " + Arrays.toString(translation));
 
     }
     @Override
     public Calibration getImageJCalibration(){
         return ijCalibration;
     }
-
     @Override
     public void copyValues(){
         int n = dims[2]*dims[1]*dims[0];
-        if(buffer.length != n) {
-            buffer = new double[n];
+        if(n != data.length) {
+            data = new double[n];
         }
         RandomAccessibleInterval<T> rai = sources.get(channel).getSource(CURRENT, 0);
-        Cursor< T > cur = rai.cursor();
-        for(int i = 0; i<n; i++){
-            cur.fwd();
-            buffer[i] = cur.get().getRealDouble();
-        }
+        extract(rai, data);
+    }
+
+    private void extract(RandomAccessibleInterval<T> rai, double[] buffer) {
+        BlockSupplier.of(rai)
+                .andThen(Convert.convert(new DoubleType()))
+                .copy(getInterval(), buffer);
     }
 
     @Override
     public double getValue(int x, int y, int z){
-        return buffer[x + y*dims[0] + z*dims[0]*dims[1]];
+        return data[x + y*dims[0] + z*dims[0]*dims[1]];
     }
 
     public static void main(String[] args) throws IOException {
         new ImageJ();
-        String location = "D:\\working\\jari\\230125-O5-c35-t1-49rpt-360nm.zarr";
+        //String location = "D:\\working\\jari\\230125-O5-c35-t1-49rpt-360nm.zarr";
+        String location = "D:\\working\\sonnen\\3D_small_organoid\\3D_small_organoid.zarr";
         //List<Source<UnsignedByteType>> sources = LoadZarr.<UnsignedByteType>load3DSource(location);
         //MeshImageStack2<UnsignedByteType> mist = new MeshImageStack2<>(sources);
-
+        MeshImageStack mist = LoadZarr.loadMeshImageStack2(Paths.get(location));
         //mist.getOriginalPlus().show();
-        List<ImagePlus> pluses = LoadZarr.load3DStackFromZarrFile(location);
-        MeshImageStack mist = new MeshImageStack(pluses.get(0));
+        //List<ImagePlus> pluses = LoadZarr.load3DStackFromZarrFile(location);
+        //MeshImageStack mist = new MeshImageStack(pluses.get(0));
         MeshFrame3D frame = new MeshFrame3D();
         frame.showFrame(true);
         frame.setBackgroundColor(new Color(0, 0, 50));
@@ -258,14 +281,21 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
             next.setChannel(channel);
             stacks.add(next);
         }
-        List<ChannelVolume> cVolumes = new ArrayList<>();
+        /*List<ChannelVolume> cVolumes = new ArrayList<>();
         for(MeshImageStack stack : stacks){
             Color color = ColorSuggestions.getSuggestion();
             ChannelVolume cv = frame.getMultiChannelVolumeObject(stack, color );
             cv.getVolumeDataObject().setMinMaxRange(0.2, 0.6);
             cVolumes.add(cv);
+        }*/
+        int n = mist.getNFrames()/4;
+        long start = System.nanoTime();
+        for(int i = 0; i<n*2; i++){
+            final int fi = i%n;
+            stacks.forEach(cv -> cv.setFrame(fi));
         }
-
+        System.out.println(((System.nanoTime() - start)*1e-9) + " two times");
+        /*
         JComponent comp = (JComponent)frame.getJFrame().getContentPane();
         int[] fc = new int[2];
 
@@ -296,7 +326,7 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
                 System.out.println( ((System.nanoTime() - start)*1e-9) + "to change");
             }
         });
-
+        */
 
     }
 
