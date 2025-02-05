@@ -41,14 +41,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class InterceptingTriangle3DTest {
-    public static void brokenMeshes() throws IOException {
-        List<Track> tracks = MeshReader.loadMeshes(new File("/home/smithm3/Desktop/2021-10-Plate8/Tile_3/broken-binarization.bmf"));
-        DeformableMesh3D mesh = tracks.get(0).getMesh(0);
-
-        MeshImageStack mis = new MeshImageStack(FileInfoVirtualStack.openVirtual("/home/smithm3/Desktop/2021-10-Plate8/Tile_3/pred-dt3-crb-latest-Tile_3_processed_binned-2b.tif"));
-        DeformableMesh3DTools.createMosaicRepresentation(mis, tracks).show();
-    }
-
     public static void runTriangle(InterceptingTriangle3D triangle){
         int N = 250;
         double[] x = new double[N];
@@ -75,22 +67,6 @@ public class InterceptingTriangle3DTest {
         g.show(true, "Dirty: triangle 1");
     }
     public static void main(String[] args) throws Exception{
-
-        brokenMeshes();
-
-        /*
-        double[] a = {0.1, -0.1, 0};
-        double[] b = {0.1, 0, 0.1};
-        double[] c = {0.1, 0.1, 0};
-
-        runTriangle(new InterceptingTriangle3D(a, b, c));
-        runTriangle(new InterceptingTriangle3D(b, c, a));
-        runTriangle(new InterceptingTriangle3D(c, a, b));
-        */
-
-
-
-
 
     }
 }

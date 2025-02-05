@@ -17,22 +17,14 @@ import net.imglib2.Interval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.blocks.BlockSupplier;
 import net.imglib2.algorithm.blocks.convert.Convert;
-import net.imglib2.img.display.imagej.ImageJVirtualStack;
-import net.imglib2.img.display.imagej.ImageJVirtualStackARGB;
-import net.imglib2.img.display.imagej.ImageJVirtualStackFloat;
-import net.imglib2.img.display.imagej.ImageJVirtualStackUnsignedByte;
-import net.imglib2.img.display.imagej.ImageJVirtualStackUnsignedShort;
+import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.Type;
-import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.NumericType;
 import net.imglib2.type.numeric.RealType;
-import net.imglib2.type.numeric.integer.IntType;
-import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.DoubleType;
-import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 
 import javax.swing.AbstractAction;
@@ -71,6 +63,13 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
             }
         };
     }
+
+    /**
+     * Creates an interval for a single slice, {0:w, 0:h, slice:slice+1}
+     *
+     * @param slice
+     * @return
+     */
     public Interval getSliceInterval(int slice){
         final int[] mins = {0, 0, slice};
         final int[] maxs = {getWidthPx() - 1, getHeightPx() - 1, slice};
@@ -91,12 +90,27 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
             }
         };
     }
+
+    /**
+     * Creates a new imageplus with the same calibration as the "original"
+     *
+     * @return
+     */
     @Override
     public ImagePlus createImagePlus(){
         ImagePlus plus = new ImagePlus();
         plus.setCalibration(ijCalibration.copy());
         return plus;
     }
+
+    /**
+     * Gets an image processor representation of the expected slice.
+     *
+     * @param frame time point
+     * @param channel channel number
+     * @param slice z location 0 based.
+     * @return Currently only uses a ShortProcessor
+     */
     @Override
     public ImageProcessor getProcessor(int frame, int channel, int slice){
         RandomAccessibleInterval<T> rai = sources.get(channel).getSource(frame, 0);
@@ -106,13 +120,20 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
         proc.setPixels(pixels);
         return proc;
     }
+
+    /**
+     * Creates a mesh image stack based on the provided big dataviewer sources.
+     * Each source is assumed to be a channel. The calibration is set based on
+     * the 0th multiscale resolution.
+     *
+     * @param sources Each source should be a different channel representing the same space.
+     */
     public MeshImageStack2(List<Source<T>> sources){
         //The assumption is each source is a channel for the same volume
         this.sources = sources;
         Source<T> source = sources.get(0);
         AffineTransform3D at = new AffineTransform3D();
         source.getSourceTransform(0, 0, at);
-        double[] dt = at.getTranslation();
 
         double[] scale = new double[3];
         double[] op2 = new double[3];
@@ -181,15 +202,28 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
         ijCalibration = new Calibration();
         calibrate(ijCalibration);
     }
+
+    /**
+     * Creates a new MeshImageStack based on the original sources used to
+     * create this one.
+     *
+     * TODO Copy the calibration too.
+     * @return
+     */
     @Override
     public MeshImageStack duplicate(){
         return new MeshImageStack2<T>(sources);
     }
+
+    /**
+     * Combines all of the RAI from the sources and concatenates them. From.
+     * (x, y, z) to (x, y, z, c, t) the wraps the resulting RAI in to an
+     * ImagePlus and calibrates it.
+     *
+     * @return
+     */
     @Override
     public ImagePlus getOriginalPlus(){
-        ImagePlus original = new ImagePlus();
-        //how to make the stack?
-        Source<T> source = sources.get(0);
         List<RandomAccessibleInterval<T>> timeStacked = new ArrayList<>();
         for(int i = 0; i<getNFrames(); i++){
             List<RandomAccessibleInterval<T>> zstacks = new ArrayList<>();
@@ -209,29 +243,21 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
 
         stacked = Views.moveAxis(stacked, 2, 3);
         Type<T> t = stacked.getType();
-        ImageStack ij1Stack;
 
-        if(t instanceof UnsignedByteType){
-            ij1Stack = ImageJVirtualStackUnsignedByte.wrap((RandomAccessibleInterval<? extends UnsignedByteType>) stacked );
-        } else if( t instanceof UnsignedShortType){
-            ij1Stack = ImageJVirtualStackUnsignedShort.wrap((RandomAccessibleInterval<? extends UnsignedShortType>) stacked );
-        } else if( t instanceof FloatType){
-            ij1Stack = ImageJVirtualStackFloat.wrap((RandomAccessibleInterval<? extends FloatType>) stacked );
-        } else if( t instanceof IntType){
-            RandomAccessibleInterval<? extends ARGBType> rai2 = (RandomAccessibleInterval)stacked;
-            ij1Stack = ImageJVirtualStackARGB.wrap((RandomAccessibleInterval<ARGBType>) rai2);
-        } else{
-                ij1Stack = new ImageJVirtualStack<T>(stacked, stacked.getType().getBitsPerPixel()){};
+        ImagePlus original = ImageJFunctions.wrap(stacked, getShortTitle());
+        original.setCalibration(ijCalibration.copy());
 
-        }
-
-        original.setCalibration(ijCalibration);
-        original.setStack(ij1Stack, getNChannels(), getNSlices(), getNFrames());
         original.setTitle(getShortTitle());
         original.setOpenAsHyperStack(true);
 
         return original;
     }
+
+    /**
+     * Extracts the scale from the sources 0th resolution "getSourceTransform"
+     *
+     * @return {sx, sy, sz}
+     */
     double[] getScale(){
         Source<T> source = sources.get(0);
         AffineTransform3D at = new AffineTransform3D();
@@ -245,12 +271,24 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
         scale[2] = scale[2] - op2[2];
         return scale;
     }
+
+    /**
+     * Extracts the translation from the sources AffineTransform3D
+     *
+     * @return { dx, dy, dz}
+     */
     double[] getTranslation(){
         Source<T> source = sources.get(0);
         AffineTransform3D at = new AffineTransform3D();
         source.getSourceTransform(0,0,at);
         return  at.getTranslation();
     }
+
+    /**
+     * Sets the relevant properties on the provided Calibration.
+     *
+     * @param c will be modified with values form the source affine transform.
+     */
     public void calibrate(Calibration c){
         AffineTransform3D at = new AffineTransform3D();
 
@@ -279,6 +317,12 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
         extract(rai, data);
     }
 
+    /**
+     * For buffering data.
+     *
+     * @param rai  source of data
+     * @param buffer where it gets buffered
+     */
     private void extract(RandomAccessibleInterval<T> rai, double[] buffer) {
         BlockSupplier.of(rai)
                 .andThen(Convert.convert(new DoubleType()))

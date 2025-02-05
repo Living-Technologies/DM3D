@@ -85,7 +85,8 @@ public class MeshImageStackConversions {
 
         double[] center = {0, 0, 0};
         double[] alt = {16, 16, 8};
-
+        Calibration cb = legacy.getImageJCalibration();
+        System.out.println(cb.zOrigin + ", " + cb.yOrigin + ", " + cb.xOrigin + "//" + cb.pixelDepth + ", " + cb.pixelHeight + ", " + cb.pixelWidth);
         Assert.assertArrayEquals(mist.getImageCoordinates(center), legacy.getImageCoordinates(center), 1e-9);
         Assert.assertArrayEquals(mist.getNormalizedCoordinate(alt), legacy.getNormalizedCoordinate(alt), 1e-9);
     }
