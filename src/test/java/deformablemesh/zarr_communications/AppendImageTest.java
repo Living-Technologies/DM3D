@@ -1,10 +1,8 @@
 package deformablemesh.zarr_communications;
 
-import deformablemesh.examples.SaveImageToZarr;
-import deformablemesh.experimental.LoadZarr;
+import deformablemesh.io.SaveImageToZarr;
 import ij.ImagePlus;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 

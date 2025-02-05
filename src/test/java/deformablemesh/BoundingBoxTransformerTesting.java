@@ -38,7 +38,7 @@ public class BoundingBoxTransformerTesting{
 
     }
     static double[] getOrigin(MeshImageStack stack){
-        Calibration c = stack.original.getCalibration();
+        Calibration c = stack.getImageJCalibration();
 
         return new double[]{c.xOrigin, c.yOrigin, c.zOrigin};
     }

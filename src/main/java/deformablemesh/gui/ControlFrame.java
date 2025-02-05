@@ -29,8 +29,8 @@ import deformablemesh.BoundingBoxTransformer;
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
 import deformablemesh.SegmentationController;
-import deformablemesh.examples.SaveImageToZarr;
-import deformablemesh.experimental.LoadZarr;
+import deformablemesh.io.SaveImageToZarr;
+import deformablemesh.io.LoadZarr;
 import deformablemesh.experimental.RemotePrediction;
 import deformablemesh.externalenergies.ImageEnergyType;
 import deformablemesh.geometry.DeformableMesh3D;
@@ -46,7 +46,6 @@ import deformablemesh.track.Track;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.io.OpenDialog;
-import ij.measure.Calibration;
 import ij.plugin.FileInfoVirtualStack;
 import loci.plugins.BF;
 import loci.plugins.in.ImporterOptions;
@@ -873,12 +872,13 @@ public class ControlFrame implements ReadyObserver, FrameListener {
 
                         plus.show();
                     }
-                    for (ImagePlus plus : pluses) {
+                    /*for (ImagePlus plus : pluses) {
                         int nz = plus.getNSlices();
                         int ny = plus.getHeight();
                         int nx = plus.getWidth();
                         Calibration cal = plus.getCalibration();
                         if(cal.scaled()){
+                            System.out.println(nz + ", " + z + "//" + ny + ", " + h + "//" + nx + ", " + w);
                             if(nz < z){
                                 cal.pixelDepth = cal.pixelDepth*z / nz;
                             }
@@ -889,7 +889,8 @@ public class ControlFrame implements ReadyObserver, FrameListener {
                                 cal.pixelWidth = cal.pixelWidth*w / nx;
                             }
                         }
-                    }
+                    }*/
+                    System.out.println("loading: " + pluses[0].getShortTitle());
                     segmentationController.setOriginalPlus(pluses[0]);
                 }
             } catch( Exception e){
@@ -1303,12 +1304,9 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         load.addActionListener(evt->{
             Path folder = Paths.get(IJ.getDirectory("select zarr folder"));
             try {
-                //List<ImagePlus> pluses = LoadZarr.load3DStackFromZarrFile(folder.toString());
-                //for(ImagePlus plus: pluses){
-                //    plus.show();
-                //}
                 MeshImageStack zStack = LoadZarr.loadMeshImageStack2(folder);
                 segmentationController.setMeshImageStack(zStack);
+
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

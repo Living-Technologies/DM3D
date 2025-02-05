@@ -1,4 +1,4 @@
-package deformablemesh.experimental;
+package deformablemesh.io;
 
 import bdv.util.RandomAccessibleIntervalMipmapSource4D;
 import bdv.viewer.Source;
@@ -140,7 +140,9 @@ public class LoadZarr {
         for(int i = 0; i<msia.getNChannels(); i++){
             sources.add(msia.getAsBdvSource(i));
         }
+
         MeshImageStack2<T> mist = new MeshImageStack2<>(sources);
+        mist.setShortTitle(location.getFileName().toString());
         Calibration ij = mist.getImageJCalibration();
         msia.calibrateUnits(ij);
         return mist;

@@ -1,7 +1,7 @@
 package deformablemesh.zarr_communications;
 
-import deformablemesh.examples.SaveImageToZarr;
-import deformablemesh.experimental.LoadZarr;
+import deformablemesh.io.SaveImageToZarr;
+import deformablemesh.io.LoadZarr;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.measure.Calibration;

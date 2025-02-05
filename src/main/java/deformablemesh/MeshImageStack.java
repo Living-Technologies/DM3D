@@ -220,7 +220,7 @@ public class MeshImageStack {
     }
 
     public Calibration getImageJCalibration(){
-        return original.getCalibration();
+        return original.getCalibration().copy();
     }
 
     public ImagePlus createImagePlus(){
@@ -598,7 +598,7 @@ public class MeshImageStack {
     }
 
     public ImagePlus samplePlus(Box3D box){
-        ImagePlus sample = original.createImagePlus();
+        ImagePlus sample = createImagePlus();
         //ret[i] = (r[i] + offsets[i])*SCALE/pixel_dimensions[i];
         int w = (int)((box.high[0] - box.low[0])*SCALE/pixel_dimensions[0]);
         int h = (int)((box.high[1] - box.low[1])*SCALE/pixel_dimensions[1]);
@@ -607,10 +607,9 @@ public class MeshImageStack {
         double[] xyz2 = getImageCoordinates(box.high);
 
         ImageStack stack = new ImageStack(w, h);
-        ImageStack ori = original.getImageStack();
 
         for(int i = (int)xyz1[2]; i<=xyz2[2]; i++){
-            ImageProcessor proc = ori.getProcessor(i);
+            ImageProcessor proc = getProcessor(CURRENT, channel, i);
             ImageProcessor nproc = proc.createProcessor(w, h);
             for(int j = 0; j<w; j++){
                 for(int k = 0; k<h; k++){
@@ -633,7 +632,7 @@ public class MeshImageStack {
      * @param slice z location 0 based.
      * @return a single 2D image representing a slice of a single channel at a time point.
      */
-    ImageProcessor getProcessor(int frame, int channel, int slice){
+    public ImageProcessor getProcessor(int frame, int channel, int slice){
         int n = getProcessorIndex(frame, channel, slice);
         return original.getStack().getProcessor(n);
     }
@@ -650,6 +649,10 @@ public class MeshImageStack {
         return slice * CHANNELS + frame*CHANNELS*SLICES + channel + 1;
     }
 
+    public String getSliceLabel(int sliceIndex){
+        return original.getStack().getSliceLabel(sliceIndex);
+    }
+
     /**
      * Creates a crop version of the original multi-channel movie with appropriately set
      * origin.
@@ -663,10 +666,10 @@ public class MeshImageStack {
      * @return
      */
     ImagePlus getCroppedRegion(int x, int y, int z, int w, int h, int d){
-        ImagePlus next = original.createImagePlus();
+        ImagePlus next = createImagePlus();
 
         ImageStack os = new ImageStack(w, h);
-        int ow = original.getWidth();
+        int ow = getWidthPx();
         for(int frame = 0; frame < getNFrames(); frame++){
             for(int slice = 0; slice < d; slice++){
                 int sz = slice + z;
@@ -678,7 +681,7 @@ public class MeshImageStack {
                             crop.setf(i + w * j, proc.getf(( i + x ) + ow*(j+y)));
                         }
                     }
-                    String label = original.getStack().getSliceLabel(getProcessorIndex(frame, c, slice));
+                    String label = getSliceLabel(getProcessorIndex(frame, c, slice));
                     os.addSlice(label, crop);
                 }
             }
@@ -756,7 +759,7 @@ public class MeshImageStack {
         ImagePlus plus = original.createImagePlus();
         plus.setStack(stack, 1, d, 1);
         Calibration c = plus.getCalibration();
-        Calibration oc = original.getCalibration();
+        Calibration oc = getImageJCalibration();
 
         c.zOrigin = oc.zOrigin - r.lz;
         c.yOrigin = oc.yOrigin - r.ly;
@@ -771,19 +774,19 @@ public class MeshImageStack {
      * all of the slices and a single time frame. Duplicate processors.
      */
     public ImagePlus getCurrentFrame(){
-        int slices = original.getNSlices();
-        int py = original.getHeight();
-        int px = original.getWidth();
+        int slices = getNSlices();
+        int py = getHeightPx();
+        int px = getWidthPx();
         ImageStack stack = new ImageStack(px, py);
 
 
         for(int i = 0;i<slices; i++){
             int n = i * CHANNELS + CURRENT*CHANNELS*slices + channel + 1;
-            ImageProcessor proc = original.getStack().getProcessor( n ).duplicate();
+            ImageProcessor proc = getProcessor(CURRENT, channel, i);
             stack.addSlice(proc);
         }
-        ImagePlus plus = original.createImagePlus();
-        String name = original.getTitle().replaceFirst("\\..*$", "");
+        ImagePlus plus = createImagePlus();
+        String name = getShortTitle().replaceFirst("\\..*$", "");
         plus.setTitle(name  + "-c" + channel + "-t" + CURRENT);
         plus.setStack(stack, 1, slices, 1);
         return plus;

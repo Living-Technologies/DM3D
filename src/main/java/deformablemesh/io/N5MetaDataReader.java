@@ -1,21 +1,7 @@
 package deformablemesh.io;
 
-import bdv.util.RandomAccessibleIntervalMipmapSource4D;
-import bdv.viewer.Source;
-import deformablemesh.experimental.LoadZarr;
 import ij.ImagePlus;
-import ij.ImageStack;
-import ij.measure.Calibration;
-import mpicbg.spim.data.sequence.DefaultVoxelDimensions;
-import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.cache.img.CachedCellImg;
-import net.imglib2.realtransform.AffineTransform3D;
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.NumericType;
-import net.imglib2.view.Views;
 import org.janelia.saalfeldlab.n5.N5Reader;
-import org.janelia.saalfeldlab.n5.ij.N5IJUtils;
-import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
 import org.janelia.saalfeldlab.n5.universe.N5Factory;
 import org.janelia.saalfeldlab.n5.universe.N5MetadataUtils;
 import org.janelia.saalfeldlab.n5.universe.metadata.N5DefaultSingleScaleMetadata;
@@ -24,16 +10,11 @@ import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.NgffSingleScale
 import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadata;
 import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMultiScaleMetadata;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class N5MetaDataReader {
     public void getMetaData(String location){

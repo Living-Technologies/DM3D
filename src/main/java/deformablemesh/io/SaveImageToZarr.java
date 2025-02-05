@@ -1,4 +1,4 @@
-package deformablemesh.examples;
+package deformablemesh.io;
 
 import ij.IJ;
 import ij.ImagePlus;

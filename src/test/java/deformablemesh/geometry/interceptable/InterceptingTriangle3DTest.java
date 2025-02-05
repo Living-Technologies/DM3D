@@ -46,7 +46,7 @@ public class InterceptingTriangle3DTest {
         DeformableMesh3D mesh = tracks.get(0).getMesh(0);
 
         MeshImageStack mis = new MeshImageStack(FileInfoVirtualStack.openVirtual("/home/smithm3/Desktop/2021-10-Plate8/Tile_3/pred-dt3-crb-latest-Tile_3_processed_binned-2b.tif"));
-        DeformableMesh3DTools.createMosaicRepresentation(mis, mis.getOriginalPlus(), tracks).show();
+        DeformableMesh3DTools.createMosaicRepresentation(mis, tracks).show();
     }
 
     public static void runTriangle(InterceptingTriangle3D triangle){

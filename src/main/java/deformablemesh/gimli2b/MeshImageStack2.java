@@ -2,8 +2,7 @@ package deformablemesh.gimli2b;
 
 import bdv.viewer.Source;
 import deformablemesh.MeshImageStack;
-import deformablemesh.experimental.LoadZarr;
-import deformablemesh.gui.GuiTools;
+import deformablemesh.io.LoadZarr;
 import deformablemesh.meshview.ChannelVolume;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.util.ColorSuggestions;
@@ -12,11 +11,9 @@ import ij.ImageJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.measure.Calibration;
-import net.imglib2.Cursor;
+import ij.process.ImageProcessor;
+import ij.process.ShortProcessor;
 import net.imglib2.Interval;
-import net.imglib2.IterableInterval;
-import net.imglib2.RandomAccess;
-import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.blocks.BlockSupplier;
 import net.imglib2.algorithm.blocks.convert.Convert;
@@ -36,21 +33,17 @@ import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.type.numeric.real.FloatType;
-import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
 import javax.swing.KeyStroke;
 import java.awt.Color;
-import java.awt.Container;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType<T>> extends MeshImageStack {
@@ -77,6 +70,41 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
                 return max_dex[i];
             }
         };
+    }
+    public Interval getSliceInterval(int slice){
+        final int[] mins = {0, 0, slice};
+        final int[] maxs = {getWidthPx() - 1, getHeightPx() - 1, slice};
+        return new Interval() {
+            @Override
+            public long min(int i) {
+                return mins[i];
+            }
+
+            @Override
+            public long max(int i) {
+                return maxs[i];
+            }
+
+            @Override
+            public int numDimensions() {
+                return 3;
+            }
+        };
+    }
+    @Override
+    public ImagePlus createImagePlus(){
+        ImagePlus plus = new ImagePlus();
+        plus.setCalibration(ijCalibration.copy());
+        return plus;
+    }
+    @Override
+    public ImageProcessor getProcessor(int frame, int channel, int slice){
+        RandomAccessibleInterval<T> rai = sources.get(channel).getSource(frame, 0);
+        short[] pixels = new short[getWidthPx()*getHeightPx()];
+        BlockSupplier.of(rai).andThen(Convert.convert( new UnsignedShortType())).copy(getSliceInterval(slice), pixels);
+        ImageProcessor proc = new ShortProcessor(getWidthPx(), getHeightPx());
+        proc.setPixels(pixels);
+        return proc;
     }
     public MeshImageStack2(List<Source<T>> sources){
         //The assumption is each source is a channel for the same volume
@@ -160,7 +188,6 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
     @Override
     public ImagePlus getOriginalPlus(){
         ImagePlus original = new ImagePlus();
-        original.setTitle(getShortTitle());
         //how to make the stack?
         Source<T> source = sources.get(0);
         List<RandomAccessibleInterval<T>> timeStacked = new ArrayList<>();
