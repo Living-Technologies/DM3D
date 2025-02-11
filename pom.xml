@@ -166,6 +166,11 @@
 			<artifactId>bigdataviewer-core</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>nl.uu.science.cellbiology</groupId>
+			<artifactId>bvv-playground</artifactId>
+			<version>0.3.5-SNAPSHOT</version>
+		</dependency>
+		<dependency>
 			<groupId>org.openjdk.nashorn</groupId>
 			<artifactId>nashorn-core</artifactId>
 			<version>15.4</version>
@@ -174,6 +179,10 @@
 
 	<repositories>
 		<!-- NB: for project parent -->
+		<repository>
+			<id>scijava.public</id>
+			<url>https://maven.scijava.org/content/groups/public</url>
+		</repository>
 		<repository>
 			<id>imagej.public</id>
 			<url>https://maven.imagej.net/content/groups/public</url>
@@ -186,7 +195,6 @@
 			<id>java3d.jogamp.org</id>
 			<url>https://jogamp.org/deployment/maven-java3d/</url>
 		</repository>
-
 	</repositories>
 
 	<build>

@@ -676,7 +676,7 @@ class TextBoxSelections{
     void insertSuggestion(){
         String rep = listView.getSelectedValue();
         if(rep!=null) {
-            String safer = rep.replaceAll("\\( .* \\)", "(");
+            String safer = rep.replaceAll("\\(.*\\)", "(");
             Caret caret = input.getCaret();
             Document doc = input.getDocument();
             int loc = caret.getMark();
@@ -716,7 +716,6 @@ class TextBoxSelections{
             String t = p.getParameterizedType().getTypeName().replaceAll(".*\\.", "");
             build.append(t);
             pre = ", ";
-            System.out.println(p.getName() + ", " + p.getParameterizedType());
         }
         build.append(")");
         return build.toString();

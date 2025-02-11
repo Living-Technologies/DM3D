@@ -221,7 +221,7 @@ public class MultiscaleImageAdapter<T extends NumericType<T> & NativeType<T>> {
                 type,
                 transforms,
                 vd,
-                title, false
+                title + "?c=" + channel, false
         );
         return source;
     }

@@ -89,6 +89,10 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
             }
         };
     }
+    @Override
+    public String getSliceLabel(int index){
+        return "";
+    }
 
     /**
      * Creates a new imageplus with the same calibration as the "original"
