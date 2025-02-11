@@ -324,6 +324,7 @@ public class MeshImageStack {
             copyValues();
         }
     }
+
     public void setChannel(int c){
         if(c >= 0 && c < CHANNELS ){
             if(channel != c){
@@ -333,6 +334,9 @@ public class MeshImageStack {
         } else{
             System.out.println("Channel " + c + " specified is out of range [0, " + ( CHANNELS - 1 ) +" ]");
         }
+    }
+    public int getChannel(){
+        return channel;
     }
 
     /**

@@ -5,6 +5,7 @@ import bdv.viewer.Source;
 import deformablemesh.MeshImageStack;
 import ij.measure.Calibration;
 import mpicbg.spim.data.sequence.DefaultVoxelDimensions;
+import net.imglib2.Interval;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
@@ -16,6 +17,7 @@ import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.NumericType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
+import net.imglib2.view.MixedTransformView;
 import net.imglib2.view.Views;
 import org.junit.Assert;
 import org.junit.Test;
@@ -34,6 +36,8 @@ public class MeshImageStackConversions {
         }
         return sources;
     }
+
+
     public static <T extends NumericType<T> & NativeType<T> & RealType<T>> Source<T> getAsBdvSource(int channel, RandomAccessibleInterval<T> img){
         int n = 1;
         String title = "samply-sample";
@@ -45,8 +49,6 @@ public class MeshImageStackConversions {
         for(int i = 0; i<n; i++){
             RandomAccessibleInterval<T> rai = (RandomAccessibleInterval<T>) Views.hyperSlice(img, 3, channel);
             levels[i] = rai;
-
-
 
             AffineTransform3D a = new AffineTransform3D();
             a.scale(scale[0], scale[1], scale[2]);

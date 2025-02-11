@@ -25,6 +25,7 @@
  */
 package deformablemesh.meshview;
 
+import java.awt.Color;
 import java.awt.Transparency;
 import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
@@ -81,6 +82,11 @@ public class MultiChannelVolumeTexture extends Texture3D {
         return paused;
     }
 
+    public void setDisplayColor(int dex, Color c) {
+        float[] f = c.getColorComponents(new float[4]);
+        setColor(dex, f[0], f[1], f[2]);
+    }
+
     static class Calibration{
         double clampedMin;
         double clampedMax;
@@ -135,13 +141,19 @@ public class MultiChannelVolumeTexture extends Texture3D {
             }
             return (float)((scale - clear)/(opaque - clear));
         }
-        VoxelPainter painter = data ->{
-            if (data < clampedMin) data = clampedMin;
-            if (data > clampedMax) data = clampedMax;
-            float scale = (float)((data - clampedMin) / (clampedMax - clampedMin));
-            return new Vector4f(color.x*scale, color.y*scale, color.z*scale, alphaFromScale(scale));
-        };
+        VoxelPainter painter = getClampedPainter();
+
+        public VoxelPainter getClampedPainter(){
+            return data -> {
+                if (data < clampedMin) data = clampedMin;
+                if (data > clampedMax) data = clampedMax;
+                float scale = (float) ((data - clampedMin) / (clampedMax - clampedMin));
+                return new Vector4f(color.x * scale, color.y * scale, color.z * scale, alphaFromScale(scale));
+            };
+        }
     }
+
+
 
 
     /**
@@ -328,6 +340,7 @@ public class MultiChannelVolumeTexture extends Texture3D {
     public void setColor(int channel, double x, double y, double z){
         Calibration cal = calibrations.get(channel);
         cal.color = new Color3f((float)x,(float)y,(float)z);
+        setVolumePainter(channel, cal.getClampedPainter());
     }
 
     /**

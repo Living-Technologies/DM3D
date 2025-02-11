@@ -9,7 +9,6 @@ import deformablemesh.util.ColorSuggestions;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
-import ij.ImageStack;
 import ij.measure.Calibration;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
@@ -359,7 +358,7 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
         List<ChannelVolume> cVolumes = new ArrayList<>();
         for(MeshImageStack stack : stacks){
             Color color = ColorSuggestions.getSuggestion();
-            ChannelVolume cv = frame.getMultiChannelVolumeObject(stack, color );
+            ChannelVolume cv = frame.createNewChannelVolume(stack, color );
             cv.getVolumeDataObject().setMinMaxRange(0.2, 0.6);
             cVolumes.add(cv);
         }

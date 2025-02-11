@@ -39,10 +39,12 @@ import deformablemesh.gui.meshinitialization.FurrowInitializer;
 import deformablemesh.io.ImportType;
 import deformablemesh.io.MeshReader;
 import deformablemesh.io.TrackMateAdapter;
+import deformablemesh.meshview.ChannelVolume;
 import deformablemesh.meshview.HotKeyDelegate;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.track.MeshTrackManager;
 import deformablemesh.track.Track;
+import deformablemesh.util.ColorSuggestions;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.io.OpenDialog;
@@ -1569,6 +1571,20 @@ public class ControlFrame implements ReadyObserver, FrameListener {
                 JDialog channelManager = new JDialog(getFrame(), true);
                 JPanel content = new JPanel();
                 JButton add = new JButton("add channel");
+                JButton follow = new JButton("show current");
+                follow.addActionListener(evt->{
+                    MeshImageStack stack = segmentationController.getMeshImageStack();
+                    if(stack != null){
+                        int labelled = JOptionPane.showConfirmDialog(frame, "Show as Labelled Regions?");
+                        if(labelled == JOptionPane.OK_OPTION){
+                            ChannelVolume cv = mf3d.createNewChannelVolume(stack.duplicate(), new Color(0, 0, 0));
+                            cv.getVolumeDataObject().showAsLabeledVolume();
+                        } else {
+                            Color c = GuiTools.getColor(frame);
+                            ChannelVolume cv = mf3d.createNewChannelVolume(stack.duplicate(), c);
+                        }
+                    }
+                });
                 JButton contrast = new JButton( "contrast channel");
                 JButton remove = new JButton("remove");
                 add.addActionListener(evt->{
@@ -1584,6 +1600,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
                     channelManager.setVisible(false);
                 });
                 content.add(add);
+                content.add(follow);
                 content.add(contrast);
                 content.add(remove);
 

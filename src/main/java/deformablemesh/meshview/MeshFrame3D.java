@@ -161,6 +161,10 @@ public class    MeshFrame3D {
         }
         return false;
     }
+
+    /**
+     * Prompts a user to create a new channel volume by selecting an open image.
+     */
     public void createNewChannelVolume(){
         ImagePlus plus = GuiTools.selectOpenImage(frame);
         if(plus == null){
@@ -187,13 +191,22 @@ public class    MeshFrame3D {
             MeshImageStack stack = new MeshImageStack(plus);
             stack.setChannel(channel);
             stack.setFrame(segmentationController.getCurrentFrame());
-            ChannelVolume cv = getMultiChannelVolumeObject(stack, c);
-            addChannelVolume(cv);
+            createNewChannelVolume(stack, c);
         }
 
     }
 
-    public ChannelVolume getMultiChannelVolumeObject(MeshImageStack stack, Color c){
+
+    /**
+     * Creates a new channel volume based on the provided mesh image stack. This
+     * will add to the existing volume data object for display or create a new one
+     * if applicable.
+     *
+     * @param stack Volume to be displayed
+     * @param c color of volume
+     * @return the created channel volume
+     */
+    public ChannelVolume createNewChannelVolume(MeshImageStack stack, Color c){
         ChannelVolume cv;
         //If the volume data object exists, it just returns it.
         if( volumeDataObject != null ){
@@ -203,9 +216,10 @@ public class    MeshFrame3D {
             int[] dims = new int[]{stack.getWidthPx(), stack.getHeightPx(), stack.getNSlices()};
             texture = new MultiChannelVolumeTexture(dims);
             cv = new ChannelVolume(stack, c, texture, null);
+            addDataObject(cv.getVolumeDataObject());
             volumeDataObject = cv.getVolumeDataObject();
-            addDataObject(volumeDataObject);
         }
+        addChannelVolume(cv);
         return cv;
     }
 

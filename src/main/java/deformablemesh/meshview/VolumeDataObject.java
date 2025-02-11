@@ -72,6 +72,7 @@ public class VolumeDataObject implements DataObject {
 
     public void setColor(Color c){
         color = c;
+        volume.setDisplayColor( dex,  c );
     }
 
     /**
@@ -158,6 +159,7 @@ public class VolumeDataObject implements DataObject {
 
     public void setMinMaxRange(double min, double max){
         System.out.println("Setting min and Max for: " + dex);
+        volume.setDisplayColor(dex, color);
         this.min = min;
         this.max = max;
         updateVolume();

@@ -73,6 +73,7 @@ import java.io.Writer;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Parameter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -672,16 +673,15 @@ class TextBoxSelections{
 
         return suggestions;
     }
-
     void insertSuggestion(){
         String rep = listView.getSelectedValue();
-
         if(rep!=null) {
+            String safer = rep.replaceAll("\\( .* \\)", "(");
             Caret caret = input.getCaret();
             Document doc = input.getDocument();
             int loc = caret.getMark();
 
-            input.replaceRange(rep, loc, loc);
+            input.replaceRange(safer, loc, loc);
 
         }
         hidePopUp();
@@ -704,6 +704,23 @@ class TextBoxSelections{
                 field->!Modifier.isStatic(field.getModifiers())
             ).map(Field::getName).collect(Collectors.toList());
     }
+    String getMethodString(Method m){
+        return m.getName() + getParameterString(m);
+    }
+    String getParameterString( Method m){
+        Parameter[] parameters = m.getParameters();
+        StringBuilder build = new StringBuilder("(");
+        String pre = "";
+        for(Parameter p : parameters){
+            build.append(pre);
+            String t = p.getParameterizedType().getTypeName().replaceAll(".*\\.", "");
+            build.append(t);
+            pre = ", ";
+            System.out.println(p.getName() + ", " + p.getParameterizedType());
+        }
+        build.append(")");
+        return build.toString();
+    }
     List<String> getAvailableMethodNames(Object obj){
         Class<?> c;
         c = obj.getClass();
@@ -712,13 +729,13 @@ class TextBoxSelections{
             try{
                 Method m = c.getMethod("getRepresentedClass");
                 c = (Class<?>)m.invoke(obj);
-                return Arrays.stream(c.getMethods()).filter(meth->Modifier.isStatic(meth.getModifiers())).map(Method::getName).collect(Collectors.toList());
+                return Arrays.stream(c.getMethods()).filter(meth->Modifier.isStatic(meth.getModifiers())).map(this::getMethodString).collect(Collectors.toList());
             } catch(Exception e){
                 //just display the obj.getClass variables.
             }
         }
         //don't show static methods since they won't work.
-        return Arrays.stream(c.getMethods()).filter(meth->!Modifier.isStatic(meth.getModifiers())).map(Method::getName).collect(Collectors.toList());
+        return Arrays.stream(c.getMethods()).filter(meth->!Modifier.isStatic(meth.getModifiers())).map(this::getMethodString).collect(Collectors.toList());
     }
     void hidePopUp(){
         if(lastPopUp!=null){

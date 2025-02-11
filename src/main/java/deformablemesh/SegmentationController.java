@@ -3594,12 +3594,14 @@ public class SegmentationController {
         cclbl.process();
     }
 
-
-    public void guessVoxelMeshes() {
+    public void guessVoxelMeshes(int threshold){
         BinaryMeshGenerator generator = new BinaryMeshGenerator();
-
+        generator.setInitialThreshold(threshold);
         List<DeformableMesh3D> meshes = generator.predictMeshes(getMeshImageStack());
         startNewMeshTracks(meshes);
+    }
+    public void guessVoxelMeshes() {
+        guessMeshes(2);
     }
 
 }

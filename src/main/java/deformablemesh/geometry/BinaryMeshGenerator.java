@@ -69,10 +69,13 @@ public class BinaryMeshGenerator {
     int openSteps = 0;
     int closeSteps = 0;
     ImageStack ones;
+    int initialThreshold;
     public BinaryMeshGenerator(){
-
+        initialThreshold = 2;
     }
-
+    public void setInitialThreshold(int t){
+        initialThreshold = t;
+    }
     public static DeformableMesh3D voxelMesh(Region r, MeshImageStack stack){
         int w = stack.getWidthPx();
         int h = stack.getHeightPx();
@@ -551,7 +554,7 @@ public class BinaryMeshGenerator {
 
         for(int j = 1; j<=old.size(); j++){
             ImageProcessor p = old.getProcessor(j).convertToShort(false).duplicate();
-            p.threshold(2);
+            p.threshold(initialThreshold);
             stack.addSlice(p);
         }
         List<Region> regions = ConnectedComponents3D.getRegions(stack);

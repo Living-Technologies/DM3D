@@ -96,6 +96,9 @@ public class PropertySaver {
                     case "steric-weight":
                         control.setStericNeighborWeight(Double.parseDouble(pair[1]));
                         break;
+                    case "prediction-host":
+                        GuiTools.setPredictionHost(pair[1]);
+                        break;
                     default:
                         System.out.println("skipping: " + pair[0]);
 
@@ -129,6 +132,7 @@ public class PropertySaver {
             writer.write(String.format("%s\t%s\n","steric-weight", Double.toHexString(control.getStericNeighborWeight())));
             writer.write(String.format("%s\t%d\n","divisions", control.getDivisions()));
             writer.write(String.format("%s\t%s\n","beta", Double.toHexString(control.getBeta())));
+            writer.write(String.format("%s\t%s\n", "prediction-host", GuiTools.getPredictionHost()));
         } catch(IOException exc){
             canSave = false;
             throw new IOException(exc);

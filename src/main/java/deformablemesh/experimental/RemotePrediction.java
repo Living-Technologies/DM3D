@@ -26,6 +26,7 @@
 package deformablemesh.experimental;
 
 import deformablemesh.MeshImageStack;
+import deformablemesh.gui.GuiTools;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
@@ -85,14 +86,20 @@ public class RemotePrediction{
         }
     }
     public int setup(MeshImageStack stack) {
+        String hostName = GuiTools.getPredictionHost();
         GenericDialog gd = new GenericDialog("Select host");
-        gd.addStringField("hostname", "", 30);
+        gd.addStringField("hostname", hostName, 30);
         gd.addStringField("port", "5050", 6);
         gd.showDialog();
-        String hostname = gd.getNextString();
+        String another = gd.getNextString();
+        if(!hostName.equals(another)){
+            GuiTools.setPredictionHost(another);
+            hostName = another;
+        }
+
         int port = Integer.parseInt( gd.getNextString() );
         try {
-            client = new PredictionClient(hostname, port);
+            client = new PredictionClient(hostName, port);
         } catch (IOException e) {
             System.out.println("Canceling! " + e.getMessage());
             return -1;

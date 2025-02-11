@@ -35,7 +35,9 @@ import javax.swing.BoxLayout;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JColorChooser;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JEditorPane;
 import javax.swing.JFrame;
@@ -443,6 +445,10 @@ public class GuiTools {
         return value[0];
     }
 
+    public static Color getColor(Component parent) {
+        return JColorChooser.showDialog(parent, "Select Color for Volume Rendering", new Color(255, 255, 255));
+    }
+
     public static class LocaleNumericTextField{
         final JTextField field;
 
@@ -634,5 +640,13 @@ public class GuiTools {
                 segmentationController.setOriginalPlus(plus, channel);
             }
         }
+    }
+    private static String predictionHost = "";
+    public static String getPredictionHost(){
+        return predictionHost;
+    }
+
+    public static void setPredictionHost(String host){
+        predictionHost = host;
     }
 }

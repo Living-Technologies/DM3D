@@ -64,4 +64,12 @@ public class ChannelVolume implements FrameListener {
         vdo.unlinkFromTexture();
     }
 
+    public MeshImageStack getMeshImageStack(){
+        return stack;
+    }
+
+    public void setColor( Color c){
+        getVolumeDataObject().setColor(c);
+    }
+
 }
