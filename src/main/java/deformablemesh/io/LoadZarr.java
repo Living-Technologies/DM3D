@@ -1,40 +1,24 @@
 package deformablemesh.io;
 
-import bdv.util.RandomAccessibleIntervalMipmapSource4D;
 import bdv.viewer.Source;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import deformablemesh.MeshImageStack;
 import deformablemesh.gimli2b.MeshImageStack2;
-import deformablemesh.io.MultiscaleImageAdapter;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
-import ij.ImageStack;
 import ij.measure.Calibration;
-import mpicbg.spim.data.sequence.DefaultVoxelDimensions;
-import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.cache.img.CachedCellImg;
-import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.NumericType;
 import net.imglib2.type.numeric.RealType;
-import net.imglib2.view.Views;
 import org.janelia.saalfeldlab.n5.N5Reader;
-import org.janelia.saalfeldlab.n5.ij.N5IJUtils;
 import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
 import org.janelia.saalfeldlab.n5.universe.N5Factory;
-import org.janelia.saalfeldlab.n5.universe.N5MetadataUtils;
-import org.janelia.saalfeldlab.n5.universe.metadata.N5DefaultSingleScaleMetadata;
-import org.janelia.saalfeldlab.n5.universe.metadata.N5Metadata;
 import org.janelia.saalfeldlab.n5.universe.metadata.axes.Axis;
-import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.NgffSingleScaleAxesMetadata;
-import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadata;
-import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMultiScaleMetadata;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -134,7 +118,7 @@ public class LoadZarr {
         return adapter;
     }
 
-    public static <T extends NumericType<T> & NativeType<T> & RealType<T> > MeshImageStack loadMeshImageStack2(Path location) throws IOException {
+    public static <T extends NumericType<T> & NativeType<T> & RealType<T> > MeshImageStack2<T> loadMeshImageStack2(Path location) throws IOException {
         MultiscaleImageAdapter<T> msia = load3DZarrFile(location.toAbsolutePath().toString());
         List<Source<T>> sources = new ArrayList<>();
         for(int i = 0; i<msia.getNChannels(); i++){

@@ -17,7 +17,6 @@ import java.util.concurrent.Future;
 public class HeadlessRemotePrediction implements AutoCloseable{
     MeshImageStack source;
     PredictionClient client;
-    WriteZarrPredictions writer;
     List<Future<Integer>> sendingFrames = new ArrayList<>();
     ExecutorService writeThread = Executors.newSingleThreadExecutor();
 
@@ -26,7 +25,6 @@ public class HeadlessRemotePrediction implements AutoCloseable{
     }
 
     public void prepareOutput(Path volumeName){
-        writer = new WriteZarrPredictions(volumeName);
     }
 
     public void connect(String host, int port) throws IOException {
@@ -52,7 +50,6 @@ public class HeadlessRemotePrediction implements AutoCloseable{
     }
 
     public void readPredictions() throws Exception {
-        String[] names = {"DT", "BOUNDARY", "MASK"};
         for(Future<Integer> result: sendingFrames){
             int frame = result.get();
             List<ImagePlus> predictions = client.getOutputs();
@@ -66,9 +63,6 @@ public class HeadlessRemotePrediction implements AutoCloseable{
                 for(int j = 1; j<=fresh.size(); j++){
                     stack.addSlice(fresh.getProcessor(j).convertToByte(false));
                 }
-                smaller.setTitle(names[i] + "-t" + frame + "-" + source.getOriginalPlus().getShortTitle());
-                smaller.setStack(stack, nc, ns, 1);
-                writer.write(names[i], smaller, frame);
             }
         }
     }
@@ -80,7 +74,6 @@ public class HeadlessRemotePrediction implements AutoCloseable{
     public void close() throws Exception {
         writeThread.shutdown();
         client.close();
-        writer.close();
     }
 
     public static void main(String[] args) throws Exception {

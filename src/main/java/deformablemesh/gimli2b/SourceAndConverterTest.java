@@ -9,17 +9,30 @@ import bvvpg.vistools.BvvFunctions;
 import bvvpg.vistools.BvvHandleFrame;
 import bvvpg.vistools.BvvOptions;
 import bvvpg.vistools.BvvStackSource;
+import com.jogamp.opengl.GLAutoDrawable;
+import com.jogamp.opengl.GLEventListener;
 import deformablemesh.io.LoadZarr;
+import ij.ImageJ;
 import ij.ImagePlus;
+import ij.ImageStack;
+import ij.process.ColorProcessor;
+import ij.process.ImageProcessor;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ActionMap;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JPanel;
 import javax.swing.KeyStroke;
+import java.awt.Graphics;
+import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.image.BufferedImage;
+import java.awt.image.ImageObserver;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -28,12 +41,58 @@ import java.nio.file.Paths;
  * "SourceAndConverter"
  */
 public class SourceAndConverterTest {
-    static <T> SourceAndConverter<T> build(ImagePlus plus){
+    static SourceAndConverter<UnsignedShortType> build(ImagePlus plus, int channel){
         return null;
     }
+
+
+    static public void buildController(Bvv bvv){
+        BvvHandleFrame handle = (BvvHandleFrame)bvv.getBvvHandle();
+
+        VolumeViewerPanel viewer = handle.getBigVolumeViewer().getViewer();
+        VolumeViewerFrame frame = handle.getBigVolumeViewer().getViewerFrame();
+        JDialog log = new JDialog(frame, "browse volumes", false);
+
+        JPanel panel = new JPanel();
+        JButton play = new JButton("play");
+        play.addActionListener(evt->{
+            play.setEnabled(false);
+            new Thread(){
+                @Override
+                public void run(){
+                    ImageStack stack = new ImageStack(viewer.getWidth(), viewer.getHeight());
+                    for( int i = 0; i < 360; i++){
+                        viewer.setTimepoint(i);
+                        try{
+                            Thread.sleep(100);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                            break;
+                        }
+                        BufferedImage img = new BufferedImage(viewer.getWidth(), viewer.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                        Graphics g = img.getGraphics();
+                        viewer.getDisplay().getComponent().paintAll(g);
+                        g.dispose();
+                        ImageProcessor proc = new ColorProcessor(img);
+                        stack.addSlice(proc);
+
+                    }
+                    new ImagePlus("snap shots", stack).show();
+                    play.setEnabled(true);
+                }
+            }.start();
+        });
+        panel.add(play);
+        log.setContentPane(panel);
+        log.pack();
+        log.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        log.setVisible(true);
+    }
     public static void main(String[] args) throws IOException {
+        new ImageJ();
         Path location = Paths.get("D:\\working\\yiteng\\241212_c5.zarr");
-        MeshImageStack2<UnsignedShortType> mist = (MeshImageStack2<UnsignedShortType>)LoadZarr.loadMeshImageStack2(location);
+        //location = Paths.get("D:/working/sonnen/four2eight-part2/pred-v3.zarr");
+        MeshImageStack2<?> mist = LoadZarr.loadMeshImageStack2(location);
 
         double dCam = 2000.;
         double dClipNear = 1000.;
@@ -59,55 +118,13 @@ public class SourceAndConverterTest {
                 maxCacheSizeInMB(maxCacheSizeInMB ).
                 ditherWidth(ditherWidth)
         );
-        BvvHandleFrame handle = (BvvHandleFrame)bvv.getBvvHandle();
+
         for(int i = 0; i<mist.getNChannels(); i++){
-            Source<UnsignedShortType> source = mist.sources.get(i);
+            Source<?> source = mist.sources.get(i);
             BvvStackSource< ? > bvvSource = BvvFunctions.show(source, mist.getNFrames(), new BvvOptions().addTo(bvv));
         }
-        VolumeViewerPanel viewer = handle.getBigVolumeViewer().getViewer();
-        VolumeViewerFrame frame = handle.getBigVolumeViewer().getViewerFrame();
-        Action action = new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                System.out.println("did something");
-            }
-        };
 
-        for(Object o : frame.getKeybindings().getConcatenatedActionMap().keys() ){
-            System.out.println(o);
-            System.out.println(frame.getKeybindings().getConcatenatedActionMap().get(o));
-        };
-
-        KeyStroke stroke = KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0, true);
-        viewer.getInputMap().put(stroke, "dm3d");
-        viewer.getActionMap().put("dm3d", action);
-        ActionMap map = new ActionMap();
-        map.put(stroke, action);
-        handle.getKeybindings().addActionMap("dm3d", map);
-
-        viewer.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyTyped(KeyEvent e) {
-                System.out.println(e);
-                new Thread(){
-                    @Override
-                    public void run(){
-                        int stop = 5000;
-                        for( int i = 0; i < 360; i++){
-                            viewer.setTimepoint(i);
-                            try{
-                                Thread.sleep(stop);
-                                stop = 100;
-                            } catch(Exception e){
-                                throw new RuntimeException(e);
-                            }
-                        }
-                    }
-                }.start();
-            }
-        });
-
-
+        buildController(bvv);
     }
 
 }

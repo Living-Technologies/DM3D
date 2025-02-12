@@ -1,5 +1,11 @@
 package deformablemesh.experimental;
 
+import org.janelia.saalfeldlab.n5.N5Writer;
+import org.janelia.saalfeldlab.n5.universe.N5Factory;
+
+import java.nio.file.Path;
+
+/*
 import ij.ImagePlus;
 import ij.ImageStack;
 import net.imglib2.img.Img;
@@ -20,21 +26,23 @@ import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMultiSca
 import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMultiScaleMetadataMutable;
 
 import java.nio.file.Path;
-
+*/
 public class WriteZarrPredictions implements AutoCloseable{
+
     final N5Writer n5;
+    public void close(){
+        n5.close();
+    }
+
 
     public WriteZarrPredictions(Path volumeName){
         n5 = new N5Factory().openWriter(volumeName.toString());
     }
-
+    /*
     public void write(String dataset, ImagePlus data, int frame) throws Exception {
         writeTimepoint(n5, dataset, data, frame);
     }
 
-    public void close(){
-        n5.close();
-    }
 
     static void makeAndWriteMetadata(final N5Writer n5,
                                      final String datasetPath,
@@ -92,5 +100,5 @@ public class WriteZarrPredictions implements AutoCloseable{
             N5Utils.save(imgWithTime, n5, dataset + "/s0", new int[]{imp.getWidth(), imp.getHeight(), imp.getNSlices(), 1}, new GzipCompression());
         }
     }
-
+    */
 }
