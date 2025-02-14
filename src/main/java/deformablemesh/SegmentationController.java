@@ -42,6 +42,7 @@ import deformablemesh.geometry.RayCastMesh;
 import deformablemesh.geometry.interceptable.Interceptable;
 import deformablemesh.geometry.interceptable.InterceptingMesh3D;
 import deformablemesh.geometry.topology.TopoCheck;
+import deformablemesh.geometry.topology.TopologyValidationError;
 import deformablemesh.gui.FrameListener;
 import deformablemesh.gui.FurrowController;
 import deformablemesh.gui.GuiTools;
@@ -1789,6 +1790,24 @@ public class SegmentationController {
         }
 
 
+    }
+    public List<DeformableMesh3D> validateTopology(DeformableMesh3D mesh){
+        List<DeformableMesh3D> meshes = new ArrayList<>();
+        try {
+            TopoCheck checkers = new TopoCheck(mesh);
+            List<DeformableMesh3D> checkedMeshes = checkers.repairMesh();
+            for(DeformableMesh3D debug : checkedMeshes){
+                List<TopologyValidationError> errs = TopoCheck.validate(debug);
+                if(errs.size() > 0){
+                    System.out.println("borked!" + checkedMeshes.size() + "//" + errs.size() + " " + errs);
+                }
+            }
+            meshes.addAll(checkedMeshes);
+        } catch(Exception e){
+            meshes.add(mesh);
+            e.printStackTrace();
+        }
+        return meshes;
     }
 
     public void validateMeshes(){
@@ -3597,11 +3616,12 @@ public class SegmentationController {
     public void guessVoxelMeshes(int threshold){
         BinaryMeshGenerator generator = new BinaryMeshGenerator();
         generator.setInitialThreshold(threshold);
+
         List<DeformableMesh3D> meshes = generator.predictMeshes(getMeshImageStack());
         startNewMeshTracks(meshes);
     }
     public void guessVoxelMeshes() {
-        guessMeshes(2);
+        guessVoxelMeshes(2);
     }
 
 }

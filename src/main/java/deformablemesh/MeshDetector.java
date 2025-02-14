@@ -163,6 +163,7 @@ public class MeshDetector {
         ImageStack currentFrame = mis.getCurrentFrame().getStack();
         ImageStack threshed = new ImageStack(currentFrame.getWidth(), currentFrame.getHeight());
         for(int i = 1; i<= currentFrame.size(); i++){
+            //If the processor is already short, this does nothing.
             ImageProcessor proc = currentFrame.getProcessor(i).convertToShort(false);
             proc.threshold(level);
             threshed.addSlice(proc);

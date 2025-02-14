@@ -9,14 +9,13 @@ import bvvpg.vistools.BvvFunctions;
 import bvvpg.vistools.BvvHandleFrame;
 import bvvpg.vistools.BvvOptions;
 import bvvpg.vistools.BvvStackSource;
-import com.jogamp.opengl.GLAutoDrawable;
-import com.jogamp.opengl.GLEventListener;
 import deformablemesh.io.LoadZarr;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
+import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 
 import javax.swing.AbstractAction;
@@ -26,6 +25,7 @@ import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.KeyStroke;
+import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
@@ -118,13 +118,17 @@ public class SourceAndConverterTest {
                 maxCacheSizeInMB(maxCacheSizeInMB ).
                 ditherWidth(ditherWidth)
         );
-
+        Color[] colors = { Color.CYAN, Color.GREEN, Color.BLACK, Color.RED, Color.BLUE};
         for(int i = 0; i<mist.getNChannels(); i++){
             Source<?> source = mist.sources.get(i);
             BvvStackSource< ? > bvvSource = BvvFunctions.show(source, mist.getNFrames(), new BvvOptions().addTo(bvv));
+            bvvSource.setColor(new ARGBType(getValue(colors[i])));
+            bvvSource.setDisplayRange(0, 4000);
         }
 
         buildController(bvv);
     }
-
+    static int getValue(Color c){
+        return (c.getRed()<<16) + (c.getGreen()<<8) + c.getBlue();
+    }
 }

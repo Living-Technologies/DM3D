@@ -234,6 +234,7 @@ public class MultiChannelVolumeTexture extends Texture3D {
     private void findMinAndMaxValues(Calibration cal, TextureProducer tex) {
         cal.min = Double.MAX_VALUE;
         cal.max = -Double.MAX_VALUE;
+        System.out.println(xDim + ", " + yDim + ", " + zDim);
         for (int k = 0; k < zDim; k++) {
             for (int j = 0; j < yDim; j++) {
                 for (int i = 0; i < xDim; i++) {

@@ -70,11 +70,28 @@ public class BinaryMeshGenerator {
     int closeSteps = 0;
     ImageStack ones;
     int initialThreshold;
+    int secondThreshold;
+    static volatile boolean validate = false;
+    private int DOWNSAMPLE = 1;
+
     public BinaryMeshGenerator(){
         initialThreshold = 2;
+        secondThreshold = 0;
     }
     public void setInitialThreshold(int t){
         initialThreshold = t;
+    }
+    public void setSecondThreshold(int t){
+        secondThreshold = t;
+    }
+
+    /**
+     * This will downsample in the x-y direction before doing any mesh creation.
+     *
+     * @param factor
+     */
+    public void setDownsample(int factor){
+        DOWNSAMPLE = factor;
     }
     public static DeformableMesh3D voxelMesh(Region r, MeshImageStack stack){
         int w = stack.getWidthPx();
@@ -516,22 +533,26 @@ public class BinaryMeshGenerator {
         }
         r.validate();
 
-
+        System.out.println("creating voxel mesh");
         DeformableMesh3D mesh = voxelMesh(r, regionStack);
-
-        try {
-            TopoCheck checkers = new TopoCheck(mesh);
-            List<DeformableMesh3D> checkedMeshes = checkers.repairMesh();
-            for(DeformableMesh3D debug : checkedMeshes){
-                List<TopologyValidationError> errs = TopoCheck.validate(debug);
-                if(errs.size() > 0){
-                    System.out.println("borked!" + checkedMeshes.size() + "//" + errs.size() + " " + errs);
+        if(validate){
+            try {
+                TopoCheck checkers = new TopoCheck(mesh);
+                List<DeformableMesh3D> checkedMeshes = checkers.repairMesh();
+                for(DeformableMesh3D debug : checkedMeshes){
+                    List<TopologyValidationError> errs = TopoCheck.validate(debug);
+                    if(errs.size() > 0){
+                        System.out.println("borked!" + checkedMeshes.size() + "//" + errs.size() + " " + errs);
+                    }
                 }
+                meshes.addAll(checkedMeshes);
+            } catch(Exception e){
+                meshes.add(mesh);
+                e.printStackTrace();
             }
-            meshes.addAll(checkedMeshes);
-        } catch(Exception e){
+        } else{
+            //System.out.println( TopoCheck.validate(mesh) );
             meshes.add(mesh);
-            e.printStackTrace();
         }
 
         return meshes;
@@ -547,8 +568,13 @@ public class BinaryMeshGenerator {
      * @return List of meshes that were found within the image.
      */
     public List<DeformableMesh3D> predictMeshes(MeshImageStack mis){
-        ImagePlus frame = mis.getCurrentFrame();
-
+        ImagePlus frame;
+        if(DOWNSAMPLE > 1){
+            frame = mis.getCurrentFrameScaled(mis.getWidthPx()/DOWNSAMPLE, mis.getHeightPx()/DOWNSAMPLE);
+        } else{
+            frame = mis.getCurrentFrame();
+        }
+        //TODO This whole section should be switched to using a MeshImageStack instead of an imageplus
         ImageStack old = frame.getStack();
         ImageStack stack = new ImageStack(frame.getWidth(), frame.getHeight());
 
@@ -558,11 +584,13 @@ public class BinaryMeshGenerator {
             stack.addSlice(p);
         }
         List<Region> regions = ConnectedComponents3D.getRegions(stack);
-
+        System.out.println(regions.size());
         ImageStack space = new ImageStack(frame.getWidth(), frame.getHeight());
+        System.out.println("second threshold: " + secondThreshold);
+
         for(int j = 1; j<=old.size(); j++){
             ImageProcessor p = old.getProcessor(j).convertToShort(false).duplicate();
-            p.threshold(0);
+            p.threshold(secondThreshold);
             space.addSlice(p);
         }
 
@@ -573,7 +601,8 @@ public class BinaryMeshGenerator {
             rg.step();
         }
 
-        ImagePlus regionPlus = mis.getOriginalPlus().createImagePlus();
+        //ImagePlus regionPlus = mis.createImagePlus();
+        ImagePlus regionPlus = frame.createImagePlus();
         regionPlus.setStack(stack);
 
         MeshImageStack regionStack = new MeshImageStack(regionPlus);

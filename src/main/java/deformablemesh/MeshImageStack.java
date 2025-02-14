@@ -35,6 +35,7 @@ import ij.measure.Calibration;
 import ij.plugin.FileInfoVirtualStack;
 import ij.plugin.FolderOpener;
 import ij.plugin.Resizer;
+import ij.plugin.Scaler;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 
@@ -215,8 +216,13 @@ public class MeshImageStack {
         return unit;
     }
 
-    public MeshImageStack duplicate(){
-        return new MeshImageStack(original);
+    public MeshImageStack duplicate()
+    {
+        MeshImageStack dup = new MeshImageStack(original);
+        dup.setFrameAndChannel(CURRENT, channel);
+
+        return dup;
+
     }
 
     public Calibration getImageJCalibration(){
@@ -786,7 +792,7 @@ public class MeshImageStack {
 
         for(int i = 0;i<slices; i++){
             int n = i * CHANNELS + CURRENT*CHANNELS*slices + channel + 1;
-            ImageProcessor proc = getProcessor(CURRENT, channel, i);
+            ImageProcessor proc = getProcessor(CURRENT, channel, i).duplicate();
             stack.addSlice(proc);
         }
         ImagePlus plus = createImagePlus();
@@ -795,6 +801,11 @@ public class MeshImageStack {
         plus.setStack(stack, 1, slices, 1);
         return plus;
     }
+
+    public ImagePlus getCurrentFrameScaled(int xf, int yf){
+        ImagePlus imp = getCurrentFrame();
+        return Scaler.resize(imp, xf, yf, imp.getNSlices(), "none");
+    };
 
     /**
      * Returns an isotropic version of the current frame.
