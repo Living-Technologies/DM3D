@@ -1149,7 +1149,15 @@ public class SegmentationController {
         });
     }
 
-
+    /**
+     * Remeshes connections using the existing values for the min and max lengths.
+     *
+     *
+     * @see SegmentationController#reMeshConnectionsAllMeshes(double, double)
+     */
+    public void reMeshConnectionsAllMeshes(){
+        reMeshConnectionsAllMeshes(getMinConnectionLength(), getMaxConnectionLength());
+    }
     /**
      * Applies the connection remesh algorith to all meshes in the current frame.
      *
@@ -3610,6 +3618,12 @@ public class SegmentationController {
 
     public void generateCellposeTrainingData(){
         CreateCellposeLabels cclbl = new CreateCellposeLabels(getMeshImageStack(), getAllTracks());
+
+        File path = GuiTools.getDirectory(IJ.getInstance(), "Select folder to save data too");
+        if(path != null){
+            cclbl.setFolder(path);
+        }
+
         cclbl.process();
     }
 

@@ -119,17 +119,17 @@ public class SaveImageToZarr {
             //x
             blocks[spatial] = plus.getWidth();
             scale[spatial] = cb.pixelWidth;
-            translation[spatial] = cb.xOrigin;
+            translation[spatial] = - cb.xOrigin * cb.pixelWidth;
             axes[spatial] = new Axis(Axis.SPACE, "x", cb.getXUnit());
             //y
             blocks[spatial + 1] = plus.getHeight();
             scale[spatial+1] = cb.pixelHeight;
-            translation[spatial+1] = cb.yOrigin;
+            translation[spatial+1] = - cb.yOrigin * cb.pixelHeight;
             axes[spatial + 1] = new Axis(Axis.SPACE, "y", cb.getYUnit());
 
             blocks[spatial + 2] = plus.getNSlices();
             scale[spatial+2] = cb.pixelDepth;
-            translation[spatial+2] = cb.zOrigin;
+            translation[spatial+2] = - cb.zOrigin * cb.pixelDepth;
             axes[spatial + 2] = new Axis(Axis.SPACE, "z", cb.getZUnit());
 
             //c (if present.)

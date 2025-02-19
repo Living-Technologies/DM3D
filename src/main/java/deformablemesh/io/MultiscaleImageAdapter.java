@@ -59,9 +59,9 @@ public class MultiscaleImageAdapter<T extends NumericType<T> & NativeType<T>> {
             cb.pixelWidth = scale[xDex];
             cb.pixelHeight = scale[yDex];
             cb.pixelDepth = scale[zDex];
-            cb.xOrigin = offset[xDex];
-            cb.yOrigin = offset[yDex];
-            cb.zOrigin = offset[zDex];
+            cb.xOrigin = -offset[xDex]/scale[xDex];
+            cb.yOrigin = -offset[yDex]/scale[xDex];
+            cb.zOrigin = -offset[zDex]/scale[zDex];
             if(tDex >= 0){
                 cb.setTimeUnit(axes.get(tDex).getUnit());
                 cb.frameInterval = scale[tDex];
@@ -147,10 +147,6 @@ public class MultiscaleImageAdapter<T extends NumericType<T> & NativeType<T>> {
     }
 
     public void addResolution(RandomAccessibleInterval<T> data, double[] scale, double[] offset){
-        System.out.println(Arrays.toString(data.dimensionsAsLongArray()));
-        System.out.println(Arrays.toString(scale));
-        System.out.println(Arrays.toString(offset));
-        System.out.println(images.getOrder());
         images.data.add(data);
         images.scales.add(scale);
         images.offsets.add(offset);
@@ -187,7 +183,6 @@ public class MultiscaleImageAdapter<T extends NumericType<T> & NativeType<T>> {
     public ImagePlus getMipMapAsPlus(int level){
         ImagePlus plus = new ImagePlus();
         plus.setTitle(getTitle());
-
         ImageStack stack = getImageStack(level);
         System.out.println(stack.size() + " E " + images.getNChannels() + ", " + images.getNSlices(level) + ", " + images.getNFrames());
         plus.setStack(stack, images.getNChannels(), images.getNSlices(level), images.getNFrames());

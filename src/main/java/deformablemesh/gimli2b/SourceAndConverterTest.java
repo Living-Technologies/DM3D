@@ -90,7 +90,7 @@ public class SourceAndConverterTest {
     }
     public static void main(String[] args) throws IOException {
         new ImageJ();
-        Path location = Paths.get("D:\\working\\yiteng\\241212_c5.zarr");
+        Path location = Paths.get("D:\\working\\nefeli-dna\\cilia\\250115_TM_IMAGINE_NI_NHS643_40x1.1_Z-stack_processed.zarr\\");
         //location = Paths.get("D:/working/sonnen/four2eight-part2/pred-v3.zarr");
         MeshImageStack2<?> mist = LoadZarr.loadMeshImageStack2(location);
 

@@ -13,6 +13,8 @@ import org.junit.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.stream.Stream;
 
 public class IOTest {
@@ -25,6 +27,8 @@ public class IOTest {
     final static double fi = 60;
     final static String unit = "µm";
     final static String timeUnit = "sec";
+
+    static Set<Path> createdFolders = new HashSet<>();
 
     /**
      * Creates an image plus with the desired array dimensions. It will be
@@ -125,11 +129,11 @@ public class IOTest {
      *
      * @param p
      */
-    static void deleteTempZarrFolder(Path p){
+    static void deleteFolder(Path p){
         try {
             if (Files.isDirectory(p)) {
                 try (Stream<Path> paths = Files.list(p)) {
-                    paths.forEach(IOTest::deleteTempZarrFolder);
+                    paths.forEach(IOTest::deleteFolder);
                 }
             }
             Files.deleteIfExists(p);
@@ -137,12 +141,25 @@ public class IOTest {
             throw new RuntimeException(e);
         }
     }
+    static void deleteTempZarrFolder(Path p){
+        if(createdFolders.contains(p)){
+            deleteFolder(p);
+        }else {
+            throw new RuntimeException("Trying to delete a folder that was not created!" + p + createdFolders);
+        }
+    }
+
     static Path getTempZarrPath(String s) throws IOException {
         Path p0 = Files.createTempDirectory(s);
         Path zarrPath = p0.getParent().resolve(p0.getFileName() + ".zarr");
-        Files.move(p0, zarrPath);
-        return zarrPath;
+        if(Files.exists(zarrPath)){
+            throw new RuntimeException("Destination folder exists!" + zarrPath);
+        }
 
+        Files.move(p0, zarrPath);
+        createdFolders.add(zarrPath);
+
+        return zarrPath;
     }
 
 

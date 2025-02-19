@@ -40,6 +40,7 @@ import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JEditorPane;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -87,6 +88,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.List;
@@ -526,6 +528,16 @@ public class GuiTools {
 
         c.setLocation(x, y);
 
+    }
+    static public File getDirectory(Frame parent, String title){
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Select folder for cellpose files");
+        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        File[] f = chooser.getSelectedFiles();
+        if(f == null || f.length == 0){
+            return null;
+        }
+        return f[0];
     }
     static public ImagePlus selectOpenImage(Frame parent, String title){
         JDialog log = new JDialog(parent, title, true);
