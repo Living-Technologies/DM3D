@@ -45,15 +45,13 @@ import deformablemesh.gui.FurrowController;
 import deformablemesh.gui.GuiTools;
 import deformablemesh.io.FurrowWriter;
 import deformablemesh.io.MeshWriter;
+import deformablemesh.plugins.Deforming3DMesh_Plugin;
 import deformablemesh.track.MeshTracker;
 import deformablemesh.track.Track;
 import deformablemesh.util.IntensitySurfacePlot;
 import deformablemesh.util.MeshAnalysis;
 import deformablemesh.util.MeshFaceObscuring;
 import ij.ImagePlus;
-import ij.ImageStack;
-import ij.process.FloatProcessor;
-import ij.process.ImageProcessor;
 import lightgraph.DataSet;
 import lightgraph.Graph;
 

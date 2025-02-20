@@ -25,7 +25,7 @@
  */
 package deformablemesh.gui;
 
-import deformablemesh.Deforming3DMesh_Plugin;
+import deformablemesh.plugins.Deforming3DMesh_Plugin;
 import deformablemesh.SegmentationController;
 import ij.IJ;
 import ij.ImagePlus;
@@ -37,7 +37,6 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JColorChooser;
 import javax.swing.JComboBox;
-import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JEditorPane;
 import javax.swing.JFileChooser;
@@ -88,7 +87,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.List;

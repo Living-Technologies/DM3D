@@ -1,4 +1,4 @@
-/*-
+package deformablemesh.plugins;/*-
  * #%L
  * Triangulated surface for deforming in 3D.
  * %%

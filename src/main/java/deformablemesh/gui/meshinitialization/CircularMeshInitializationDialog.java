@@ -30,6 +30,7 @@ import deformablemesh.SegmentationController;
 import deformablemesh.SegmentationModel;
 import deformablemesh.externalenergies.PerpendicularGradientEnergy;
 import deformablemesh.externalenergies.PressureForce;
+import deformablemesh.geometry.BinaryMeshGenerator;
 import deformablemesh.geometry.Box3D;
 import deformablemesh.geometry.ConnectionRemesher;
 import deformablemesh.geometry.DeformableMesh3D;
@@ -80,6 +81,7 @@ import java.awt.event.MouseMotionListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -138,8 +140,10 @@ public class CircularMeshInitializationDialog implements FrameListener {
         add.addActionListener(evt->{
             createMesh();
         });
-        JButton start = new JButton("start mesh");
-        start.addActionListener(this::startMesh);
+        JButton creatVoxelMesh = new JButton("add voxel mesh");
+        creatVoxelMesh.addActionListener(evt->{
+            createVoxelMesh();
+        });
         showMeshes = new JCheckBox("show meshes");
         showMeshes.setSelected(true);
         showMeshes.addActionListener((evt)->{
@@ -233,6 +237,7 @@ public class CircularMeshInitializationDialog implements FrameListener {
 
 
         row.add(add);
+        row.add(creatVoxelMesh);
         row.add(clear);
         row.add(close);
         row.add(binary);
@@ -287,8 +292,6 @@ public class CircularMeshInitializationDialog implements FrameListener {
 
     }
 
-    private void startMesh(ActionEvent actionEvent) {
-    }
 
     public void setCloseCallback( Runnable r){
         closeCallback = r;
@@ -427,7 +430,19 @@ public class CircularMeshInitializationDialog implements FrameListener {
         initializer.clear();
         segmentationController.clearTransientObjects();
     }
-
+    private void createVoxelMesh(){
+        List<Sphere> spheres = initializer.getSpheres();
+        if(spheres.size()==0){
+            return;
+        }
+        ImagePlus bin = getBinaryImage(spheres, stack);
+        BinaryMeshGenerator meshGenerator = new BinaryMeshGenerator();
+        List<DeformableMesh3D> meshes = meshGenerator.meshesFromLabels(new MeshImageStack(bin));
+        initializer.clear();
+        meshes.sort(Comparator.comparingDouble(DeformableMesh3D::calculateVolume));
+        segmentationController.initializeMesh(meshes.get(meshes.size() - 1));
+        showMeshes();
+    }
     private void createMesh(){
         List<Sphere> spheres = initializer.getSpheres();
         if(spheres.size()==0){
