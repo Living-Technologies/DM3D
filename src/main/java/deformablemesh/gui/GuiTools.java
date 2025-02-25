@@ -529,13 +529,16 @@ public class GuiTools {
     }
     static public File getDirectory(Frame parent, String title){
         JFileChooser chooser = new JFileChooser();
-        chooser.setDialogTitle("Select folder for cellpose files");
+        chooser.setDialogTitle(title);
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        File[] f = chooser.getSelectedFiles();
-        if(f == null || f.length == 0){
+        chooser.showDialog(parent, "select");
+        File f = chooser.getSelectedFile();
+        File d = chooser.getCurrentDirectory();
+        System.out.println(f + ", " + d);
+        if( f == null ){
             return null;
         }
-        return f[0];
+        return f;
     }
     static public ImagePlus selectOpenImage(Frame parent, String title){
         JDialog log = new JDialog(parent, title, true);

@@ -3610,6 +3610,27 @@ public class SegmentationController {
      *
      */
     public void generateStardistTrainingData() {
+        if(getMeshImageStack() == null && getAllTracks().size() > 0){
+            //Need an image and meshes to generate training data
+            return;
+        }
+        File path = GuiTools.getDirectory(IJ.getInstance(), "Select base folder for stardist training data.");
+        if(path != null){
+            Path imgFolder = path.toPath().resolve("images");
+            Path maskFolder = path.toPath().resolve("masks");
+            try {
+                if (!Files.exists(imgFolder)) {
+                    Files.createDirectories(imgFolder);
+                } else if (!Files.isDirectory(imgFolder)) {
+                    throw new IOException("Cannot save images to regular file: " + imgFolder);
+                }
+                if (!Files.exists(maskFolder)) {
+                    Files.createDirectories(maskFolder);
+                }
+            } catch(IOException ioe){
+
+            }
+        }
     }
 
     public void generateActiveUnetTrainingData(){

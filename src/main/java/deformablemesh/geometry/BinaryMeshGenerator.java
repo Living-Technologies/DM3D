@@ -28,6 +28,7 @@ package deformablemesh.geometry;
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshDetector;
 import deformablemesh.MeshImageStack;
+import deformablemesh.geometry.meshgeneration.RegionFilter;
 import deformablemesh.geometry.topology.TopoCheck;
 import deformablemesh.geometry.topology.TopologyValidationError;
 import deformablemesh.io.MeshWriter;
@@ -73,6 +74,7 @@ public class BinaryMeshGenerator {
     int secondThreshold;
     static volatile boolean validate = false;
     private int DOWNSAMPLE = 1;
+    List<Region> preMeshFilter = new ArrayList<>();
 
     public BinaryMeshGenerator(){
         initialThreshold = 2;
@@ -85,6 +87,9 @@ public class BinaryMeshGenerator {
         secondThreshold = t;
     }
 
+    public void addPreMeshFilter(RegionFilter filter){
+
+    }
     /**
      * This will downsample in the x-y direction before doing any mesh creation.
      *
@@ -407,12 +412,8 @@ public class BinaryMeshGenerator {
                     if(proc.get(j*w +  k)!=0 && isEdge(k, j, i, blob.getStack())){
                         points.add(new int[]{k, j, i-1});
                     }
-
-
                 }
-
             }
-
         }
         return points;
     }

@@ -7,6 +7,7 @@ import deformablemesh.geometry.ConnectionRemesher;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.topology.TopoCheck;
 import deformablemesh.geometry.topology.TopologyValidationError;
+import deformablemesh.io.LoadZarr;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.track.Track;
@@ -40,6 +41,7 @@ import net.imglib2.type.numeric.integer.UnsignedByteType;
 import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -310,7 +312,7 @@ public class Imglib2Mesh {
         List<DeformableMesh3D> meshes = new ArrayList<>();
         for(int j = 1; j<old.size(); j++){
             ImageProcessor p = old.getProcessor(j).convertToShort(false).duplicate();
-            p.threshold(3);
+            p.threshold(14500);
             stack.addSlice(p);
         }
         List<Region> regions = ConnectedComponents3D.getRegions(stack);
@@ -318,7 +320,7 @@ public class Imglib2Mesh {
         ImageStack space = new ImageStack(frame.getWidth(), frame.getHeight());
         for(int j = 1; j<old.size(); j++){
             ImageProcessor p = old.getProcessor(j).convertToShort(false).duplicate();
-            p.threshold(0);
+            p.threshold(3000);
             space.addSlice(p);
         }
 
@@ -334,6 +336,7 @@ public class Imglib2Mesh {
         rg.dilate();
 
         for(Region r: regions){
+            System.out.println("region!" + r.getPoints().size());
             r.validate();
             Img<UnsignedByteType> img = image(r);
 
@@ -389,9 +392,9 @@ public class Imglib2Mesh {
 
     public static void main(String[] args) throws IOException {
         new ImageJ();
-        ImagePlus plus = FileInfoVirtualStack.openVirtual(new File(args[0]).getAbsolutePath());
-        MeshImageStack mis = new MeshImageStack(plus);
-
+        //ImagePlus plus = FileInfoVirtualStack.openVirtual(new File(args[0]).getAbsolutePath());
+        //MeshImageStack mis = new MeshImageStack(plus);
+        MeshImageStack mis = LoadZarr.loadMeshImageStack2(Paths.get("D:\\working\\nefeli-dna\\cilia\\250115_TM_IMAGINE_NI_NHS643_40x1.1_Z-stack_processed.zarr"));
         MeshFrame3D mf3d = new MeshFrame3D();
         mf3d.showFrame(true);
         mf3d.addLights();

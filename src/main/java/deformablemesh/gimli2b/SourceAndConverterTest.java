@@ -9,7 +9,9 @@ import bvvpg.vistools.BvvFunctions;
 import bvvpg.vistools.BvvHandleFrame;
 import bvvpg.vistools.BvvOptions;
 import bvvpg.vistools.BvvStackSource;
+import deformablemesh.gui.GuiTools;
 import deformablemesh.io.LoadZarr;
+import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -90,8 +92,7 @@ public class SourceAndConverterTest {
     }
     public static void main(String[] args) throws IOException {
         new ImageJ();
-        Path location = Paths.get("D:\\working\\nefeli-dna\\cilia\\250115_TM_IMAGINE_NI_NHS643_40x1.1_Z-stack_processed.zarr\\");
-        //location = Paths.get("D:/working/sonnen/four2eight-part2/pred-v3.zarr");
+        Path location = GuiTools.getDirectory(IJ.getInstance(), "Select Zarr Folder").toPath();
         MeshImageStack2<?> mist = LoadZarr.loadMeshImageStack2(location);
 
         double dCam = 2000.;
