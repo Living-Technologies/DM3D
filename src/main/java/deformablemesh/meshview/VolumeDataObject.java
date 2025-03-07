@@ -228,10 +228,10 @@ public class VolumeDataObject implements DataObject {
     }
 
     public double[] getMaxRangeMinMax(){
-        return volume.getMaxRangeMinMax(0);
+        return volume.getMaxRangeMinMax(dex);
     }
     public double[] getClampedMinMax(){
-        return volume.getAbsoluteMinMax(0);
+        return volume.getAbsoluteMinMax(dex);
     }
     public double[] getMinMax() {
         return new double[] {min, max};

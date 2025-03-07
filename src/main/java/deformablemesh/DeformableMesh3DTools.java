@@ -1755,6 +1755,51 @@ public class DeformableMesh3DTools {
             return a + (b<<16);
         }
     }
+
+    /**
+     * @Depracated
+     *
+     * This is a way to construct the positions. It is not as efficient as the long[][] version.
+     * I'm not sure why, I think because the topology repair is so slow.
+     * @param origin
+     * @param nx
+     * @param ny
+     * @return
+     */
+    static public DeformableMesh3D getQuad(double[] origin, double[] nx, double[] ny){
+
+        double[] positions = {
+                origin[0] - 0.5*nx[0] - 0.5*ny[0],
+                origin[1] - 0.5*nx[1] - 0.5*ny[1],
+                origin[2] - 0.5*nx[2] - 0.5*ny[2],
+
+                origin[0] + 0.5*nx[0] - 0.5*ny[0],
+                origin[1] + 0.5*nx[1] - 0.5*ny[1],
+                origin[2] + 0.5*nx[2] - 0.5*ny[2],
+
+                origin[0] + 0.5*nx[0] + 0.5*ny[0],
+                origin[1] + 0.5*nx[1] + 0.5*ny[1],
+                origin[2] + 0.5*nx[2] + 0.5*ny[2],
+
+                origin[0] - 0.5*nx[0] + 0.5*ny[0],
+                origin[1] - 0.5*nx[1] + 0.5*ny[1],
+                origin[2] - 0.5*nx[2] + 0.5*ny[2]
+        };
+
+        int[] connections = {
+                0, 1,
+                1, 2,
+                2, 0,
+                2, 3,
+                3, 0
+        };
+        int[] triangles = {
+                0, 1, 2,
+                0, 2, 3
+        };
+
+        return new DeformableMesh3D(positions, connections, triangles);
+    }
 }
 
 class Node3DPath implements PossiblePath<Node3D>{
@@ -1767,7 +1812,7 @@ class Node3DPath implements PossiblePath<Node3D>{
     }
 
     public Node3DPath(List<Node3D> path){
-        path.forEach(this.path::add);
+        this.path.addAll(path);
     }
     @Override
         public Node3D getEndPoint() {

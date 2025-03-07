@@ -31,7 +31,7 @@ import deformablemesh.gui.FrameListener;
 import java.awt.Color;
 
 /**
- * For adding a second channel to display.
+ * For following the single channel of the 3D mesh image stack.
  */
 public class ChannelVolume implements FrameListener {
     VolumeDataObject vdo;
@@ -49,7 +49,7 @@ public class ChannelVolume implements FrameListener {
     @Override
     public void frameChanged(int i) {
         stack.setFrame(i);
-        vdo.setTextureData(stack);
+        vdo.updateVolume();
     }
     @Override
     public String toString(){

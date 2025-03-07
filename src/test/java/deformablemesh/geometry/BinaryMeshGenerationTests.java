@@ -9,14 +9,19 @@ import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.meshview.MultiChannelVolumeTexture;
 import deformablemesh.meshview.VolumeDataObject;
 import deformablemesh.util.ColorSuggestions;
+import deformablemesh.util.connectedcomponents.Region;
+import deformablemesh.util.connectedcomponents.RegionGrowing;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
+import ij.process.ShortProcessor;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.awt.Color;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class BinaryMeshGenerationTests {
@@ -31,6 +36,7 @@ public class BinaryMeshGenerationTests {
         plus.setStack(stack, 1, 16, 1);
         return plus;
     }
+
     public static ImagePlus spot(){
         ImagePlus plus = space();
         ImageStack stack = plus.getStack();
@@ -350,8 +356,67 @@ public class BinaryMeshGenerationTests {
         mesh.update();
     }
 
-    interface PlusMaker{
-        ImagePlus getPlus();
+    @Test
+    public void openMeshBug(){
+
+        int[][] corners = {
+                {5, 5, 4},
+                {5, 3, 4},
+                {3, 5, 4},
+                {3, 3, 4},
+                {4, 5, 3},
+                {4, 3, 3},
+                {3, 4, 3},
+                {5, 4, 3},
+                {4, 5, 5},
+                {4, 3, 5},
+                {3, 4, 5},
+                {5, 4, 5}
+
+        };
+        for(int[] pos : corners) {
+            ImageStack space = new ImageStack(9, 9);
+            for (int i = 0; i < 9; i++) {
+                space.addSlice(new ShortProcessor(9, 9));
+            }
+
+
+            space.getProcessor(5).set(4, 4, 255);
+            space.getProcessor(pos[2] + 1).set(pos[0], pos[1], 255);
+            List<int[]> pts = new ArrayList<>();
+            pts.add(new int[]{4, 4, 4});
+            pts.add(pos);
+            Region r = new Region(255, pts);
+            DeformableMesh3D mesh = BinaryMeshGenerator.voxelMesh(r, new MeshImageStack(new ImagePlus("disjoint", space)));
+            System.out.println("checking: " + Arrays.toString(pos));
+            Assert.assertEquals(24, mesh.triangles.size());
+        }
+
+        int[][] adjacent = {
+                {5, 4, 4},
+                {3, 4, 4},
+                {4, 5, 4},
+                {4, 3, 4},
+                {4, 4, 3},
+                {4, 4, 5}
+        };
+        for(int[] pos : adjacent) {
+            ImageStack space = new ImageStack(9, 9);
+            for (int i = 0; i < 9; i++) {
+                space.addSlice(new ShortProcessor(9, 9));
+            }
+
+
+            space.getProcessor(5).set(4, 4, 255);
+            space.getProcessor(pos[2] + 1).set(pos[0], pos[1], 255);
+            List<int[]> pts = new ArrayList<>();
+            pts.add(new int[]{4, 4, 4});
+            pts.add(pos);
+            Region r = new Region(255, pts);
+            DeformableMesh3D mesh = BinaryMeshGenerator.voxelMesh(r, new MeshImageStack(new ImagePlus("disjoint", space)));
+            System.out.println("checking: " + Arrays.toString(pos));
+            Assert.assertEquals(20, mesh.triangles.size());
+        }
     }
     public static void main(String[] args){
 

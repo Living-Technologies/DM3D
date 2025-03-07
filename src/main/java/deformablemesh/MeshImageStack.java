@@ -44,6 +44,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -57,6 +58,12 @@ import static deformablemesh.geometry.DeformableMesh3D.ORIGIN;
  * Date: 7/3/13
  */
 public class MeshImageStack {
+    static interface Filter{
+        void filter(ImageProcessor proc);
+    }
+
+    List<Filter> filters = new ArrayList<>();
+
     String shortTitle = "";
     public void setShortTitle(String s){
         shortTitle = s;
@@ -344,7 +351,9 @@ public class MeshImageStack {
     public int getChannel(){
         return channel;
     }
-
+    public void gaussianBlur(double sigma){
+        filters.add( imp-> imp.blurGaussian(sigma));
+    }
     /**
      * Copies the image data from the image stack to the double[][] backing the
      * image data that is used for obtaining values.
@@ -365,6 +374,11 @@ public class MeshImageStack {
             //int N = z*channels + i * channels * slices + c;
             int n = i * CHANNELS + CURRENT*CHANNELS*slices + channel + 1;
             ImageProcessor proc = original.getStack().getProcessor( n );
+            if(filters.size() > 0){
+                ImageProcessor filtered = proc.duplicate();
+                filters.forEach(f->f.filter(filtered));
+                proc = filtered;
+            }
             for(int j = 0; j<py; j++){
                 for(int k = 0; k<px; k++){
                     double v = proc.getPixelValue(k,j);
@@ -855,6 +869,7 @@ public class MeshImageStack {
 
     /**
      * This will get an N channel version of the provided frame.
+     * It has duplicated processors and a new image stack.
      *
      * @param i 0-index time.
      * @return

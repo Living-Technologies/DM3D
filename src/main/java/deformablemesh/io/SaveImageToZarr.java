@@ -56,7 +56,7 @@ public class SaveImageToZarr {
         return DataType.FLOAT32;
     }
 
-    static <T extends NativeType<T> & NumericType<T>> RandomAccessibleInterval<T>  getXYZCTRandomAccessIntervale(ImagePlus plus){
+    public static <T extends NativeType<T> & NumericType<T>> RandomAccessibleInterval<T>  getXYZCTRandomAccessIntervale(ImagePlus plus){
         //RandomAccessibleInterval<T> img = ImageJFunctions.wrap(plus);
         RandomAccessibleInterval<T> img = (RandomAccessibleInterval<T>)VirtualStackAdapter.wrap(plus);
         if(plus.getNChannels() > 1){

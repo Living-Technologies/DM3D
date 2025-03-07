@@ -124,14 +124,27 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
         return proc;
     }
 
+
+    /**
+     * Creates a mesh image stack that is backed by the BDV class "Source"
+     *
+     *
+     * @param sources Each source represents a channel for a 3D time series
+     *                image. They can also contain multiple resolutions.
+     */
+    public MeshImageStack2(List<Source<T>> sources){
+        this(sources, 0, 0);
+    }
     /**
      * Creates a mesh image stack based on the provided big dataviewer sources.
      * Each source is assumed to be a channel. The calibration is set based on
      * the 0th multiscale resolution.
      *
      * @param sources Each source should be a different channel representing the same space.
+     * @param frame starting frame. Used to avoid buffering twice.
+     * @param channel starting channel. Used to avoid buffering twice.
      */
-    public MeshImageStack2(List<Source<T>> sources){
+    public MeshImageStack2(List<Source<T>> sources, int frame, int channel){
         //The assumption is each source is a channel for the same volume
         this.sources = sources;
         Source<T> source = sources.get(0);
@@ -159,8 +172,8 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
 
         FRAMES = nFrames;
         CHANNELS = sources.size();
-        CURRENT=0;
-        channel = 0;
+        CURRENT = frame;
+        this.channel = channel;
         int py = (int)dims[1];
         int px = (int)dims[0];
 
@@ -215,7 +228,8 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
      */
     @Override
     public MeshImageStack duplicate(){
-        return new MeshImageStack2<T>(sources);
+
+        return new MeshImageStack2<T>(sources, CURRENT, channel);
     }
 
     /**

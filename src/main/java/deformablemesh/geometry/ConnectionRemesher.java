@@ -183,6 +183,7 @@ public class ConnectionRemesher {
         ave = ave/original.connections.size();
 
         int originalSize = original.connections.size();
+        //the surface area is l0*l0
         double minResult = Math.pow(2, ave/maxLength)*original.connections.size();
         //System.out.println( "before: " + ave + "// " + mn + "//" + ml + " ... " + originalSize);
         if(minResult > originalSize && minResult > 200000){

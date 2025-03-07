@@ -26,7 +26,9 @@
 package deformablemesh.util.connectedcomponents;
 
 import ij.ImageStack;
+import ij.process.ShortProcessor;
 
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -223,36 +225,56 @@ public class RegionGrowing{
         return false;
     }
 
+    /**
+     * 6 fold connectivity.
+     * @param label
+     * @param front
+     * @return
+     */
     List<int[]> possible(int label, int[] front){
         List<int[]> values = new ArrayList<>();
-        for(int i = -1; i<=1; i++){
+
+        for(int i = -1; i<=1; i+=2) {
+            int x = front[0];
+            int y = front[1];
             int z = front[2] + i;
-            if(z<0 || z>slices-1){
+            if (z < 0 || z > slices - 1) {
                 continue;
             }
-            for(int j = -1; j<=1; j++){
-                int y = front[1] + j;
-                if(y<0 || y>=height){
-                    continue;
-                }
-                for(int k = -1; k<=1; k++){
 
-                    if(i==0 && j == 0 && k == 0){
-                        continue;
-                    }
-
-                    int x = front[0] + k;
-                    if(x<0 || x>=width){
-                        continue;
-                    }
-                    int l = getLabel(x, y, z);
-                    if( l == 0 && isValid(x, y, z)){
-                        values.add(new int[]{x, y, z});
-                    }
-
-                }
+            int l = getLabel(x, y, z);
+            if( l == 0 && isValid(x, y, z)){
+                values.add(new int[]{x, y, z});
             }
         }
+        for(int j = -1; j<=1; j+=2) {
+            int x = front[0];
+            int y = front[1] + j;
+            int z = front[2];
+
+            if (y < 0 || y >= height) {
+                continue;
+            }
+            int l = getLabel(x, y, z);
+            if( l == 0 && isValid(x, y, z)){
+                values.add(new int[]{x, y, z});
+            }
+        }
+        for(int k = -1; k<=1; k+=2){
+            int x = front[0] + k;
+            int y = front[1];
+            int z = front[2];
+            if(x<0 || x>=width){
+                continue;
+            }
+            int l = getLabel(x, y, z);
+            if( l == 0 && isValid(x, y, z)){
+                values.add(new int[]{x, y, z});
+            }
+
+        }
+
+
         return values;
     }
     public Region getRegion(Integer label){

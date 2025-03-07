@@ -3371,6 +3371,13 @@ public class SegmentationController {
     public Furrow3D getFurrow() {
         return getRingController().getFurrow();
     }
+    public void blurImage(){
+        MeshImageStack stack = getMeshImageStack();
+        if(stack != null){
+            stack.gaussianBlur(2.0);
+        }
+    }
+
 
     public void setGlobalExecutor(ExecutorService executorService) {
         this.globalExecutor = executorService;

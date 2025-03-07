@@ -74,7 +74,7 @@ public class BinaryMeshGenerator {
     int secondThreshold;
     static volatile boolean validate = false;
     private int DOWNSAMPLE = 1;
-    List<Region> preMeshFilter = new ArrayList<>();
+    List<RegionFilter> preMeshFilters = new ArrayList<>();
 
     public BinaryMeshGenerator(){
         initialThreshold = 2;
@@ -88,7 +88,7 @@ public class BinaryMeshGenerator {
     }
 
     public void addPreMeshFilter(RegionFilter filter){
-
+        preMeshFilters.add(filter);
     }
     /**
      * This will downsample in the x-y direction before doing any mesh creation.
@@ -98,6 +98,7 @@ public class BinaryMeshGenerator {
     public void setDownsample(int factor){
         DOWNSAMPLE = factor;
     }
+
     public static DeformableMesh3D voxelMesh(Region r, MeshImageStack stack){
         int w = stack.getWidthPx();
         int h = stack.getHeightPx();
@@ -215,157 +216,13 @@ public class BinaryMeshGenerator {
         return new long[][]{t1, t2};
     }
 
-    /**
-     * @Depracated
-     *
-     * This is a way to construct the positions. It is not as efficient as the long[][] version.
-     * I'm not sure why, I think because the topology repair is so slow.
-     * @param origin
-     * @param nx
-     * @param ny
-     * @return
-     */
-    static public DeformableMesh3D getQuad(double[] origin, double[] nx, double[] ny){
 
-        double[] positions = {
-                origin[0] - 0.5*nx[0] - 0.5*ny[0],
-                origin[1] - 0.5*nx[1] - 0.5*ny[1],
-                origin[2] - 0.5*nx[2] - 0.5*ny[2],
-
-                origin[0] + 0.5*nx[0] - 0.5*ny[0],
-                origin[1] + 0.5*nx[1] - 0.5*ny[1],
-                origin[2] + 0.5*nx[2] - 0.5*ny[2],
-
-                origin[0] + 0.5*nx[0] + 0.5*ny[0],
-                origin[1] + 0.5*nx[1] + 0.5*ny[1],
-                origin[2] + 0.5*nx[2] + 0.5*ny[2],
-
-                origin[0] - 0.5*nx[0] + 0.5*ny[0],
-                origin[1] - 0.5*nx[1] + 0.5*ny[1],
-                origin[2] - 0.5*nx[2] + 0.5*ny[2]
-        };
-
-        int[] connections = {
-                0, 1,
-                1, 2,
-                2, 0,
-                2, 3,
-                3, 0
-        };
-        int[] triangles = {
-                0, 1, 2,
-                0, 2, 3
-        };
-
-        return new DeformableMesh3D(positions, connections, triangles);
-    }
-    static boolean closeEnough(double[] a, double[] b){
-        double dx = a[0] - b[0];
-        double dy = a[1] - b[1];
-        double dz = a[2] - b[2];
-        return dx*dx + dy*dy + dz*dz < tolerance;
-    }
 
     public void setOpenSteps(int openSteps) {
         this.openSteps = openSteps;
     }
     public void setCloseSteps(int closeSteps){
         this.closeSteps = closeSteps;
-    }
-
-    interface Merger{
-        int addPoint(double[] xyz);
-        List<double[]> getPoints();
-    }
-
-    static class MappingMerger implements Merger{
-        List<double[]> pts = new ArrayList<>();
-        int[][] map;
-        MeshImageStack stack;
-        int w;
-        public MappingMerger(MeshImageStack stack){
-            map = new int[stack.getNSlices()+1][(stack.getHeightPx() + 1)*(stack.getWidthPx() + 1)];
-            this.stack  = stack;
-            w = stack.getWidthPx() + 1;
-        }
-        public int addPoint(double[] xyz){
-            double[] imgc = stack.getImageCoordinates(xyz);
-            int i = (int)Math.round(imgc[0]);
-            int j = (int)Math.round(imgc[1]);
-            int k = (int)Math.round(imgc[2]);
-            int s = map[k][j*w + i];
-            if(s == 0){
-                int dex = pts.size();
-                map[k][j*w + i] =  dex + 1;
-                pts.add(xyz);
-                return dex;
-            } else{
-                return s - 1;
-
-            }
-        }
-
-        public List<double[]> getPoints(){
-            return pts;
-        }
-    }
-
-    static class DistanceMerging implements Merger{
-        List<double[]> added = new ArrayList<>();
-
-
-        @Override
-        public int addPoint(double[] xyz) {
-            for(int i = 0; i<added.size(); i++){
-                double[] a = added.get(i);
-                if( closeEnough(a, xyz)){
-                    return i;
-                }
-            }
-            added.add(xyz);
-            return added.size()-1;
-        }
-
-        @Override
-        public List<double[]> getPoints() {
-            return added;
-        }
-    }
-
-    static public DeformableMesh3D mergeOverlappingVertexes(DeformableMesh3D mesh, Merger merger){
-        int[] map = new int[mesh.nodes.size()];
-
-        for(Node3D node: mesh.nodes){
-            double[] x0 = node.getCoordinates();
-            map[node.index] = merger.addPoint(x0);
-
-        }
-        List<double[]> added = merger.getPoints();
-
-        double[] positions = new double[3*added.size()];
-        int i = 0;
-        for(double[] pt : added){
-            positions[i++] = pt[0];
-            positions[i++] = pt[1];
-            positions[i++] = pt[2];
-        }
-        List<int[]> triangles = new ArrayList<>(mesh.triangles.size());
-        for(Triangle3D t : mesh.triangles){
-            int[] a = {map[t.A.index], map[t.B.index], map[t.C.index]};
-            triangles.add(a);
-        }
-        return DeformableMesh3DTools.fromTriangles(positions, triangles);
-    }
-
-    public DeformableMesh3D remesh(DeformableMesh3D mesh, MeshImageStack stack){
-        ImagePlus binaryBlob = DeformableMesh3DTools.createBinaryRepresentation(stack, mesh);
-        MeshImageStack binstack = new MeshImageStack(binaryBlob);
-        long start = System.currentTimeMillis();
-        List<int[]> points = getPoints(binaryBlob);
-        Region r = new Region(255, points);
-        System.out.println(System.currentTimeMillis() - start);
-        return voxelMesh(r, binstack);
-
     }
 
     /**
@@ -397,26 +254,7 @@ public class BinaryMeshGenerator {
 
     }
 
-    private static List<int[]> getPoints(ImagePlus blob) {
 
-        List<int[]> points = new ArrayList<>();
-        int slices = blob.getNSlices();
-        int w = blob.getWidth();
-        int h = blob.getHeight();
-
-        for(int i = 1; i<= slices; i++){
-            ImageProcessor proc = blob.getStack().getProcessor(i);
-            for(int j = 0; j<h; j++){
-                for(int k = 0; k<w; k++){
-
-                    if(proc.get(j*w +  k)!=0 && isEdge(k, j, i, blob.getStack())){
-                        points.add(new int[]{k, j, i-1});
-                    }
-                }
-            }
-        }
-        return points;
-    }
 
     static boolean isEdge(int x, int y, int k, ImageStack stack){
         if ( x == 0 || x + 1 == stack.getWidth() || y == 0 || y+1 == stack.getHeight() || k == 1 || k == stack.getSize()){
@@ -451,22 +289,6 @@ public class BinaryMeshGenerator {
                 stack.getProcessor(k + 0).get(x + -1, y + 1) == 0;
     }
 
-    static boolean isEdgeLoop(int x, int y, int k, ImageStack stack){
-        if ( x == 0 || x + 1 == stack.getWidth() || y == 0 || y+1 == stack.getHeight() || k == 1 || k == stack.getSize()){
-            return true;
-        }
-        for(int dz = -1; dz<=1; dz++){
-            ImageProcessor p = stack.getProcessor(dz + k);
-            for(int dy = -1; dy<=1; dy++ ){
-                for(int dx = -1; dx<=1; dx++){
-                    if(p.get(dx + x, dy + y)==0){
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
-    }
     /**
      * Creates voxel mesh from the provided binary blob. There is no processing done,
      * this method is used to test the topology correction routines.
@@ -585,10 +407,23 @@ public class BinaryMeshGenerator {
             stack.addSlice(p);
         }
         List<Region> regions = ConnectedComponents3D.getRegions(stack);
-        System.out.println(regions.size());
-        ImageStack space = new ImageStack(frame.getWidth(), frame.getHeight());
-        System.out.println("second threshold: " + secondThreshold);
 
+        if(preMeshFilters.size() > 0){
+            List<Region> remove = new ArrayList<>();
+            for(Region r : regions){
+                if( preMeshFilters.stream().anyMatch(f -> f.filter(r) ) ){
+                    remove.add(r);
+                }
+            }
+            for(Region r : remove){
+                regions.remove(r);
+                for(int[] p : r.getPoints()){
+                    stack.getProcessor(p[2] + 1).set(p[0], p[1], 0);
+                }
+            }
+        }
+
+        ImageStack space = new ImageStack(frame.getWidth(), frame.getHeight());
         for(int j = 1; j<=old.size(); j++){
             ImageProcessor p = old.getProcessor(j).convertToShort(false).duplicate();
             p.threshold(secondThreshold);

@@ -51,6 +51,7 @@ import ij.io.OpenDialog;
 import ij.plugin.FileInfoVirtualStack;
 import loci.plugins.BF;
 import loci.plugins.in.ImporterOptions;
+import org.checkerframework.checker.units.qual.C;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -1567,51 +1568,8 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         if(ready){
             setReady(false);
             MeshFrame3D mf3d = segmentationController.getMeshFrame3D();
-            if(mf3d != null){
-                JDialog channelManager = new JDialog(getFrame(), true);
-                JPanel content = new JPanel();
-                JButton add = new JButton("add channel");
-                JButton follow = new JButton("show current");
-                follow.addActionListener(evt->{
-                    MeshImageStack stack = segmentationController.getMeshImageStack();
-                    if(stack != null){
-                        int labelled = JOptionPane.showConfirmDialog(frame, "Show as Labelled Regions?");
-                        if(labelled == JOptionPane.OK_OPTION){
-                            ChannelVolume cv = mf3d.createNewChannelVolume(stack.duplicate(), new Color(0, 0, 0));
-                            cv.getVolumeDataObject().showAsLabeledVolume();
-                        } else {
-                            Color c = GuiTools.getColor(frame);
-                            ChannelVolume cv = mf3d.createNewChannelVolume(stack.duplicate(), c);
-                        }
-                    }
-                });
-                JButton contrast = new JButton( "contrast channel");
-                JButton remove = new JButton("remove");
-                add.addActionListener(evt->{
-                    mf3d.createNewChannelVolume();
-                    channelManager.setVisible(false);
-                });
-                contrast.addActionListener(evt->{
-                    mf3d.chooseToContrastChannelVolume();
-                    channelManager.setVisible(false);
-                });
-                remove.addActionListener(evt->{
-                    mf3d.chooseToremoveChannelVolume();
-                    channelManager.setVisible(false);
-                });
-                content.add(add);
-                content.add(follow);
-                content.add(contrast);
-                content.add(remove);
-
-                channelManager.setContentPane(content);
-                channelManager.pack();
-                channelManager.setTitle("Add, Adjust or Remove 3D Volumes.");
-                GuiTools.centerComponent(mf3d.getJFrame(), channelManager);
-                channelManager.setVisible(true);
-                mf3d.setVisible(true);
-            }
-
+            ChannelVolumeManagement cvm = new ChannelVolumeManagement(segmentationController);
+            cvm.buildGui(this);
             finished();
         }
     }

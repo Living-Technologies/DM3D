@@ -464,7 +464,7 @@ public class MeshModifier implements Drawable {
     public void setImage(ImagePlus plus){
         mis = new MeshImageStack(plus);
         if(slice == null){
-            DeformableMesh3D texturedPlaneGeometry = BinaryMeshGenerator.getQuad(
+            DeformableMesh3D texturedPlaneGeometry = DeformableMesh3DTools.getQuad(
                     new double[]{0,0,0},
                     new double[]{1, 0, 0},
                     new double[]{0, 1, 0}
