@@ -194,7 +194,6 @@ public class MultiChannelVolumeTexture extends Texture3D {
     }
 
     public int addChannel(TextureProducer channelValues, double cl_min, double cl_max, Color3f c){
-        System.out.println("starting: " + textures);
 
         Calibration cal = new Calibration();
         cal.color = c;
@@ -210,13 +209,11 @@ public class MultiChannelVolumeTexture extends Texture3D {
                 dex = i;
             }
         }
-        System.out.println("after: " + textures + " with " + dex);
         if(dex == -1) {
             dex = textures.size();
             calibrations.add(cal);
             textures.add(channelValues);
         }
-        System.out.println("finally: " + dex + " // " + textures);
         clamp();
 
         return dex;
@@ -234,7 +231,7 @@ public class MultiChannelVolumeTexture extends Texture3D {
     private void findMinAndMaxValues(Calibration cal, TextureProducer tex) {
         cal.min = Double.MAX_VALUE;
         cal.max = -Double.MAX_VALUE;
-        System.out.println(xDim + ", " + yDim + ", " + zDim);
+
         for (int k = 0; k < zDim; k++) {
             for (int j = 0; j < yDim; j++) {
                 for (int i = 0; i < xDim; i++) {
@@ -358,7 +355,6 @@ public class MultiChannelVolumeTexture extends Texture3D {
     }
 
     public void removeChannel(int index){
-        System.out.println("removing!");
         textures.set(index, null);
         clamp();
     }

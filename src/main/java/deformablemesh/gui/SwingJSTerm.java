@@ -360,10 +360,10 @@ public class SwingJSTerm {
                 echoed = o.toString();
             }
         }else{
-            echoed = o.toString() + "\n";
+            echoed = o.toString();
         }
         EventQueue.invokeLater(()->{
-            displayText(echoed);
+            displayText(echoed + "\n");
         });
     }
 
@@ -713,7 +713,7 @@ class TextBoxSelections{
         String pre = "";
         for(Parameter p : parameters){
             build.append(pre);
-            String t = p.getParameterizedType().getTypeName().replaceAll(".*\\.", "");
+            String t = p.getParameterizedType().getTypeName().replaceAll("[^<]*\\.", "");
             build.append(t);
             pre = ", ";
         }

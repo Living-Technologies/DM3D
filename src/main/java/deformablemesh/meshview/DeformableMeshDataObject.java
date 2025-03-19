@@ -71,6 +71,7 @@ public class DeformableMeshDataObject implements DataObject {
     public float emm = 0;
     public float dif = 0.85f;
     public float spec = 0.85f;
+    private boolean showWires = true;
 
     public DeformableMeshDataObject(List<Node3D> nodes, List<Connection3D> connections, List<Triangle3D> triangles, double[] positions, int[] connection_index, int[] triangle_index){
 
@@ -282,13 +283,8 @@ public class DeformableMeshDataObject implements DataObject {
 
     public void setWireColor(Color color) {
         wires = color;
-        //float[] r = new float[4];
-        //r = wires.getColorComponents(r);
-
+        showWires = true;
         mesh_object.setAppearance(createLineAppearance());
-
-        //mesh_object.getAppearance().getColoringAttributes().setColor(r[0], r[1], r[2]);
-
     }
 
     public void setShowSurface(boolean showSurface) {
@@ -329,5 +325,21 @@ public class DeformableMeshDataObject implements DataObject {
         frame.setBackgroundColor(Color.BLACK);
         term.addToScriptEngine("meshes", meshes);
         term.addToScriptEngine("mf3d", frame);
+    }
+
+    public void setShowWires(boolean showWires) {
+        if(showWires == this.showWires){
+            return;
+        }
+        this.showWires = showWires;
+        if(showWires) {
+            mesh_object.setAppearance(hiddenSurface());
+        } else{
+            mesh_object.setAppearance(createLineAppearance());
+        }
+    }
+
+    public boolean isShowWires() {
+        return showWires;
     }
 }

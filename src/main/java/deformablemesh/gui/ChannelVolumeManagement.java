@@ -85,10 +85,15 @@ public class ChannelVolumeManagement {
         channelManager.pack();
         channelManager.setTitle("Add, Adjust or Remove 3D Volumes.");
         GuiTools.centerComponent(mf3d.getJFrame(), channelManager);
-        channelManager.setVisible(true);
         mf3d.setVisible(true);
         channelManager.setVisible(true);
+        System.out.println("set visible");
     }
+
+    private void removeRow(JComponent comp){
+
+    }
+
     List<JComponent> availableChannels( MeshImageStack stack){
         List<JComponent> comps = new ArrayList<>();
         String s = stack.getShortTitle();

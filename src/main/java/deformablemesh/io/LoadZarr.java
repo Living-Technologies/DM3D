@@ -26,10 +26,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class LoadZarr {
-    static {
-        System.loadLibrary("blosc");
-    }
-
     @JsonIgnoreProperties(ignoreUnknown = true)
     static class AxisThing {
         public String name;

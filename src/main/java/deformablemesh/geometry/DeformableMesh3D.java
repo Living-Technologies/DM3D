@@ -80,6 +80,8 @@ public class DeformableMesh3D{
     private Color color = Color.BLUE;
     private boolean selected;
     static ExecutorService globalPool = ForkJoinPool.commonPool();
+    private boolean showWires = true;
+
     /**
      * Creates a deformable mesh in 3d.
      *
@@ -214,6 +216,7 @@ public class DeformableMesh3D{
         data_object.setColor(color);
 
         data_object.setShowSurface(showSurface);
+        data_object.setShowWires(showWires);
     }
 
     public void reshape(){
@@ -985,6 +988,12 @@ public class DeformableMesh3D{
         return map;
     }
 
+    public void setShowWires(boolean show){
+        if(data_object!=null){
+            data_object.setShowWires(show);
+        }
+        this.showWires = show;
+    }
     public void setShowSurface(boolean showSurface) {
         if(data_object!=null){
             data_object.setShowSurface(showSurface);

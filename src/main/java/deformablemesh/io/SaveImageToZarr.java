@@ -38,9 +38,6 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 
 public class SaveImageToZarr {
-    static {
-        System.loadLibrary("blosc");
-    }
     public static DataType getDataType(ImagePlus plus){
         ImageProcessor proc = plus.getStack().getProcessor(1);
 

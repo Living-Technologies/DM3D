@@ -1689,7 +1689,7 @@ public class SegmentationController {
 
     public ImagePlus cropNormalizedRegion(Box3D region){
         MeshImageStack stack = getMeshImageStack();
-        MeshImageStack.ImageRegion3D r = stack.getImageCropValues(region);
+        ImageRegion3D r = stack.getImageCropValues(region);
         int x = r.lx;
         int y = r.ly;
         int z = r.lz;
@@ -2182,7 +2182,7 @@ public class SegmentationController {
     }
 
     /**
-     * Extands the track to (frame + 1) provided by copying the deformable mesh at frame.
+     * Extends the track to (frame + 1) provided by copying the deformable mesh at frame.
      *
      * @param track track to be extended.
      * @param frame initial frame

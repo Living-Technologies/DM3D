@@ -42,6 +42,7 @@ public class Track {
     boolean showSurface = false;
     private Map<Integer, DeformableMesh3D> track = new TreeMap<>();
     private boolean selected;
+    private boolean showWires;
 
     public Track(List<Color> usedColors){
         this.color = ColorSuggestions.getSuggestion(usedColors);
@@ -61,6 +62,7 @@ public class Track {
     public void addMesh(Integer i, DeformableMesh3D mesh){
         mesh.setColor(color);
         mesh.setShowSurface(showSurface);
+        mesh.setShowWires(showWires);
         track.put(i, mesh);
         mesh.setSelected(selected);
     }
@@ -184,6 +186,13 @@ public class Track {
         showSurface = show;
         for(DeformableMesh3D mesh: track.values()){
             mesh.setShowSurface(show);
+        }
+    }
+
+    public void setShowWires(boolean show){
+        showWires = show;
+        for(DeformableMesh3D mesh: track.values()){
+            mesh.setShowWires(show);
         }
     }
 

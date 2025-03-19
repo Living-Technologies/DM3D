@@ -1305,7 +1305,9 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         JMenuItem load = new JMenuItem("load zarr");
         zarr.add(load);
         load.addActionListener(evt->{
-            Path folder = Paths.get(IJ.getDirectory("select zarr folder"));
+            String ijf = IJ.getDirectory("select zarr folder");
+            if(ijf == null) return;
+            Path folder = Paths.get(ijf);
             try {
                 MeshImageStack zStack = LoadZarr.loadMeshImageStack2(folder);
                 segmentationController.setMeshImageStack(zStack);

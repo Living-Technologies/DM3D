@@ -72,17 +72,7 @@ public class MeshImageStack {
         return shortTitle;
     }
 
-    public static class ImageRegion3D{
-        final int lx, ly, lz, hx, hy, hz;
-        ImageRegion3D (int lx, int ly, int lz, int hx, int hy, int hz){
-            this.lx = lx;
-            this.ly = ly;
-            this.lz = lz;
-            this.hx = hx;
-            this.hy = hy;
-            this.hz = hz;
-        }
-    };
+
 
     public double[] data;
 
@@ -780,7 +770,7 @@ public class MeshImageStack {
             }
             stack.addSlice(proc);
         }
-        ImagePlus plus = original.createImagePlus();
+        ImagePlus plus = createImagePlus();
         plus.setStack(stack, 1, d, 1);
         Calibration c = plus.getCalibration();
         Calibration oc = getImageJCalibration();
@@ -915,7 +905,10 @@ public class MeshImageStack {
     public ImagePlus getOriginalPlus() {
         return original;
     }
-
+    public double[] getOrigin(){
+        Calibration cal = getImageJCalibration();
+        return new double[]{cal.xOrigin, cal.yOrigin, cal.zOrigin};
+    }
     public int getNChannels() {
         return CHANNELS;
     }

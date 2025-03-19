@@ -71,11 +71,12 @@ public class TrackMateAdapter {
 
         ProxySpot(DeformableMesh3D mesh, MeshImageStack mis){
             Box3D box = mesh.getBoundingBox();
-            double[] center = mis.getImageCoordinates(box.getCenter());
+            double[] center = Vector3DOps.difference(
+                    mis.getImageCoordinates(box.getCenter()), mis.getOrigin() );
             //gets the image in pixels needs to be scaled to real units.
-
+            double[] origin = mis.getOrigin();
             cx = center[0] * mis.pixel_dimensions[0];
-            cy = center[1] * mis.pixel_dimensions[1];
+            cy = center[1] * mis.pixel_dimensions[1] - origin[0];
             cz = center[2] * mis.pixel_dimensions[2];
             //volume is going to be a normalized weight.
             radius = Math.cbrt(3* box.getVolume()/2/4/Math.PI)*mis.SCALE;
@@ -83,10 +84,16 @@ public class TrackMateAdapter {
 
         static double[] getNormalizedCoordinates(Spot spot, MeshImageStack mis) {
             double f = 1. / mis.SCALE;
+            double[] origin = mis.getOrigin();
+            double[] realOrigin = {
+                    origin[0]*mis.pixel_dimensions[0],
+                    origin[1]*mis.pixel_dimensions[1],
+                    origin[2]*mis.pixel_dimensions[2]
+            };
             return new double[] {
-                    spot.getDoublePosition(0) * f - mis.offsets[0],
-                    spot.getDoublePosition(1) * f - mis.offsets[1],
-                    spot.getDoublePosition(2) * f - mis.offsets[2]
+                    ( spot.getDoublePosition(0) + realOrigin[0] ) * f - mis.offsets[0],
+                    ( spot.getDoublePosition(1) + realOrigin[1] ) * f - mis.offsets[1],
+                    ( spot.getDoublePosition(2) + realOrigin[2] ) * f - mis.offsets[2]
             };
         }
 
