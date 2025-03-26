@@ -341,6 +341,9 @@ public class MeshImageStack {
     public int getChannel(){
         return channel;
     }
+    public void clearFilters(){
+        filters.clear();
+    }
     public void gaussianBlur(double sigma){
         filters.add( imp-> imp.blurGaussian(sigma));
     }

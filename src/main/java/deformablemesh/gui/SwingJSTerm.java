@@ -43,6 +43,9 @@ import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JList;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
@@ -67,13 +70,16 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.io.Reader;
 import java.io.Writer;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -208,6 +214,8 @@ public class SwingJSTerm {
         display.setCaretPosition(display.getDocument().getLength());
     }
 
+
+
     public void addClasses() throws ScriptException {
 
         BufferedReader reader = new BufferedReader(
@@ -337,10 +345,42 @@ public class SwingJSTerm {
         content.add(buttons, BorderLayout.SOUTH);
 
         frame.setContentPane(content);
+        if(engine.getContext().getAttribute("importer") != null) {
+            frame.setJMenuBar(buildBar());
+        }
         frame.pack();
         frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 
         return content;
+    }
+
+    JMenuBar buildBar(){
+        JMenuBar bar = new JMenuBar();
+        JMenu scripts = new JMenu("tools");
+        bar.add(scripts);
+
+        String[] tools = {
+            "meshing-tools.js",
+            "tracking-tools.js",
+            "visualization-tools.js"
+        };
+        for( String tool : tools){
+            URL url = getClass().getResource("/javascript/" + tool);
+            if(url != null){
+                JMenuItem item = new JMenuItem(tool.replace("-tools.js", ""));
+                scripts.add(item);
+                item.addActionListener(evt->{
+                    executor.submit( ()->{
+                        try(InputStream is = url.openStream()){
+                            engine.eval(new InputStreamReader(is));
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
+                });
+            }
+        }
+        return bar;
     }
 
     public void echo(Object o){

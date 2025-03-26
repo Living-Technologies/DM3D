@@ -67,6 +67,7 @@ public class ConnectionRemesher {
     boolean openSurface = false;
     //defensive copy for connectivity features. ie nodes, connections and triangles.
     DeformableMesh3D original;
+    static double MAX_EDGES_EXPECTED=200000;
     public void buildDisplay(){
         frame = new MeshFrame3D();
         frame.showFrame(true);
@@ -186,7 +187,7 @@ public class ConnectionRemesher {
         //the surface area is l0*l0
         double minResult = Math.pow(2, ave/maxLength)*original.connections.size();
         //System.out.println( "before: " + ave + "// " + mn + "//" + ml + " ... " + originalSize);
-        if(minResult > originalSize && minResult > 200000){
+        if(minResult > originalSize && minResult > MAX_EDGES_EXPECTED){
             throw new RuntimeException("Too many edges are predicted to be created: " + minResult);
         }
         if (Double.isNaN(mn) || Double.isNaN(ml) || Double.isInfinite(mn) || Double.isInfinite(ml)){

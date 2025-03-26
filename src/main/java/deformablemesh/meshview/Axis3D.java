@@ -26,6 +26,7 @@
 package deformablemesh.meshview;
 
 import deformablemesh.geometry.Node3D;
+import deformablemesh.util.Vector3DOps;
 import org.jogamp.java3d.Appearance;
 import org.jogamp.java3d.BranchGroup;
 import org.jogamp.java3d.ColoringAttributes;
@@ -49,14 +50,28 @@ import java.util.List;
 public class Axis3D implements DataObject {
     BranchGroup bg;
     Color wireColor = Color.LIGHT_GRAY;
-    double s = 1;
+    double s = 0.5;
     List<LineDataObject> wires = new ArrayList<>();
+    double[] positions = {
+            -s, -s, -s,
+            -s,  s, -s,
+            s,  s, -s,
+            s, -s, -s,
+            -s, -s, s,
+            -s,  s,  s,
+            s,  s, s,
+            s, -s, s,
+            0, 0, 0,
+            2*s, 0, 0,
+            0, 2*s, 0,
+            0, 0, 2*s
+    };
     public Axis3D(){
         bg = new BranchGroup();
         bg.setCapability(BranchGroup.ALLOW_DETACH);
 
         Transform3D transformx = new Transform3D();
-        transformx.setTranslation(new Vector3f((float)s,0f,0f));
+        transformx.setTranslation(new Vector3f((float)s*2,0f,0f));
 
         Appearance a = new Appearance();
 
@@ -69,7 +84,7 @@ public class Axis3D implements DataObject {
         a.setColoringAttributes(new ColoringAttributes(new Color3f(0f,1f,0f),ColoringAttributes.FASTEST));
         Sphere spherey = new Sphere((float)0.01, Sphere.GENERATE_NORMALS, 50, a);
         Transform3D transformy = new Transform3D();
-        transformy.setTranslation(new Vector3f(0f,(float)s,0f));
+        transformy.setTranslation(new Vector3f(0f,(float)s*2,0f));
         TransformGroup tgy = new TransformGroup(transformy);
         tgy.addChild(spherey);
 
@@ -78,7 +93,7 @@ public class Axis3D implements DataObject {
         Sphere spherez = new Sphere((float)0.01, Sphere.GENERATE_NORMALS, 50, a);
 
         Transform3D transformz = new Transform3D();
-        transformz.setTranslation(new Vector3f(0f, 0f, (float)s));
+        transformz.setTranslation(new Vector3f(0f, 0f, (float)s*2));
         TransformGroup tgz = new TransformGroup(transformz);
         tgz.addChild(spherez);
 
@@ -86,48 +101,79 @@ public class Axis3D implements DataObject {
         bg.addChild(tgy);
         bg.addChild(tgz);
 
-        double[] positions = {
-                -s, -s, -s,
-                -s,  s, -s,
-                 s,  s, -s,
-                 s, -s, -s,
-                -s, -s, s,
-                -s,  s,  s,
-                 s,  s, s,
-                 s, -s, s,
-                0, 0, 0,
-                s, 0, 0,
-                0, s, 0,
-                0, 0, s
-            };
+
         List<Node3D> nodes = new ArrayList<>();
         for(int i = 0; i<positions.length/3; i++){
             nodes.add(new Node3D(positions, i));
         }
-
         LineDataObject obj = new LineDataObject(Arrays.asList(nodes.get(0), nodes.get(1), nodes.get(2), nodes.get(3), nodes.get(0)), 0.5f);
-        float[] c = wireColor.getRGBComponents(new float[4]);
-        obj.setColor(c[0], c[1], c[2]);
-        bg.addChild(obj.getBranchGroup());
+        wires.add(obj);
         obj = new LineDataObject(Arrays.asList(nodes.get(4), nodes.get(5), nodes.get(6), nodes.get(7), nodes.get(4)), 0.5f);
-        obj.setColor(c[0], c[1], c[2]);
-        bg.addChild(obj.getBranchGroup());
+        wires.add(obj);
         for(int i = 0; i<4; i++){
             obj = new LineDataObject(Arrays.asList(nodes.get(i), nodes.get(i+4)), 0.5f);
-            obj.setColor(c[0], c[1], c[2]);
-            bg.addChild(obj.getBranchGroup());
+            wires.add(obj);
         }
 
         obj = new LineDataObject(Arrays.asList(nodes.get(8), nodes.get(9)), 0.5f);
-        obj.setColor(c[0], c[1], c[2]);
-        bg.addChild(obj.getBranchGroup());
+        wires.add(obj);
         obj = new LineDataObject(Arrays.asList(nodes.get(8), nodes.get(10)), 0.5f);
-        obj.setColor(c[0], c[1], c[2]);
-        bg.addChild(obj.getBranchGroup());
+        wires.add(obj);
         obj = new LineDataObject(Arrays.asList(nodes.get(8), nodes.get(11)), 0.5f);
-        obj.setColor(c[0], c[1], c[2]);
-        bg.addChild(obj.getBranchGroup());
+        wires.add(obj);
 
+        //four xs
+        drawTics(new double[]{-s, -s, -s}, new double[]{s, -s, -s}, Vector3DOps.yhat);
+        drawTics(new double[]{-s, -s, -s}, new double[]{s, -s, -s}, Vector3DOps.zhat);
+        drawTics(new double[]{-s, s, -s}, new double[]{s, s, -s}, Vector3DOps.nyhat);
+        drawTics(new double[]{-s, s, -s}, new double[]{s, s, -s}, Vector3DOps.zhat);
+        drawTics(new double[]{-s, -s, s}, new double[]{s, -s, s}, Vector3DOps.yhat);
+        drawTics(new double[]{-s, -s, s}, new double[]{s, -s, s}, Vector3DOps.nzhat);
+        drawTics(new double[]{-s, s, s}, new double[]{s, s, s}, Vector3DOps.nyhat);
+        drawTics(new double[]{-s, s, s}, new double[]{s, s, s}, Vector3DOps.nzhat);
+
+        //four ys
+        drawTics(new double[]{-s, -s, -s}, new double[]{-s, s, -s}, Vector3DOps.xhat);
+        drawTics(new double[]{-s, -s, -s}, new double[]{-s, s, -s}, Vector3DOps.zhat);
+        drawTics(new double[]{s, -s, -s}, new double[]{s, s, -s}, Vector3DOps.nxhat);
+        drawTics(new double[]{s, -s, -s}, new double[]{s, s, -s}, Vector3DOps.zhat);
+        drawTics(new double[]{-s, -s, s}, new double[]{-s, s, s}, Vector3DOps.xhat);
+        drawTics(new double[]{-s, -s, s}, new double[]{-s, s, s}, Vector3DOps.nzhat);
+        drawTics(new double[]{s, -s, s}, new double[]{s, s, s}, Vector3DOps.nxhat);
+        drawTics(new double[]{s, -s, s}, new double[]{s, s, s}, Vector3DOps.nzhat);
+        //four zs
+        drawTics(new double[]{-s, -s, -s}, new double[]{-s, -s, s}, Vector3DOps.xhat);
+        drawTics(new double[]{-s, -s, -s}, new double[]{-s, -s, s}, Vector3DOps.yhat);
+        drawTics(new double[]{s, -s, -s}, new double[]{s, -s, s}, Vector3DOps.nxhat);
+        drawTics(new double[]{s, -s, -s}, new double[]{s, -s, s}, Vector3DOps.yhat);
+        drawTics(new double[]{-s, s, -s}, new double[]{-s, s, s}, Vector3DOps.xhat);
+        drawTics(new double[]{-s, s, -s}, new double[]{-s, s, s}, Vector3DOps.nyhat);
+        drawTics(new double[]{s, s, -s}, new double[]{s, s, s}, Vector3DOps.nxhat);
+        drawTics(new double[]{s, s, -s}, new double[]{s, s, s}, Vector3DOps.nyhat);
+
+        for(LineDataObject ldo : wires){
+            float[] c = wireColor.getRGBComponents(new float[4]);
+            ldo.setColor(c[0], c[1], c[2]);
+            bg.addChild(ldo.getBranchGroup());
+        }
+    }
+
+    private void drawTics(double[] a, double[] b, double[] n){
+        double[] axis = Vector3DOps.difference(b, a);
+        double l = Vector3DOps.normalize(axis);
+        int tics = 50;
+        double dl = l/tics;
+        double minor = dl/2;
+
+        for(int i = 0; i<tics + 1; i++){
+            double[] a0 = Vector3DOps.add(a, axis, dl*i);
+            double tl = i%5 == 0 ? 2*minor : minor;
+            double[] a1 = Vector3DOps.add(a0, n, tl);
+            LineDataObject ldo = new LineDataObject(
+                    Arrays.asList(new Node3D(a0, 0), new Node3D(a1, 0)), 0.5f
+            );
+            wires.add(ldo);
+        }
     }
 
     public void setWireColor(Color c){

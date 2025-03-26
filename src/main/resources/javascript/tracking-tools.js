@@ -1,3 +1,17 @@
+importer("deformablemesh.experimental.DTTrackPredictor");
+importer("deformablemesh.meshview.BoxDO");
+importer("deformablemesh.geometry.Box3D");
+importer("deformablemesh.geometry.InterpolatingCropper");
+importer("deformablemesh.io.SaveImageToZarr");
+importer("ij.process.FloatProcessor");
+
+importer("java.lang.System");
+importer("java.lang.Thread");
+
+/**
+  * This section is for modifying multiple tracks at the
+  * same time.
+  **/
 selectedTracks = controls.getEmptyTrackList();
 add = function(){
     track = controls.getSelectedMeshTrack();
@@ -31,8 +45,13 @@ controls.setHotKey("9", function(){
 criteria = {
   minl:0.004, maxl:0.008,iterations:500, maxChange:0.3
 };
-function copyTrackMeshTracksBackwards(tracks, steps){
 
+/**
+  * Starting from the current frame, goes through each track in the
+  * provided list.
+  *
+  **/
+function copyTrackMeshTracksBackwards(tracks, steps){
     c = controls.getCurrentFrame();
     minl = criteria.minl;
     maxl = criteria.maxl;

@@ -23,9 +23,10 @@ public class SnapShotRecorder {
         }
         stack.addSlice(proc);
     }
-
-    public void show(){
-        new ImagePlus(title, stack).show();
+    public ImagePlus getImagePlus(){
+        return new ImagePlus(title, stack);
     }
-
+    public void show(){
+        getImagePlus().show();
+    }
 }

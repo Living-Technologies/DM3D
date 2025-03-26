@@ -116,6 +116,10 @@
 			<artifactId>bio-formats_plugins</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>imagej</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>org.jogamp.gluegen</groupId>
 			<artifactId>gluegen-rt</artifactId>
 			<classifier>${scijava.natives.classifier.gluegen}</classifier>
@@ -128,17 +132,14 @@
 		<dependency>
 			<groupId>org.jogamp.java3d</groupId>
 			<artifactId>java3d-core</artifactId>
-			<version>1.7.2</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jogamp.java3d</groupId>
 			<artifactId>java3d-utils</artifactId>
-			<version>1.7.2</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jogamp.java3d</groupId>
 			<artifactId>vecmath</artifactId>
-			<version>1.7.2</version>
 		</dependency>
 		<dependency>
 			<groupId>org.janelia.saalfeldlab</groupId>

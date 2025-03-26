@@ -71,6 +71,7 @@ import deformablemesh.util.DistanceTransformMosaicImage;
 import deformablemesh.util.IntensitySurfacePlot;
 import deformablemesh.util.MeshAnalysis;
 import deformablemesh.util.MeshFaceObscuring;
+import deformablemesh.util.SnapShotRecorder;
 import deformablemesh.util.SurfacePlot;
 import deformablemesh.util.TrackAnalysis;
 import deformablemesh.util.Vector3DOps;
@@ -508,20 +509,13 @@ public class SegmentationController {
      */
     public void recordSnapshots(int start, int end){
         submit(()->{
-            ImageStack stack = null;
+            SnapShotRecorder recorder = new SnapShotRecorder(this);
             for(int i = start; i<=end; i++){
                 model.setFrame(i);
-                BufferedImage img = meshFrame3D.snapShot();
-                ImageProcessor proc = new ColorProcessor(img);
-                if(stack==null){
-                    stack = new ImageStack(proc.getWidth(), proc.getHeight());
-                }
-                stack.addSlice("snapshot " + i, proc);
-
+                recorder.snapshot();
             }
-            if(stack!=null){
-                new ImagePlus("snapshots", stack).show();
-            }
+            ImagePlus imp = recorder.getImagePlus();
+            imp.setTitle("snapshots_" + start + "_" + end);
         });
     }
 
