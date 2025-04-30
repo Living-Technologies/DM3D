@@ -516,6 +516,7 @@ public class SegmentationController {
             }
             ImagePlus imp = recorder.getImagePlus();
             imp.setTitle("snapshots_" + start + "_" + end);
+            imp.show();
         });
     }
 

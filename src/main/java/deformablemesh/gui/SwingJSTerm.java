@@ -323,6 +323,9 @@ public class SwingJSTerm {
 
         JButton eval = new JButton("eval");
         eval.addActionListener((event) -> {
+            if((event.getModifiers() & ActionEvent.CTRL_MASK) != 0){
+                shortCircuit();
+            }
             submit();
         });
 
@@ -434,6 +437,19 @@ public class SwingJSTerm {
             engine.eval(s);
         } catch (ScriptException e) {
             e.printStackTrace();
+        }
+    }
+    private void shortCircuit(){
+        System.out.println("short circuit!");
+        String s = input.getText();
+        try{
+            engine.eval(s);
+        } catch (ScriptException e) {
+            StackTraceElement[] elements = e.getStackTrace();
+            displayText(e.getMessage() + '\n');
+            if(elements.length>0){
+                displayText(elements[0].toString() + '\n');
+            }
         }
     }
 
