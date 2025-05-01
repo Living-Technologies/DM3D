@@ -1700,29 +1700,18 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         pluses.forEach(ImagePlus::show);
     }
     File getOpenFile(String title){
-        FileDialog fd = new FileDialog(frame, title);
-        fd.setDirectory(OpenDialog.getDefaultDirectory());
-        fd.setMode(FileDialog.LOAD);
-        fd.setVisible(true);
-        if(fd.getFile()==null || fd.getDirectory()==null){
-            return null;
+        Path p = GuiTools.getMeshFile(frame, title);
+        if(p != null){
+            return p.toFile();
         }
-        return new File(fd.getDirectory(),fd.getFile());
+        return null;
     }
 
     public void loadMeshes(){
-        FileDialog fd = new FileDialog(frame,"File to load mesh from");
-        fd.setDirectory(OpenDialog.getDefaultDirectory());
-        fd.setMode(FileDialog.LOAD);
-        fd.setVisible(true);
-
-        if(fd.getFile()==null || fd.getDirectory()==null){
-            finished();
-            return;
+        Path p = GuiTools.getMeshFile(frame, "File to load mesh from");
+        if(p != null){
+            segmentationController.loadMeshes(p.toFile());
         }
-
-        File f = new File(fd.getDirectory(),fd.getFile());
-        segmentationController.loadMeshes(f);
     }
 
     public void importMeshes(){

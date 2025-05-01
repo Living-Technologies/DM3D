@@ -95,6 +95,8 @@ public class SourceAndConverterTest {
         Path location = GuiTools.getDirectory(IJ.getInstance(), "Select Zarr Folder").toPath();
         MeshImageStack2<?> mist = LoadZarr.loadMeshImageStack2(location);
 
+        Path mesh = GuiTools.getMeshFile(IJ.getInstance(), "Select Mesh File");
+
         double dCam = 2000.;
         double dClipNear = 1000.;
         double dClipFar = 15000.;

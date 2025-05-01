@@ -96,6 +96,7 @@ function binaryRemeshSelectedMesh(downsample, threshold){
 			});
 	  }
 	}
+
 	controls.startNewMeshTracks( next );
 
 }

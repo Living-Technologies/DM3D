@@ -28,6 +28,7 @@ package deformablemesh.gui;
 import deformablemesh.plugins.Deforming3DMesh_Plugin;
 import deformablemesh.SegmentationController;
 import ij.IJ;
+import ij.ImageJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 
@@ -87,6 +88,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.List;
@@ -103,11 +105,14 @@ import static deformablemesh.gui.ControlFrame.instance;
  */
 public class GuiTools {
     public static Color SELECTED_MESH_COLOR = Color.WHITE;
+    public static Path lastUsed = null;
     public static List<ImagePlus> openImages(){
         FileDialog fd = new FileDialog(IJ.getInstance(), "Select Image to Open");
         fd.setVisible(true);
         File[] files = fd.getFiles();
-
+        if(files.length >= 1){
+            lastUsed = files[0].getParentFile().toPath();
+        }
         return Arrays.stream(files).map(File::getAbsolutePath).map(ImagePlus::new).collect(Collectors.toList());
 
     }
@@ -351,15 +356,6 @@ public class GuiTools {
         return b;
     }
 
-    public static void highQualityRenderingHints(Graphics2D g2d){
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2d.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2d.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
-        g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
-        g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-    }
-
     public static Icon getXIcon(int size, Color c) {
         int L = size*2/3;
         int b = (size - L)/2;
@@ -449,6 +445,8 @@ public class GuiTools {
         return JColorChooser.showDialog(parent, "Select Color for Volume Rendering", new Color(255, 255, 255));
     }
 
+
+
     public static class LocaleNumericTextField{
         final JTextField field;
 
@@ -537,8 +535,30 @@ public class GuiTools {
         System.out.println(f + ", " + d);
         if( f == null ){
             return null;
+        } else{
+            lastUsed = f.getParentFile().toPath();
         }
         return f;
+    }
+
+    static public Path getMeshFile(Frame parent, String title){
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle(title);
+        chooser.setFileSelectionMode(JFileChooser.OPEN_DIALOG);
+        if(lastUsed != null) {
+            chooser.setCurrentDirectory(lastUsed.toFile());
+        }
+        chooser.showDialog(parent, "select");
+        File f = chooser.getSelectedFile();
+        File d = chooser.getCurrentDirectory();
+        System.out.println(f + ", " + d);
+        if( f == null ){
+            return null;
+        } else{
+            lastUsed = f.getParentFile().toPath();
+        }
+
+        return f.toPath();
     }
     static public ImagePlus selectOpenImage(Frame parent, String title){
         JDialog log = new JDialog(parent, title, true);
