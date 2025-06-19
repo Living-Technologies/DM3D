@@ -56,13 +56,12 @@ public class IntensityRanges {
         public void setMinMax(double min, double max);
     }
 
-    public IntensityRanges(TextureProducer intensityValues, int[] xyz){
-        histogram = new Histogram(intensityValues, xyz);
+    public IntensityRanges(TextureProducer intensityValues, int[] xyz, double min, double max){
+        histogram = new Histogram(intensityValues, xyz, min, max);
         panel = new HistogramPanel(histogram);
     }
 
     public void setClipValues(double min, double max ){
-        System.out.println("min: " + min + ", max: "  + max);
         lowIntensity = min*(histogram.maxValue-histogram.minValue) + histogram.minValue;
         highIntensity = max*(histogram.maxValue-histogram.minValue) + histogram.minValue;
         panel.setMarkerPositions();
@@ -85,25 +84,7 @@ public class IntensityRanges {
         double f = 1/(histogram.maxValue - histogram.minValue);
         return new double[]{ lowIntensity*f, highIntensity*f };
     }
-    /**
-     * Probably wont be used.
-     *
-     * @param stack
-     */
-    public IntensityRanges(ImageStack stack){
-        this(getProducer(stack), getDimensions(stack));
-    }
 
-    static TextureProducer getProducer(ImageStack stack){
-        final int w = stack.getWidth();
-        return (x, y, z)->{
-            return stack.getProcessor(z+1).get(y*w + x);
-        };
-
-    }
-    static int[] getDimensions(ImageStack stack){
-        return new int[]{stack.getWidth(), stack.getHeight(), stack.getSize()};
-    }
     public void addContrastableListener(Contrastable c){
         listeners.add(c);
     }
@@ -147,14 +128,17 @@ public class IntensityRanges {
         final double[] values; //value per bin
         double binMax = 0;
 
-        public Histogram(TextureProducer inputValues, int[] xyz){
-            this(120, inputValues, xyz);
+        public Histogram(TextureProducer inputValues, int[] xyz, double min, double max){
+            this(120, inputValues, xyz, min, max);
         }
 
-        public Histogram(int nBins, TextureProducer inputValues, int[] xyz){
+        public Histogram(int nBins, TextureProducer inputValues, int[] xyz, double min, double max){
             bins = new int[nBins];
             values = new double[nBins];
 
+            minValue = min;
+            maxValue = max;
+            /*
             minValue = Double.MAX_VALUE;
             maxValue = -Double.MAX_VALUE;
 
@@ -169,6 +153,7 @@ public class IntensityRanges {
                     }
                 }
             }
+             */
 
             for(int i = 0; i<bins.length; i++){
                 //bins[i] = 0;
@@ -183,6 +168,7 @@ public class IntensityRanges {
                         double v = inputValues.get(i, j, k);
                         int dex = (int) ((v - minValue) * range);
                         dex = dex >= bins.length ? bins.length - 1 : dex;
+                        dex = dex < 0 ? 0 : dex;
                         int bin = ++bins[dex];
                         if (bin > binMax) {
                             binMax = bin;
@@ -515,7 +501,7 @@ public class IntensityRanges {
             range[2*i] = u*f + 2;
             range[2*i+1] = v*f + 2;
         }
-        IntensityRanges ranger = new IntensityRanges((x, y, z)->range[z], new int[]{1, 1, range.length});
+        IntensityRanges ranger = new IntensityRanges((x, y, z)->range[z], new int[]{1, 1, range.length}, -10, 10);
         frame.add(ranger.panel);
         frame.pack();
         frame.setVisible(true);

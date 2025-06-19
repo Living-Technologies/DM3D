@@ -50,28 +50,43 @@ import java.util.List;
 public class Axis3D implements DataObject {
     BranchGroup bg;
     Color wireColor = Color.LIGHT_GRAY;
-    double s = 0.5;
+    double lx, ly, lz, hx, hy, hz;
     List<LineDataObject> wires = new ArrayList<>();
-    double[] positions = {
-            -s, -s, -s,
-            -s,  s, -s,
-            s,  s, -s,
-            s, -s, -s,
-            -s, -s, s,
-            -s,  s,  s,
-            s,  s, s,
-            s, -s, s,
-            0, 0, 0,
-            2*s, 0, 0,
-            0, 2*s, 0,
-            0, 0, 2*s
-    };
+    double[] positions;
+    void generatePositions(){
+        positions = new double[] {
+                lx, ly, lz,
+                lx,  hy, lz,
+                hx,  hy, lz,
+                hx, ly, lz,
+                lx, ly, hz,
+                lx,  hy,  hz,
+                hx,  hy, hz,
+                hx, ly, hz,
+                0, 0, 0,
+                hx - lx, 0, 0,
+                0, hy- ly, 0,
+                0, 0, hz - lz
+        };
+    }
     public Axis3D(){
+        this(-0.5, -0.5, -0.5, 0.5, 0.5, 0.5);
+    }
+
+    public Axis3D(double lx, double ly, double lz, double hx, double hy, double hz){
+        this.lx = lx;
+        this.ly = ly;
+        this.lz = lz;
+        this.hx = hx;
+        this.hy = hy;
+        this.hz = hz;
+        generatePositions();
+
         bg = new BranchGroup();
         bg.setCapability(BranchGroup.ALLOW_DETACH);
 
         Transform3D transformx = new Transform3D();
-        transformx.setTranslation(new Vector3f((float)s*2,0f,0f));
+        transformx.setTranslation(new Vector3f((float)(hx - lx),0f,0f));
 
         Appearance a = new Appearance();
 
@@ -84,7 +99,7 @@ public class Axis3D implements DataObject {
         a.setColoringAttributes(new ColoringAttributes(new Color3f(0f,1f,0f),ColoringAttributes.FASTEST));
         Sphere spherey = new Sphere((float)0.01, Sphere.GENERATE_NORMALS, 50, a);
         Transform3D transformy = new Transform3D();
-        transformy.setTranslation(new Vector3f(0f,(float)s*2,0f));
+        transformy.setTranslation(new Vector3f(0f,(float)(hy - ly),0f));
         TransformGroup tgy = new TransformGroup(transformy);
         tgy.addChild(spherey);
 
@@ -93,7 +108,7 @@ public class Axis3D implements DataObject {
         Sphere spherez = new Sphere((float)0.01, Sphere.GENERATE_NORMALS, 50, a);
 
         Transform3D transformz = new Transform3D();
-        transformz.setTranslation(new Vector3f(0f, 0f, (float)s*2));
+        transformz.setTranslation(new Vector3f(0f, 0f, (float)(hz - lz)));
         TransformGroup tgz = new TransformGroup(transformz);
         tgz.addChild(spherez);
 
@@ -123,33 +138,33 @@ public class Axis3D implements DataObject {
         wires.add(obj);
 
         //four xs
-        drawTics(new double[]{-s, -s, -s}, new double[]{s, -s, -s}, Vector3DOps.yhat);
-        drawTics(new double[]{-s, -s, -s}, new double[]{s, -s, -s}, Vector3DOps.zhat);
-        drawTics(new double[]{-s, s, -s}, new double[]{s, s, -s}, Vector3DOps.nyhat);
-        drawTics(new double[]{-s, s, -s}, new double[]{s, s, -s}, Vector3DOps.zhat);
-        drawTics(new double[]{-s, -s, s}, new double[]{s, -s, s}, Vector3DOps.yhat);
-        drawTics(new double[]{-s, -s, s}, new double[]{s, -s, s}, Vector3DOps.nzhat);
-        drawTics(new double[]{-s, s, s}, new double[]{s, s, s}, Vector3DOps.nyhat);
-        drawTics(new double[]{-s, s, s}, new double[]{s, s, s}, Vector3DOps.nzhat);
+        drawTics(new double[]{lx, ly, lz}, new double[]{hx, ly, lz}, Vector3DOps.yhat);
+        drawTics(new double[]{lx, ly, lz}, new double[]{hx, ly, lz}, Vector3DOps.zhat);
+        drawTics(new double[]{lx, hy, lz}, new double[]{hx, hy, lz}, Vector3DOps.nyhat);
+        drawTics(new double[]{lx, hy, lz}, new double[]{hx, hy, lz}, Vector3DOps.zhat);
+        drawTics(new double[]{lx, ly, hz}, new double[]{hx, ly, hz}, Vector3DOps.yhat);
+        drawTics(new double[]{lx, ly, hz}, new double[]{hx, ly, hz}, Vector3DOps.nzhat);
+        drawTics(new double[]{lx, hy, hz}, new double[]{hx, hy, hz}, Vector3DOps.nyhat);
+        drawTics(new double[]{lx, hy, hz}, new double[]{hx, hy, hz}, Vector3DOps.nzhat);
 
         //four ys
-        drawTics(new double[]{-s, -s, -s}, new double[]{-s, s, -s}, Vector3DOps.xhat);
-        drawTics(new double[]{-s, -s, -s}, new double[]{-s, s, -s}, Vector3DOps.zhat);
-        drawTics(new double[]{s, -s, -s}, new double[]{s, s, -s}, Vector3DOps.nxhat);
-        drawTics(new double[]{s, -s, -s}, new double[]{s, s, -s}, Vector3DOps.zhat);
-        drawTics(new double[]{-s, -s, s}, new double[]{-s, s, s}, Vector3DOps.xhat);
-        drawTics(new double[]{-s, -s, s}, new double[]{-s, s, s}, Vector3DOps.nzhat);
-        drawTics(new double[]{s, -s, s}, new double[]{s, s, s}, Vector3DOps.nxhat);
-        drawTics(new double[]{s, -s, s}, new double[]{s, s, s}, Vector3DOps.nzhat);
+        drawTics(new double[]{lx, ly, lz}, new double[]{lx, hy, lz}, Vector3DOps.xhat);
+        drawTics(new double[]{lx, ly, lz}, new double[]{lx, hy, lz}, Vector3DOps.zhat);
+        drawTics(new double[]{hx, ly, lz}, new double[]{hx, hy, lz}, Vector3DOps.nxhat);
+        drawTics(new double[]{hx, ly, lz}, new double[]{hx, hy, lz}, Vector3DOps.zhat);
+        drawTics(new double[]{lx, ly, hz}, new double[]{lx, hy, hz}, Vector3DOps.xhat);
+        drawTics(new double[]{lx, ly, hz}, new double[]{lx, hy, hz}, Vector3DOps.nzhat);
+        drawTics(new double[]{hx, ly, hz}, new double[]{hx, hy, hz}, Vector3DOps.nxhat);
+        drawTics(new double[]{hx, ly, hz}, new double[]{hx, hy, hz}, Vector3DOps.nzhat);
         //four zs
-        drawTics(new double[]{-s, -s, -s}, new double[]{-s, -s, s}, Vector3DOps.xhat);
-        drawTics(new double[]{-s, -s, -s}, new double[]{-s, -s, s}, Vector3DOps.yhat);
-        drawTics(new double[]{s, -s, -s}, new double[]{s, -s, s}, Vector3DOps.nxhat);
-        drawTics(new double[]{s, -s, -s}, new double[]{s, -s, s}, Vector3DOps.yhat);
-        drawTics(new double[]{-s, s, -s}, new double[]{-s, s, s}, Vector3DOps.xhat);
-        drawTics(new double[]{-s, s, -s}, new double[]{-s, s, s}, Vector3DOps.nyhat);
-        drawTics(new double[]{s, s, -s}, new double[]{s, s, s}, Vector3DOps.nxhat);
-        drawTics(new double[]{s, s, -s}, new double[]{s, s, s}, Vector3DOps.nyhat);
+        drawTics(new double[]{lx, ly, lz}, new double[]{lx, ly, hz}, Vector3DOps.xhat);
+        drawTics(new double[]{lx, ly, lz}, new double[]{lx, ly, hz}, Vector3DOps.yhat);
+        drawTics(new double[]{hx, ly, lz}, new double[]{hx, ly, hz}, Vector3DOps.nxhat);
+        drawTics(new double[]{hx, ly, lz}, new double[]{hx, ly, hz}, Vector3DOps.yhat);
+        drawTics(new double[]{lx, hy, lz}, new double[]{lx, hy, hz}, Vector3DOps.xhat);
+        drawTics(new double[]{lx, hy, lz}, new double[]{lx, hy, hz}, Vector3DOps.nyhat);
+        drawTics(new double[]{hx, hy, lz}, new double[]{hx, hy, hz}, Vector3DOps.nxhat);
+        drawTics(new double[]{hx, hy, lz}, new double[]{hx, hy, hz}, Vector3DOps.nyhat);
 
         for(LineDataObject ldo : wires){
             float[] c = wireColor.getRGBComponents(new float[4]);
@@ -161,11 +176,16 @@ public class Axis3D implements DataObject {
     private void drawTics(double[] a, double[] b, double[] n){
         double[] axis = Vector3DOps.difference(b, a);
         double l = Vector3DOps.normalize(axis);
+        double ll = 1.0;
+
+        //Longest axis has 50 tics
         int tics = 50;
-        double dl = l/tics;
+        double dl = ll/tics;
         double minor = dl/2;
 
-        for(int i = 0; i<tics + 1; i++){
+        int ntics = (int)(l/dl);
+
+        for(int i = 0; i<ntics; i++){
             double[] a0 = Vector3DOps.add(a, axis, dl*i);
             double tl = i%5 == 0 ? 2*minor : minor;
             double[] a1 = Vector3DOps.add(a0, n, tl);

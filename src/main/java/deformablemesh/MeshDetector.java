@@ -275,22 +275,29 @@ public class MeshDetector {
         aves[2] = aves[2] / n;
 
         double[][] covar = new double[3][3];
+        double npw = mis.pixel_dimensions[0]/mis.SCALE;
+        double sxx = npw*npw/12;
+        double nph = mis.pixel_dimensions[1]/mis.SCALE;
+        double syy = nph*nph/12;
+        double npd = mis.pixel_dimensions[2]/mis.SCALE;
+        double szz = npd*npd/12;
+
         for(double[] pt: points){
             double dx = pt[0] - aves[0];
             double dy = pt[1] - aves[1];
             double dz = pt[2] - aves[2];
 
-            covar[0][0] += dx*dx;
+            covar[0][0] += dx*dx + sxx;
             covar[0][1] += dx*dy;
             covar[0][2] += dx*dz;
 
             covar[1][0] += dy*dx;
-            covar[1][1] += dy*dy;
+            covar[1][1] += dy*dy + syy;
             covar[1][2] += dy*dz;
 
             covar[2][0] += dz*dx;
             covar[2][1] += dz*dy;
-            covar[2][2] += dz*dz;
+            covar[2][2] += dz*dz + szz;
 
         }
         Matrix m = new Matrix(covar);

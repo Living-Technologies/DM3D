@@ -2,7 +2,6 @@ package deformablemesh.geometry;
 
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
-import deformablemesh.gimli2b.Imglib2MeshBenchMark;
 import deformablemesh.geometry.topology.TopoCheck;
 import deformablemesh.geometry.topology.TopologyValidationError;
 import deformablemesh.meshview.MeshFrame3D;
@@ -10,7 +9,6 @@ import deformablemesh.meshview.MultiChannelVolumeTexture;
 import deformablemesh.meshview.VolumeDataObject;
 import deformablemesh.util.ColorSuggestions;
 import deformablemesh.util.connectedcomponents.Region;
-import deformablemesh.util.connectedcomponents.RegionGrowing;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ByteProcessor;
@@ -439,7 +437,7 @@ public class BinaryMeshGenerationTests {
             ImagePlus plus = DeformableMesh3DTools.createBinaryRepresentation(mis, dm3d);
             VolumeDataObject vdo2 = new VolumeDataObject(Color.ORANGE, mcvt);
             vdo2.setTextureData(new MeshImageStack(plus));
-            vdo2.setMinMaxRange(0, 0.1);
+            vdo2.setMinMaxExtents(0, 0.1);
             mf3d.addDataObject(vdo2);
             TopoCheck checkers = new TopoCheck(dm3d);
             List<TopologyValidationError> errors = checkers.validate();

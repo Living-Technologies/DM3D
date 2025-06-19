@@ -41,6 +41,7 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
     //Each channel is a source
     List<Source<T>> sources;
     Calibration ijCalibration;
+    final int mipmap;
 
     /**
      * Creates an imglib2 interval for the current time/channel point.
@@ -116,7 +117,7 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
      */
     @Override
     public ImageProcessor getProcessor(int frame, int channel, int slice){
-        RandomAccessibleInterval<T> rai = sources.get(channel).getSource(frame, 0);
+        RandomAccessibleInterval<T> rai = sources.get(channel).getSource(frame, mipmap);
         short[] pixels = new short[getWidthPx()*getHeightPx()];
         BlockSupplier.of(rai).andThen(Convert.convert( new UnsignedShortType())).copy(getSliceInterval(slice), pixels);
         ImageProcessor proc = new ShortProcessor(getWidthPx(), getHeightPx());
@@ -124,6 +125,9 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
         return proc;
     }
 
+    public MeshImageStack2<T> getMipMap(int level){
+        return new MeshImageStack2<>(sources, CURRENT, channel, level);
+    }
 
     /**
      * Creates a mesh image stack that is backed by the BDV class "Source"
@@ -135,6 +139,7 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
     public MeshImageStack2(List<Source<T>> sources){
         this(sources, 0, 0);
     }
+
     /**
      * Creates a mesh image stack based on the provided big dataviewer sources.
      * Each source is assumed to be a channel. The calibration is set based on
@@ -144,12 +149,26 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
      * @param frame starting frame. Used to avoid buffering twice.
      * @param channel starting channel. Used to avoid buffering twice.
      */
-    public MeshImageStack2(List<Source<T>> sources, int frame, int channel){
+    public MeshImageStack2(List<Source<T>> sources, int frame, int channel) {
+        this(sources, frame, channel, 0);
+    }
+
+    /**
+     * Creates a mesh image stack based on the provided big dataviewer sources.
+     * Each source is assumed to be a channel. The calibration is set based on
+     * the 0th multiscale resolution.
+     *
+     * @param sources Each source should be a different channel representing the same space.
+     * @param frame starting frame. Used to avoid buffering twice.
+     * @param channel starting channel. Used to avoid buffering twice.
+     */
+    public MeshImageStack2(List<Source<T>> sources, int frame, int channel, int mipmap){
         //The assumption is each source is a channel for the same volume
         this.sources = sources;
-        Source<T> source = sources.get(0);
+        this.mipmap = mipmap;
+        Source<T> source = sources.get(channel);
         AffineTransform3D at = new AffineTransform3D();
-        source.getSourceTransform(0, 0, at);
+        source.getSourceTransform(0, mipmap, at);
 
         double[] scale = new double[3];
         double[] op2 = new double[3];
@@ -159,7 +178,7 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
         scale[0] = scale[0] - op2[0];
         scale[1] = scale[1] - op2[1];
         scale[2] = scale[2] - op2[2];
-        long[] dims = source.getSource(0, 0).dimensionsAsLongArray();
+        long[] dims = source.getSource(0, mipmap).dimensionsAsLongArray();
 
         SLICES=(int)dims[2];
         this.dims = new int[]{(int)dims[0], (int)dims[1], (int)dims[2]};
@@ -214,9 +233,17 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
                 nPx[0] < nPx[2] ? nPx[0] : nPx[2] :
                 nPx[1] < nPx[2] ? nPx[1] : nPx[2];
         copyValues();
-
+        setMinMax();
         ijCalibration = new Calibration();
         calibrate(ijCalibration);
+    }
+    private void setMinMax(){
+        MIN_VALUE=Double.MAX_VALUE;
+        MAX_VALUE=-MIN_VALUE;
+        for(double d : data){
+            MIN_VALUE = d < MIN_VALUE ? d : MIN_VALUE;
+            MAX_VALUE = d > MAX_VALUE ? d : MAX_VALUE;
+        }
     }
 
     /**
@@ -229,7 +256,7 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
     @Override
     public MeshImageStack duplicate(){
 
-        return new MeshImageStack2<T>(sources, CURRENT, channel);
+        return new MeshImageStack2<T>(sources, CURRENT, channel, mipmap);
     }
 
     /**
@@ -245,7 +272,7 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
         for(int i = 0; i<getNFrames(); i++){
             List<RandomAccessibleInterval<T>> zstacks = new ArrayList<>();
             for(int j = 0; j<getNChannels(); j++){
-                RandomAccessibleInterval<T> rai = sources.get(j).getSource(i, 0);
+                RandomAccessibleInterval<T> rai = sources.get(j).getSource(i, mipmap);
                 rai = Views.addDimension(rai, 0, 0);
                 zstacks.add(rai);
             }
@@ -270,6 +297,10 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
         return original;
     }
 
+    public Source<?> getSource(int channel){
+        return sources.get(channel);
+    }
+
     /**
      * Extracts the scale from the sources 0th resolution "getSourceTransform"
      *
@@ -278,7 +309,7 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
     double[] getScale(){
         Source<T> source = sources.get(0);
         AffineTransform3D at = new AffineTransform3D();
-        source.getSourceTransform(0,0,at);
+        source.getSourceTransform(0,mipmap,at);
         double[] scale = new double[3];
         double[] op2 = new double[3];
         at.apply(new double[]{1, 1, 1}, scale);
@@ -297,7 +328,7 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
     double[] getTranslation(){
         Source<T> source = sources.get(0);
         AffineTransform3D at = new AffineTransform3D();
-        source.getSourceTransform(0,0,at);
+        source.getSourceTransform(0,mipmap,at);
         return  at.getTranslation();
     }
 
@@ -330,8 +361,10 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
         if(n != data.length) {
             data = new double[n];
         }
-        RandomAccessibleInterval<T> rai = sources.get(channel).getSource(CURRENT, 0);
+
+        RandomAccessibleInterval<T> rai = sources.get(channel).getSource(CURRENT, mipmap);
         extract(rai, data);
+
     }
 
     /**
@@ -377,7 +410,7 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
         for(MeshImageStack stack : stacks){
             Color color = ColorSuggestions.getSuggestion();
             ChannelVolume cv = frame.createNewChannelVolume(stack, color );
-            cv.getVolumeDataObject().setMinMaxRange(0.2, 0.6);
+            cv.getVolumeDataObject().setMinMaxExtents(0.2, 0.6);
             cVolumes.add(cv);
         }
         JComponent comp = (JComponent)frame.getJFrame().getContentPane();

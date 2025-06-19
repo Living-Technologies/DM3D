@@ -1140,7 +1140,17 @@ public class SegmentationController {
         generator.setCloseSteps(closeSteps);
         submit(()->{
             List<DeformableMesh3D> meshes = generator.meshesFromLabels(getMeshImageStack());
-            startNewMeshTracks(meshes);
+            List<DeformableMesh3D> validated = new ArrayList<>();
+            for(DeformableMesh3D mesh : meshes){
+                int n = mesh.nodes.size();
+                List<DeformableMesh3D> val = validateTopology(mesh);
+                for( DeformableMesh3D v : val){
+                    if(v.nodes.size() >= 8 ){
+                        validated.add(v);
+                    }
+                }
+            }
+            startNewMeshTracks(validated);
         });
     }
 
@@ -1645,24 +1655,6 @@ public class SegmentationController {
         model.setImageEnergyType(selectedItem);
     }
 
-    /**
-     * Stops displaying the volume in the meshframe3d.
-     *
-     */
-    public void hideVolume() {
-        submit(meshFrame3D::hideVolume);
-    }
-
-    /**
-     * Adjust the min/max values for clipping the image. Any values less than minDelta are transparent, and values above
-     * maxDelta are opaque.
-     *
-     * @param minDelta
-     * @param maxDelta
-     */
-    public void changeVolumeClipping(int minDelta, int maxDelta) {
-        submit(()->meshFrame3D.changeVolumeClipping(minDelta, maxDelta));
-    }
     public void cropSelectedMeshRegion(){
         DeformableMesh3D mesh = getSelectedMesh();
         if(mesh != null){
@@ -2463,10 +2455,6 @@ public class SegmentationController {
     public void setOriginalPlus(ImagePlus plus, int channel) {
         submit(
                 ()->{
-                    boolean volumeShowing = meshFrame3D!=null && meshFrame3D.volumeShowing();
-                    if(volumeShowing){
-                        meshFrame3D.hideVolume();
-                    }
                     model.setOriginalPlus(plus, channel);
 
                     Furrow3D f = getRingController().getFurrow();

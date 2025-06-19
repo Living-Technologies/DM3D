@@ -25,8 +25,10 @@
  */
 package deformablemesh.meshview;
 
+import deformablemesh.BoundingBoxTransformer;
 import deformablemesh.MeshImageStack;
 import deformablemesh.SegmentationController;
+import deformablemesh.geometry.Box3D;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Furrow3D;
 import deformablemesh.gui.FurrowController;
@@ -102,10 +104,6 @@ public class    MeshFrame3D {
         return canvas.getCanvasBackgroundColor();
     }
 
-    public VolumeDataObject getVolumeDataObject() {
-        return vdo;
-    }
-
     public DataCanvas getCanvas() {
         return canvas;
     }
@@ -123,7 +121,6 @@ public class    MeshFrame3D {
     List<DeformableMesh3D> showing = new ArrayList<>();
 
     boolean showingVolume = false;
-    VolumeDataObject vdo;
 
     FurrowController ringController;
 
@@ -210,7 +207,44 @@ public class    MeshFrame3D {
         ChannelVolume cv;
         //If the volume data object exists, it just returns it.
         if( volumeDataObject != null ){
-            cv = new ChannelVolume(stack, c, volumeDataObject.volume, volumeDataObject.getGeometry());
+            int[] sizes = volumeDataObject.sizes;
+            if( sizes[0] != stack.getWidthPx() || sizes[1] != stack.getHeightPx() || sizes[2] != stack.getNSlices()){
+                MeshImageStack check = null;
+                for(ChannelVolume ocv : channelVolumes){
+                    if(ocv.getVolumeDataObject() == volumeDataObject){
+                        System.out.println("found em");
+                        check = ocv.getMeshImageStack();
+                    }
+                }
+                if(check != null) {
+                    MeshImageStack geometry = check;
+                    TextureProducer tp = new TextureProducer() {
+                        @Override
+                        public double get(int x, int y, int z) {
+                            double[] nc = geometry.getNormalizedCoordinate(new double[]{x, y, z});
+                            double[] ic = stack.getImageCoordinates(nc);
+
+                            int x1 = (int)ic[0];
+                            int y1 = (int)ic[1];
+                            int z1 = (int)ic[2];
+
+                            if( x1 >= 0 && x1 < stack.getWidthPx() && y1 >= 0 && y1 < stack.getHeightPx() && z1 >= 0 && z1 < stack.getNSlices() ){
+                                return stack.getValue(x1, y1, z1);
+                            } else{
+                                return 0;
+                            }
+                        }
+                    };
+                    MeshImageStack db = MeshImageStack.unbufferedStack(tp, geometry);
+
+                    cv = new ChannelVolume(db, c, volumeDataObject.volume, volumeDataObject.getGeometry());
+                } else{
+                    throw new RuntimeException("Cannot add miss-match texture resolutions.");
+                }
+
+            } else {
+                cv = new ChannelVolume(stack, c, volumeDataObject.volume, volumeDataObject.getGeometry());
+            }
         } else {
             //creates a new volume data object and adds it to the group.
             int[] dims = new int[]{stack.getWidthPx(), stack.getHeightPx(), stack.getNSlices()};
@@ -507,7 +541,16 @@ public class    MeshFrame3D {
 
 
     public void showAxis(){
-        axis = new Axis3D();
+        if(segmentationController != null && segmentationController.getMeshImageStack() != null) {
+            Box3D b3d = segmentationController.getMeshImageStack().getBounds();
+            if(b3d.getVolume() == 0){
+                axis= new Axis3D();
+            } else {
+                axis = new Axis3D(b3d.low[0], b3d.low[1], b3d.low[2], b3d.high[0], b3d.high[1], b3d.high[2]);
+            }
+        } else{
+            axis = new Axis3D();
+        }
         addDataObject(axis);
     }
 
@@ -715,23 +758,6 @@ public class    MeshFrame3D {
 
     public JFrame getJFrame() {
         return frame;
-    }
-
-    public void changeVolumeClipping(int minDelta, int maxDelta) {
-        if(vdo!=null){
-            double[] mnMx = vdo.getMinMax();
-            double min = mnMx[0] + minDelta*0.05;
-            double max = mnMx[1] + maxDelta*0.05;
-            vdo.setMinMaxRange(min, max);
-        }
-    }
-
-    public void hideVolume() {
-        if(vdo!=null){
-            removeDataObject(vdo);
-            vdo = null;
-        }
-        showingVolume=false;
     }
 
     List<ContractileRingDataObject> lines = new ArrayList<>();

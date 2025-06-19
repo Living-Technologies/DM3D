@@ -5,6 +5,8 @@ import deformablemesh.MeshDetector;
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.ConnectionRemesher;
 import deformablemesh.geometry.DeformableMesh3D;
+import deformablemesh.geometry.Node3D;
+import deformablemesh.geometry.Triangle3D;
 import deformablemesh.geometry.topology.TopoCheck;
 import deformablemesh.geometry.topology.TopologyValidationError;
 import deformablemesh.io.LoadZarr;
@@ -97,6 +99,38 @@ public class Imglib2Mesh {
         }
         double getZ(double z){
             return (z + oz + 0.5)*dz * iscale + sz;
+        }
+
+    }
+
+    static class NormalizedSpaceTransformer{
+        int ox, oy, oz;
+        double scale;
+        double dx, dy, dz;
+        double sx, sy, sz;
+        int w, h, d;
+        public NormalizedSpaceTransformer(MeshImageStack stack){
+            scale = stack.SCALE;
+            dx = stack.pixel_dimensions[0];
+            dy = stack.pixel_dimensions[1];
+            dz = stack.pixel_dimensions[2];
+            sx = -stack.offsets[0];
+            sy = -stack.offsets[1];
+            sz = -stack.offsets[2];
+
+            w = stack.getWidthPx();
+            h = stack.getHeightPx();
+            d = stack.getNSlices();
+        }
+
+        double getX(double x){
+            return (x - sx)*scale - 0.;
+        }
+        double getY(double y){
+            return (y - sy) * scale - 0.;
+        }
+        double getZ(double z){
+            return (z - sz ) * scale - 0.;
         }
 
     }
@@ -387,6 +421,22 @@ public class Imglib2Mesh {
             e.printStackTrace();
         }
         return m2;
+    }
+
+    static Mesh convert(DeformableMesh3D dm3dMesh, MeshImageStack stack){
+        Mesh mesh = new BufferMesh(dm3dMesh.nodes.size(), dm3dMesh.triangles.size());
+        NormalizedSpaceTransformer tr = new NormalizedSpaceTransformer(stack);
+        for( Node3D node : dm3dMesh.nodes){
+            double[] xyz = node.getCoordinates();
+            mesh.vertices().add(tr.getX(xyz[0]), tr.getY(xyz[1]), tr.getZ(xyz[2]));
+        }
+        for( Triangle3D triangle : dm3dMesh.triangles){
+            int[] indexes = triangle.getIndices();
+            mesh.triangles().add(indexes[0], indexes[1], indexes[2]);
+        }
+
+        return mesh;
+
     }
 
 

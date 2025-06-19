@@ -43,7 +43,7 @@ public class LabelQuality {
         MultiChannelVolumeTexture texture = new MultiChannelVolumeTexture(dims);
         VolumeDataObject vdo = new VolumeDataObject(new Color(255, 255, 100), texture);
         vdo.setTextureData(labels);
-        vdo.setMinMaxRange(0, 0.001);
+        vdo.setMinMaxExtents(0, 0.001);
         vdo.setTransparencyTrim(0, 1);
 
         frame.addDataObject(vdo);

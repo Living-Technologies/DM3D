@@ -188,17 +188,27 @@ public class MultiChannelVolumeTexture extends Texture3D {
 
         Calibration cal = calibrations.get(index);
         cal.color = c;
-        findMinAndMaxValues(cal, tex);
+
         cal.setRange(cl_min, cl_max);
         clamp();
     }
 
-    public int addChannel(TextureProducer channelValues, double cl_min, double cl_max, Color3f c){
+    /**
+     * Adds a channel and sets the absolute ranges.
+     *
+     * @param channelValues
+     * @param minRange
+     * @param maxRange
+     * @param c
+     * @return
+     */
+    public int addChannel(TextureProducer channelValues, double minRange, double maxRange, Color3f c){
 
         Calibration cal = new Calibration();
         cal.color = c;
-        findMinAndMaxValues(cal, channelValues);
-        cal.setRange(cl_min, cl_max);
+        cal.min = minRange;
+        cal.max = maxRange;
+        cal.setRange(0, 1);
 
         int dex = -1;
         for(int i = 0; i<textures.size(); i++){
@@ -224,24 +234,10 @@ public class MultiChannelVolumeTexture extends Texture3D {
         refresh();
     }
 
-    /**
-     * Finds the max and min values in the image.
-     *
-     */
-    private void findMinAndMaxValues(Calibration cal, TextureProducer tex) {
-        cal.min = Double.MAX_VALUE;
-        cal.max = -Double.MAX_VALUE;
-
-        for (int k = 0; k < zDim; k++) {
-            for (int j = 0; j < yDim; j++) {
-                for (int i = 0; i < xDim; i++) {
-                    double v = tex.get(i, j, k);
-                    if (v > cal.max) cal.max = v;
-                    if (v < cal.min) cal.min = v;
-                }
-            }
-        }
+    public VoxelPainter getVolumePainter(int channel){
+        return calibrations.get(channel).painter;
     }
+
 
     /**
      * Adds ints a and b together as unsigned bytes 0 -> 255 twos compliment. [ -128, 127 ] becomes

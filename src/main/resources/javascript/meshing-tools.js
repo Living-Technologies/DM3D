@@ -34,6 +34,8 @@ MESHING_CONSTANTS = {
 function binaryRemesher( downsample, threshold ){
 	filtered = controls.getMeshImageStack().getCurrentFrame();
 	stack = filtered.getStack();
+    cf = controls.getCurrentFrame();
+
 	for( var i=1; i <= stack.size(); i++){
 		stack.getProcessor(i).blurGaussian( MESHING_CONSTANTS.blur );
 	}
@@ -76,7 +78,7 @@ function binaryRemeshSelectedMesh(downsample, threshold){
         return;
     }
     mesh = track.getMesh(cf);
-    original = new ArrayList<>();
+    original = new ArrayList();
     original.add(mesh);
 	remesher = new BinaryRemesher(new MeshImageStack(filtered));
 	remesher.setThreshold( threshold );

@@ -109,11 +109,11 @@ public class FillingBinaryImage {
         MeshImageStack mis2 = new MeshImageStack(p2);
         VolumeDataObject vdo = new VolumeDataObject(Color.WHITE, texture);
         vdo.setTextureData(mis2);
-        vdo.setMinMaxRange(0, 1);
+        vdo.setMinMaxExtents(0, 1);
 
         VolumeDataObject vdo2 = new VolumeDataObject(Color.RED, texture);
         vdo2.setTextureData(mis);
-        vdo2.setMinMaxRange(0, 1);
+        vdo2.setMinMaxExtents(0, 1);
         //vdo2.setTransparencyTrim(0, 100);
         frame.addDataObject(vdo);
         frame.addDataObject(vdo2);

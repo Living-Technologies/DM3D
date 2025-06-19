@@ -385,7 +385,16 @@ public class SwingJSTerm {
         }
         return bar;
     }
+    public void clearDisplay(){
 
+        Document d = display.getDocument();
+        try {
+            d.remove(0, d.getLength());
+        } catch (BadLocationException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
     public void echo(Object o){
         String echoed;
         if(o == null){
@@ -397,7 +406,11 @@ public class SwingJSTerm {
                 echoed = Arrays.toString((int[])o);
             } else if(o instanceof byte[]){
                 echoed = Arrays.toString((byte[])o);
-            } else if(o instanceof Object[]){
+            } else if(o instanceof long[]){
+                echoed = Arrays.toString((long[])o);
+            } else if(o instanceof short[]){
+                echoed = Arrays.toString((short[])o);
+            }else if(o instanceof Object[]){
                 echoed = Arrays.toString((Object[])o);
             } else{
                 echoed = o.toString();

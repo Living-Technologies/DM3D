@@ -30,71 +30,35 @@
  	eval(className + " = Java.type('" + fullName + "');");
  	echo(className + " imported");
  }
-var CompositeInterceptables = Java.type("deformablemesh.geometry.interceptable.CompositeInterceptables");
-var InterceptingMesh3D = Java.type("deformablemesh.geometry.interceptable.InterceptingMesh3D");
-var DoubleArray = Java.type("double[]");
-var DeformableMesh3D = Java.type("deformablemesh.geometry.DeformableMesh3D");
-var RayCastMesh = Java.type("deformablemesh.geometry.RayCastMesh");
-var ImagePlus = Java.type("ij.ImagePlus");
-var MeshImageStack = Java.type("deformablemesh.MeshImageStack");
-var WireframeMesh = Java.type("deformablemesh.geometry.WireframeMesh");
-var Color = Java.type("java.awt.Color");
-var ArrayList = Java.type("java.util.ArrayList");
-var Track = Java.type("deformablemesh.track.Track");
-var File = Java.type("java.io.File");
-var ImageEnergyType = Java.type("deformablemesh.externalenergies.ImageEnergyType");
-var Graph = Java.type("lightgraph.Graph");
-var ImageStack = Java.type("ij.ImageStack");
-var ColorProcessor = Java.type("ij.process.ColorProcessor");
-var ImageStack = Java.type("ij.ImageStack");
-var MeshAnalysis = Java.type("deformablemesh.util.MeshAnalysis");
-var GroupDynamics = Java.type("deformablemesh.util.GroupDynamics");
-var DeformableMeshDataObject = Java.type("deformablemesh.meshview.DeformableMeshDataObject");
+
+DoubleArray = Java.type("double[]");
+DeformableMesh3D = Java.type("deformablemesh.geometry.DeformableMesh3D");
+Track = Java.type("deformablemesh.track.Track");
+RayCastMesh = Java.type("deformablemesh.geometry.RayCastMesh");
+MeshImageStack = Java.type("deformablemesh.MeshImageStack");
 GuiTools = Java.type("deformablemesh.gui.GuiTools");
 Vector3DOps = Java.type("deformablemesh.util.Vector3DOps");
+SnapShotRecorder = Java.type("deformablemesh.util.SnapShotRecorder");
+ImageStack = Java.type("ij.ImageStack");
+ColorProcessor = Java.type("ij.process.ColorProcessor");
+ImagePlus = Java.type("ij.ImagePlus");
+IJ = Java.type("ij.IJ");
 FileInfoVirtualStack = Java.type("ij.plugin.FileInfoVirtualStack");
+
+Color = Java.type("java.awt.Color");
+ArrayList = Java.type("java.util.ArrayList");
+File = Java.type("java.io.File");
 Files = Java.type("java.nio.file.Files");
 Paths = Java.type("java.nio.file.Paths");
 FolderOpener = Java.type("ij.plugin.FolderOpener");
-IJ = Java.type("ij.IJ");
 
-function loadFolderOfVolumes( name , filter){
 
-    images = Files.list(Paths.get(name)).filter( function(p){
-            var v = true;
-            if( filter === undefined ){
-                v = p.toString().contains(".tif");
-            } else{
-                s = p.toString();
-                v = s.contains(filter)
-            }
-            return v;
-        }).toList();
-    count = images.size();
-    one = FileInfoVirtualStack.openVirtual(images.get(0).toAbsolutePath().toString());
-    slices = one.getNSlices();
-    channels = one.getNChannels();
-    cal = one.getCalibration();
-    var options;
-    if(filter === undefined ){
-        options = "virtual";
-    } else{
-        options = "virtual filter=" + filter;
-    }
+MeshAnalysis = Java.type("deformablemesh.util.MeshAnalysis");
+GroupDynamics = Java.type("deformablemesh.util.GroupDynamics");
 
-    plus = FolderOpener.open(name , options);
-    total = plus.getStack().size();
 
-    if(channels*slices*count != total){
-        echo("inconsistencies!" + channels + ", " + slices + ", " + count + " :: " + total);
-    }
-	plus.setCalibration(cal);
-	plus.setTitle(Paths.get(name).getFileName().toString());
-    plus.setDimensions(channels, slices, count);
-    plus.setOpenAsHyperStack(true);
-    plus.show();
-    return plus;
-}
+
+
 
 function echo(obj){
     terminal.echo(obj);

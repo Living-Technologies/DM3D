@@ -44,6 +44,7 @@ import deformablemesh.util.astar.PossiblePath;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
@@ -1393,8 +1394,10 @@ public class DeformableMesh3DTools {
 
         int slices = stack.getNSlices();
         for(int slice = 0; slice<slices; slice++){
-            int[] pixels = new int[w*h];
-            ImageProcessor proc = new ColorProcessor(w, h, pixels);
+            //why?
+            //int[] pixels = new int[w*h];
+            //ImageProcessor proc = new ColorProcessor(w, h, pixels);
+            ImageProcessor proc = new ByteProcessor(w, h);
             colorStack.addSlice(proc);
         }
 

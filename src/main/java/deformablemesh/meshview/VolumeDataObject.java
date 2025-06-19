@@ -50,8 +50,13 @@ public class VolumeDataObject implements DataObject {
     TextureProducer textureProducer;
     BranchGroup branchGroup;
     TransformGroup tg;
+
+    //relative min/max used for adjusting.
     double min  = 0;
     double max = 1;
+
+    //Min and max of texture
+    double rangeMin, rangeMax;
 
     double tLow = 1;
     double tHigh = 1;
@@ -73,6 +78,10 @@ public class VolumeDataObject implements DataObject {
     public void setColor(Color c){
         color = c;
         volume.setDisplayColor( dex,  c );
+    }
+
+    public Color getColor(){
+        return color;
     }
 
     /**
@@ -119,6 +128,8 @@ public class VolumeDataObject implements DataObject {
         lengths = stack.scaleToNormalizedLength(new double[]{sizes[0], sizes[1], sizes[2]});
 
         setPosition(0, 0, -stack.offsets[2]);
+        rangeMin = stack.getMinValue();
+        rangeMax = stack.getMaxValue();
         textureProducer = stack::getValue;
         updateVolume();
     }
@@ -157,12 +168,24 @@ public class VolumeDataObject implements DataObject {
         updateVolume();
     }
 
-    public void setMinMaxRange(double min, double max){
-        System.out.println("Setting min and Max for: " + dex);
+    /**
+     * This sets the relative clipping values for the volume. The range of the image is
+     * stored as the MinMaxRange, this sets the extends of the range that are display.
+     *
+     * The values are relative to the total display, 0 = minRange 1=maxRange.
+     *
+     * @param min relative clipping value.
+     * @param max relative clipping value.
+     */
+    public void setMinMaxExtents(double min, double max){
         volume.setDisplayColor(dex, color);
         this.min = min;
         this.max = max;
         updateVolume();
+    }
+
+    public double[] getMinMaxExtents(){
+        return new double[]{min, max};
     }
 
     /**
@@ -187,7 +210,7 @@ public class VolumeDataObject implements DataObject {
     public void updateVolume(){
         Color volumeColor = color;
         if(dex == -1){
-            dex = volume.addChannel(textureProducer, min, max, DataCanvas.getComponents(volumeColor));
+            dex = volume.addChannel(textureProducer, rangeMin, rangeMax, DataCanvas.getComponents(volumeColor));
         } else{
             volume.updateTextureData(dex, textureProducer, min, max, DataCanvas.getComponents(volumeColor));
         }
@@ -221,7 +244,9 @@ public class VolumeDataObject implements DataObject {
     public void showAsLabeledVolume(){
         volume.setVolumePainter(dex, new LabeledVoxelPainter(0));
     }
-
+    public boolean shownAsLabels(){
+        return volume.getVolumePainter(dex) instanceof LabeledVoxelPainter;
+    }
     @Override
     public BranchGroup getBranchGroup() {
         return branchGroup;
@@ -230,11 +255,9 @@ public class VolumeDataObject implements DataObject {
     public double[] getMaxRangeMinMax(){
         return volume.getMaxRangeMinMax(dex);
     }
-    public double[] getClampedMinMax(){
-        return volume.getAbsoluteMinMax(dex);
-    }
-    public double[] getMinMax() {
-        return new double[] {min, max};
+
+    public double[] getMinMaxRange() {
+        return new double[] {rangeMin, rangeMax};
     }
 
     public void unlinkFromTexture() {

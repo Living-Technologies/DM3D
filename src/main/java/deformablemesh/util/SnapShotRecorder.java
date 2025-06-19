@@ -21,7 +21,8 @@ public class SnapShotRecorder {
         if(stack == null){
             stack = new ImageStack(proc.getWidth(), proc.getHeight());
         }
-        stack.addSlice(proc);
+        String label = "ms" + System.nanoTime()*1e-6;
+        stack.addSlice(label, proc);
     }
     public ImagePlus getImagePlus(){
         return new ImagePlus(title, stack);

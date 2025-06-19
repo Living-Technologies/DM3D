@@ -24,7 +24,7 @@ public class BinaryRemesher {
     }
 
     public void setDownsample( int d){
-        downsample = 4;
+        downsample = 1;
     }
 
     public void setThreshold(int t){

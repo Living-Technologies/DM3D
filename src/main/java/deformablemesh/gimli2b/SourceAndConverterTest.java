@@ -2,6 +2,8 @@ package deformablemesh.gimli2b;
 
 import bdv.viewer.Source;
 import bdv.viewer.SourceAndConverter;
+import bvb.core.BigVolumeBrowser;
+import bvb.shapes.MeshColor;
 import bvvpg.core.VolumeViewerFrame;
 import bvvpg.core.VolumeViewerPanel;
 import bvvpg.vistools.Bvv;
@@ -9,35 +11,32 @@ import bvvpg.vistools.BvvFunctions;
 import bvvpg.vistools.BvvHandleFrame;
 import bvvpg.vistools.BvvOptions;
 import bvvpg.vistools.BvvStackSource;
+import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.gui.GuiTools;
 import deformablemesh.io.LoadZarr;
+import deformablemesh.io.MeshReader;
+import deformablemesh.track.Track;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
+import net.imglib2.mesh.Mesh;
 import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 
-import javax.swing.AbstractAction;
-import javax.swing.Action;
-import javax.swing.ActionMap;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
-import javax.swing.KeyStroke;
 import java.awt.Color;
 import java.awt.Graphics;
-import java.awt.Image;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
-import java.awt.image.ImageObserver;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.List;
+
 /**
  * Trying to create simple examples built on the imglib2 structure
  * "SourceAndConverter"
@@ -90,13 +89,8 @@ public class SourceAndConverterTest {
         log.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
         log.setVisible(true);
     }
-    public static void main(String[] args) throws IOException {
-        new ImageJ();
-        Path location = GuiTools.getDirectory(IJ.getInstance(), "Select Zarr Folder").toPath();
-        MeshImageStack2<?> mist = LoadZarr.loadMeshImageStack2(location);
 
-        Path mesh = GuiTools.getMeshFile(IJ.getInstance(), "Select Mesh File");
-
+    static Bvv buildBvv(){
         double dCam = 2000.;
         double dClipNear = 1000.;
         double dClipFar = 15000.;
@@ -121,15 +115,55 @@ public class SourceAndConverterTest {
                 maxCacheSizeInMB(maxCacheSizeInMB ).
                 ditherWidth(ditherWidth)
         );
-        Color[] colors = { Color.CYAN, Color.GREEN, Color.BLACK, Color.RED, Color.BLUE};
+        return bvv;
+    }
+
+    public static void main(String[] args) throws IOException {
+        new ImageJ();
+        BigVolumeBrowser bvb = new BigVolumeBrowser();
+        bvb.startBVB("DM3D visualization");
+        bvb.settingsDialogBVV();
+
+
+
+
+
+        File location = GuiTools.getDirectory(IJ.getInstance(), "Select Zarr Folder");
+        if(location == null){
+            return;
+        }
+        MeshImageStack2<?> mist = LoadZarr.loadMeshImageStack2(location.toPath());
+
+        Color[] colors = { Color.MAGENTA, Color.CYAN, null, Color.RED, Color.YELLOW};
         for(int i = 0; i<mist.getNChannels(); i++){
+            Color c = colors[i];
+            if(c == null) continue;
             Source<?> source = mist.sources.get(i);
-            BvvStackSource< ? > bvvSource = BvvFunctions.show(source, mist.getNFrames(), new BvvOptions().addTo(bvv));
-            bvvSource.setColor(new ARGBType(getValue(colors[i])));
-            bvvSource.setDisplayRange(0, 4000);
+
+            List<BvvStackSource<?>> bvvSources = bvb.addSource(source).getB();
+            System.out.println(bvvSources.size());
+            //BvvStackSource< ? > bvvSource = BvvFunctions.show(source, mist.getNFrames(), new BvvOptions().addTo(bvb.bvv));
+            //bvvSource.setColor(new ARGBType(getValue(colors[i])));
+            //bvvSource.setDisplayRange(0, 4000);
         }
 
-        buildController(bvv);
+        Path mesh = GuiTools.getOpenFile(IJ.getInstance(), "Select Mesh File");
+        if(mesh != null){
+            List<Track> tracks = MeshReader.loadMeshes(mesh.toFile());
+            for(Track t : tracks){
+                for(Integer frame : t.getTrack().keySet()){
+                    DeformableMesh3D dm3dMesh = t.getMesh(frame);
+                    Mesh m = Imglib2Mesh.convert(dm3dMesh, mist);
+                    MeshColor mc = new MeshColor(m, bvb);
+                    mc.setTimePoint(frame);
+                    mc.setColor(t.getColor());
+                    bvb.addShape(mc);
+                }
+            }
+
+        }
+
+        buildController(bvb.bvv);
     }
     static int getValue(Color c){
         return (c.getRed()<<16) + (c.getGreen()<<8) + c.getBlue();

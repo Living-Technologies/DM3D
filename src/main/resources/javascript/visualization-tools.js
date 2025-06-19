@@ -1,3 +1,7 @@
+importer("deformablemesh.meshview.MultiChannelVolumeTexture");
+IntArray = Java.type("int[]");
+importer("deformablemesh.meshview.VolumeDataObject");
+
 
 typeA = {
     function stylizeMeshSurface(o){
@@ -71,4 +75,15 @@ function turnOffWires(){
         mdo.setWireColor( new Color(0, 0, 0, 0));
       }
     });
+}
+
+function addSeparateVolumeTexture(stack){
+    xyz = new IntArray(3);
+    xyz[0] = stack.getWidthPx();
+    xyz[1] = stack.getHeightPx();
+    xyz[2] = stack.getNSlices();
+    mctex = new MultiChannelVolumeTexture(xyz);
+    vdo = new VolumeDataObject( Color.CYAN, mctex );
+    vdo.setTextureData( stack );
+    mf3d.addDataObject( vdo );
 }

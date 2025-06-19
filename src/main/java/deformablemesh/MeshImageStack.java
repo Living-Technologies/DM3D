@@ -28,6 +28,7 @@ package deformablemesh;
 import deformablemesh.geometry.Box3D;
 import deformablemesh.geometry.Furrow3D;
 import deformablemesh.geometry.FurrowTransformer;
+import deformablemesh.meshview.TextureProducer;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.io.FileInfo;
@@ -45,6 +46,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -122,7 +124,6 @@ public class MeshImageStack {
         CHANNELS = original.getNChannels();
         int py = original.getHeight();
         int px = original.getWidth();
-
         CURRENT=frame;
         this.channel = channel;
 
@@ -215,8 +216,7 @@ public class MeshImageStack {
 
     public MeshImageStack duplicate()
     {
-        MeshImageStack dup = new MeshImageStack(original);
-        dup.setFrameAndChannel(CURRENT, channel);
+        MeshImageStack dup = new MeshImageStack(original, CURRENT, channel);
 
         return dup;
 
@@ -252,12 +252,9 @@ public class MeshImageStack {
      */
     public double[] getNormalizedCoordinate(double[] r){
         double[] ret = new double[3];
-
-
         for(int i = 0; i<3; i++){
             ret[i] = r[i]*pixel_dimensions[i]/SCALE - offsets[i];
         }
-
         return ret;
     }
 
@@ -382,6 +379,13 @@ public class MeshImageStack {
             }
         }
 
+    }
+
+    public double getMaxValue(){
+        return MAX_VALUE;
+    }
+    public double getMinValue(){
+        return MIN_VALUE;
     }
 
     /**
@@ -904,6 +908,42 @@ public class MeshImageStack {
         return new MeshImageStack(plus);
     }
 
+    public static MeshImageStack unbufferedStack(TextureProducer tp, MeshImageStack geometry){
+
+
+        MeshImageStack ub = new MeshImageStack(){
+            @Override
+            public void copyValues(){
+
+            }
+            @Override
+            public double getValue( int x, int y, int z){
+                return tp.get(x, y, z);
+            }
+        };
+        ub.SLICES = geometry.getNSlices();
+        ub.FRAMES = geometry.getNFrames();
+        ub.CHANNELS = 1;
+        int py = geometry.getHeightPx();
+        int px = geometry.getWidthPx();
+        ub.CURRENT=geometry.CURRENT;
+        ub.channel = 0;
+
+        ub.max_dex = new int[]{px-1, py-1, ub.SLICES-1};
+        ub.dims = new int[]{px, py, ub.SLICES};
+
+        ub.pixel_dimensions = Arrays.copyOf(geometry.pixel_dimensions, 3);
+
+        ub.SCALE = geometry.SCALE;
+        ub.scale_values = Arrays.copyOf(geometry.scale_values, 3);
+
+        ub.offsets = Arrays.copyOf(geometry.offsets, 3);
+        //px should be the smallest pixel in normalized coordinates.
+        ub.PX = geometry.PX;
+        ub.shortTitle = geometry.getShortTitle() + "NB";
+
+        return ub;
+    }
 
     public ImagePlus getOriginalPlus() {
         return original;

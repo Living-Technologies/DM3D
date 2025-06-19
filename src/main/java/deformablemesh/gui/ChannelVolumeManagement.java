@@ -4,26 +4,22 @@ import deformablemesh.MeshImageStack;
 import deformablemesh.SegmentationController;
 import deformablemesh.meshview.ChannelVolume;
 import deformablemesh.meshview.MeshFrame3D;
+import deformablemesh.meshview.VolumeDataObject;
 
 import javax.swing.BoxLayout;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JList;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.JTextField;
-import javax.swing.JTree;
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Graphics;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
-import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,6 +28,23 @@ public class ChannelVolumeManagement {
     ControlFrame controlFrame;
     public ChannelVolumeManagement(SegmentationController sc){
         controller = sc;
+    }
+
+    private void addRow(JComponent layout, GridBagConstraints gbc, List<JComponent> comps){
+        gbc.gridx = 0;
+        layout.add(comps.get(0), gbc);
+        gbc.gridx = 1;
+        layout.add(comps.get(1), gbc);
+        gbc.gridx = 2;
+        layout.add(comps.get(2), gbc);
+        gbc.gridx = 3;
+        layout.add(comps.get(3), gbc);
+        gbc.gridx = 4;
+        layout.add(comps.get(4), gbc);
+        gbc.gridx = 5;
+        layout.add(comps.get(5), gbc);
+
+
     }
     public void buildGui(ControlFrame controlFrame){
         this.controlFrame = controlFrame;
@@ -48,10 +61,27 @@ public class ChannelVolumeManagement {
         MeshImageStack stack = controller.getMeshImageStack();
         JPanel available = new JPanel();
         available.setLayout(new BoxLayout( available, BoxLayout.PAGE_AXIS) );
-        List<JComponent> ac = availableChannels(stack);
+        List<List<JComponent>> ac = availableChannels(stack);
+        List<List<JComponent>> existing = showingChannels(controller.getMeshFrame3D());
+        GridBagLayout layout = new GridBagLayout();
+        GridBagConstraints gbc = new GridBagConstraints();
+        available.setLayout(layout);
 
-        ac.forEach(available::add);
+        List<JComponent> header = new ArrayList<>();
+        header.add(new JLabel("name"));
+        header.add(new JLabel("low"));
+        header.add(new JLabel("high"));
+        header.add(new JLabel("color"));
+        header.add(new JLabel("is labels"));
+        header.add(new JLabel("action"));
+        gbc.gridy=1;
+        addRow(available, gbc, header);
 
+        for(List<JComponent> row : ac){
+            gbc.gridy += 1;
+            addRow(available, gbc, row);
+        }
+        available.setLayout(layout);
         content.add( available, BorderLayout.CENTER );
 
 
@@ -60,6 +90,10 @@ public class ChannelVolumeManagement {
             mf3d.createNewChannelVolume();
             channelManager.setVisible(false);
         });
+
+
+
+
 
         JButton contrast = new JButton( "contrast channel");
         contrast.addActionListener(
@@ -93,9 +127,36 @@ public class ChannelVolumeManagement {
     private void removeRow(JComponent comp){
 
     }
+    List<List<JComponent>> showingChannels( MeshFrame3D mf3d){
+        List<List<JComponent>> rows = new ArrayList<>();
+        List<ChannelVolume> displayed = mf3d.getChannelVolumes();
+        for(ChannelVolume cv : displayed){
+            VolumeDataObject vdo = cv.getVolumeDataObject();
+            JButton color = colorSelector( vdo.getColor());
+            double[] mnmx = vdo.getMinMaxExtents();
+            JTextField min = new JTextField(4);
+            min.setText("" + mnmx[0]);
 
-    List<JComponent> availableChannels( MeshImageStack stack){
-        List<JComponent> comps = new ArrayList<>();
+            JTextField max = new JTextField(4);
+            max.setText("" + mnmx[1]);
+            MeshImageStack stack = cv.getMeshImageStack();
+            JLabel label = new JLabel(stack.getShortTitle() + "c:" + stack.getChannel());
+            JCheckBox asLabels = new JCheckBox();
+            asLabels.setSelected(vdo.shownAsLabels());
+            JButton remove = new JButton("remove");
+            remove.addActionListener(evt->{
+                controller.submit( ()->{
+                    mf3d.removeChannelVolume( cv );
+                });
+            });
+            List<JComponent> row = new ArrayList<>();
+
+        }
+
+        return rows;
+    }
+    List<List<JComponent>> availableChannels( MeshImageStack stack){
+        List<List<JComponent>> comps = new ArrayList<>();
         String s = stack.getShortTitle();
         for(int i = 0; i<stack.getNChannels(); i++){
             final int channel = i;
@@ -121,20 +182,20 @@ public class ChannelVolumeManagement {
                 if(labels.isSelected()){
                     cv.getVolumeDataObject().showAsLabeledVolume();
                 } else{
-                    cv.getVolumeDataObject().setMinMaxRange(
+                    cv.getVolumeDataObject().setMinMaxExtents(
                             Double.parseDouble(min.getText()),
                             Double.parseDouble(max.getText()) );
                 }
-
             });
-            JPanel row = new JPanel();
-            row.setLayout(new BoxLayout(row, BoxLayout.LINE_AXIS));
+
+
+            List<JComponent> row = new ArrayList<>();
+            row.add(label);
             row.add(min);
             row.add(max);
             row.add(color);
             row.add(labels);
             row.add(add);
-            row.add(label);
             comps.add(row);
         }
         return comps;

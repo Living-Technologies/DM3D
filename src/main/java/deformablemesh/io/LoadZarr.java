@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -89,12 +90,12 @@ public class LoadZarr {
         List<Axis> axes = things.get(0).axes.stream().map(t->new Axis(t.type, t.name, t.unit)).collect(Collectors.toList());
         MultiscaleImageAdapter<T> adapter = new MultiscaleImageAdapter<>(axes);
         for(String s: sets){
-            int mipmap =adapter.getNextLevel();
-
             CachedCellImg<T, ?> cachedCellImg = N5Utils.open(reader, s);
-            long[] dims = cachedCellImg.dimensionsAsLongArray();
-
-            List<Transformations> ts = mss.datasets.get(mipmap).coordinateTransformations;
+            int dex = adapter.addResolutionData(cachedCellImg);
+            adapter.addDataSetLabel(dex, s);
+        }
+        for(int i = 0; i<adapter.getMipMapLevels(); i++){
+            List<Transformations> ts = mss.datasets.get(i).coordinateTransformations;
             double[] scale = null;
             double[] offset = null;
             for(Transformations t : ts){
@@ -104,9 +105,9 @@ public class LoadZarr {
                     offset = t.translation.stream().mapToDouble(Double::valueOf).toArray();
                 }
             }
-            adapter.addResolution(cachedCellImg, scale, offset);
-            adapter.addDataSetLabel(s);
+            adapter.addResolutionTransforms(scale, offset);
         }
+
         adapter.setTitle(location);
         return adapter;
     }

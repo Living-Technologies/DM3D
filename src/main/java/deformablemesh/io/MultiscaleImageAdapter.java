@@ -145,9 +145,29 @@ public class MultiscaleImageAdapter<T extends NumericType<T> & NativeType<T>> {
     public int getNextLevel(){
         return images.data.size();
     }
+    static public long getSize(RandomAccessibleInterval<?> rai){
+        long size = 1;
+        for(int i = 0; i<rai.numDimensions(); i++){
+            size = size*rai.dimension(i);
+        }
+        return size;
+    }
 
-    public void addResolution(RandomAccessibleInterval<T> data, double[] scale, double[] offset){
-        images.data.add(data);
+    public int addResolutionData(RandomAccessibleInterval<T> data){
+        int dex = 0;
+        long size = getSize(data);
+        for(int i = 0; i<images.data.size(); i++){
+            long s2 = getSize(images.data.get(i));
+            if( s2 > size ){
+                dex++;
+            } else{
+                break;
+            }
+        }
+        images.data.add(dex, data);
+        return dex;
+    }
+    public void addResolutionTransforms(double[] scale, double[] offset){
         images.scales.add(scale);
         images.offsets.add(offset);
     }
@@ -173,8 +193,8 @@ public class MultiscaleImageAdapter<T extends NumericType<T> & NativeType<T>> {
         throw new RuntimeException("Cannot map data type to ImageJ 1 datatype: " + t.getClass());
     }
 
-    public void addDataSetLabel(String dataSetLabel){
-        images.datasetLabels.add(dataSetLabel);
+    public void addDataSetLabel(int index, String dataSetLabel){
+        images.datasetLabels.add(index, dataSetLabel);
     }
 
     public int getMipMapLevels(){
@@ -206,9 +226,12 @@ public class MultiscaleImageAdapter<T extends NumericType<T> & NativeType<T>> {
 
 
             AffineTransform3D a = new AffineTransform3D();
-            a.scale(scale[images.xDex], scale[images.yDex], scale[images.zDex]);
             a.translate(offset[images.xDex], offset[images.yDex], offset[images.zDex]);
+            a.scale(scale[images.xDex], scale[images.yDex], scale[images.zDex]);
             transforms[i] = a;
+            System.out.println(a);
+            System.out.println(i + ", " + Arrays.toString(scale));
+            System.out.println(Arrays.toString(rai.dimensionsAsLongArray()));
         }
         DefaultVoxelDimensions vd = new DefaultVoxelDimensions(4);
         RandomAccessibleIntervalMipmapSource4D<T> source = new RandomAccessibleIntervalMipmapSource4D<>(

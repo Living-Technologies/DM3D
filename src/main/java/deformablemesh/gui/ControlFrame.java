@@ -39,19 +39,16 @@ import deformablemesh.gui.meshinitialization.FurrowInitializer;
 import deformablemesh.io.ImportType;
 import deformablemesh.io.MeshReader;
 import deformablemesh.io.TrackMateAdapter;
-import deformablemesh.meshview.ChannelVolume;
 import deformablemesh.meshview.HotKeyDelegate;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.track.MeshTrackManager;
 import deformablemesh.track.Track;
-import deformablemesh.util.ColorSuggestions;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.io.OpenDialog;
 import ij.plugin.FileInfoVirtualStack;
 import loci.plugins.BF;
 import loci.plugins.in.ImporterOptions;
-import org.checkerframework.checker.units.qual.C;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -61,7 +58,6 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
-import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
@@ -772,7 +768,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
     }
 
     public JButton createManageVolumeButton(){
-        final String showing = "manage volumes";
+        final String showing = "manage displayed volumes";
         JButton show_volume = new JButton(showing);
         buttons.add(show_volume);
         show_volume.addActionListener(e -> {
@@ -1324,11 +1320,11 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             if(out == null || !segmentationController.hasImage()  ){
                 return;
             }
-            try {
+            setReady(false);
+            segmentationController.submit(()->{
                 SaveImageToZarr.saveToZarr(segmentationController.getMeshImageStack().getOriginalPlus(), Paths.get(out));
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+                finished();
+            });
         });
         tools.add(zarr);
         return tools;
@@ -1569,7 +1565,6 @@ public class ControlFrame implements ReadyObserver, FrameListener {
     public void showVolumeManagerAction(){
         if(ready){
             setReady(false);
-            MeshFrame3D mf3d = segmentationController.getMeshFrame3D();
             ChannelVolumeManagement cvm = new ChannelVolumeManagement(segmentationController);
             cvm.buildGui(this);
             finished();
@@ -1700,7 +1695,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         pluses.forEach(ImagePlus::show);
     }
     File getOpenFile(String title){
-        Path p = GuiTools.getMeshFile(frame, title);
+        Path p = GuiTools.getOpenFile(frame, title);
         if(p != null){
             return p.toFile();
         }
@@ -1708,7 +1703,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
     }
 
     public void loadMeshes(){
-        Path p = GuiTools.getMeshFile(frame, "File to load mesh from");
+        Path p = GuiTools.getOpenFile(frame, "File to load mesh from");
         if(p != null){
             segmentationController.loadMeshes(p.toFile());
         }

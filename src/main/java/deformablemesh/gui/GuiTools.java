@@ -28,7 +28,6 @@ package deformablemesh.gui;
 import deformablemesh.plugins.Deforming3DMesh_Plugin;
 import deformablemesh.SegmentationController;
 import ij.IJ;
-import ij.ImageJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 
@@ -541,7 +540,7 @@ public class GuiTools {
         return f;
     }
 
-    static public Path getMeshFile(Frame parent, String title){
+    static public Path getOpenFile(Frame parent, String title){
         JFileChooser chooser = new JFileChooser();
         chooser.setDialogTitle(title);
         chooser.setFileSelectionMode(JFileChooser.OPEN_DIALOG);
@@ -560,6 +559,7 @@ public class GuiTools {
 
         return f.toPath();
     }
+
     static public ImagePlus selectOpenImage(Frame parent, String title){
         JDialog log = new JDialog(parent, title, true);
         JPanel content = new JPanel(new BorderLayout());

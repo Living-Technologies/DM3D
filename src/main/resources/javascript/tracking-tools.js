@@ -321,3 +321,56 @@ function maxOverTime( mist ){
 	plus.setStack(stack);
 	plus.show();
 }
+
+function varianceOverTime( mist ){
+
+	plus = mist.createImagePlus();
+	stack = new ImageStack( mist.getWidthPx(), mist.getHeightPx());
+    stack2 = new ImageStack( mist.getWidthPx(), mist.getHeightPx());
+    echo("to here");
+	for(i = 0; i<mist.getNSlices(); i++){
+		stack.addSlice( new FloatProcessor(mist.getWidthPx(), mist.getHeightPx() ) );
+		stack2.addSlice( new FloatProcessor(mist.getWidthPx(), mist.getHeightPx() ) );
+	}
+    echo("to here 2")
+	for( frame = 0; frame<mist.getNFrames(); frame++){
+		mist.setFrame(frame);
+		for(z = 0; z<mist.getNSlices(); z++){
+			proc = stack.getProcessor(z + 1);
+                                                                                        proc2 = stack2.getProcessor( z + 1);
+			for(j = 0; j<mist.getHeightPx(); j++){
+				for(i = 0; i<mist.getWidthPx(); i++){
+                                                                                                                                                   var v = proc.getf( i, j)
+					proc.setf( i, j, v + mist.getValue(i, j, z) );
+					proc2.setf( i, j, v*v + mist.getValue(i, j, z) );
+
+				}
+			}
+		}
+	}
+	plus.setStack(stack);
+	plus.show();
+
+    plus2 = mist.createImagePlus();
+    plus2.setStack( stack2)
+    plus2.show()
+}
+
+function play(){
+    playing = true;
+    new Thread( function(){
+        var mf3d = controls.getMeshFrame3D();
+        var rate = 24;
+        while(playing){
+            t0 = System.nanoTime();
+            n = (controls.getCurrentFrame() + 1) % controls.getNFrames();
+            controls.toFrame(n);
+            mf3d.snapShot();
+            t1 = System.nanoTime();
+            elapsed = (t1 - t0)*1e-6;
+            if(elapsed < rate ){
+                Thread.sleep( rate - elapsed);
+            }
+        }
+    } ).start()
+}

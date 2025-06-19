@@ -34,16 +34,7 @@ import javax.swing.JDialog;
 import javax.swing.JPanel;
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Frame;
-import java.awt.Window;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 public class VolumeContrastSetter{
     IntensityRanges range;
@@ -62,7 +53,8 @@ public class VolumeContrastSetter{
         JPanel content = new JPanel(new BorderLayout());
         content.setBackground(Color.BLACK);
         content.setOpaque(true);
-        range = new IntensityRanges(vdo.textureProducer, vdo.sizes);
+        double[] mm = vdo.getMinMaxRange();
+        range = new IntensityRanges(vdo.textureProducer, vdo.sizes, mm[0], mm[1]);
 
         JPanel flow = new JPanel();
         flow.setOpaque(false);
@@ -85,13 +77,8 @@ public class VolumeContrastSetter{
             //double[] clamped = preview.previewVdo.getClampedMinMax();
             double[] clip = range.getClipValues();
             //using the original vdo we want to find clip values that give the same clamped values.
-            double[] mm = vdo.getMaxRangeMinMax();
-
-            //double rmin = ( clamped[0] - mm[0] )/(mm[1] - mm[0]);
-            //double rmax = ( clamped[1] - mm[0])/(mm[1] - mm[0]);
-            //System.out.println(" : global clips: " + rmin + ", " + rmax);
             dialog.dispose();
-            vdo.setMinMaxRange(clip[0], clip[1]);
+            vdo.setMinMaxExtents(clip[0], clip[1]);
 
         });
         JButton cancel = new JButton("cancel");
@@ -106,63 +93,6 @@ public class VolumeContrastSetter{
         return panel;
     }
 
-    class VolumeSamplerPanel{
-        MeshFrame3D mf3d;
-        Component panel;
-        VolumeDataObject previewVdo;
-        int preview_time = 0;
-        ScheduledFuture<?> future;
-        ScheduledExecutorService ses = new ScheduledThreadPoolExecutor(1);
-        public VolumeSamplerPanel(Window parent){
-            mf3d = new MeshFrame3D();
 
-            panel = mf3d.asJPanel(parent);
-            mf3d.setBackgroundColor(previewBackgroundColor);
-            mf3d.showAxis();
-
-            WindowListener l = new WindowAdapter() {
-                @Override
-                public void windowClosed(WindowEvent evt){
-                    ses.shutdown();
-                }
-
-                @Override
-                public void windowOpened(WindowEvent e) {
-                    oscillate();
-                }
-            };
-            parent.addWindowListener(l);
-
-        }
-
-
-
-        public void oscillate(){
-            if(future != null){
-                future.cancel(false);
-                future = null;
-            }
-            future = ses.scheduleAtFixedRate(()->{
-                double t = Math.sin(preview_time*3.14/100);
-                mf3d.rotateView((int)(10*t), 0);
-                preview_time++;
-            }, 0, 20, TimeUnit.MILLISECONDS);
-        }
-
-        public void stopOscillation(){
-            future.cancel(false);
-            future = null;
-        }
-        int[] getShape(double[][][] arr){
-
-            return new int[]{arr.length, arr[0].length, arr[0][0].length};
-
-        }
-
-        void setMinMaxClipping(double min, double max){
-            previewVdo.setMinMaxRange(min, max);
-        }
-
-    }
 
 }
