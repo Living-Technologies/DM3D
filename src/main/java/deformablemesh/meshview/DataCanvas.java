@@ -485,6 +485,15 @@ public class DataCanvas extends Canvas3D {
         return img;
     }
 
+    public BufferedImage snapShot(float factor){
+        if(offscreen == null) {
+            createOffscreenCanvas();
+        }
+        int w = (int)(getWidth()*factor);
+        int h = (int)(getHeight()*factor);
+        BufferedImage img = offscreen.doRender(w, h);
+        return img;
+    }
 
 
     public void changeBackgroundColor(Color color){
@@ -657,6 +666,7 @@ public class DataCanvas extends Canvas3D {
         transform.transform(forward);
         return new double[]{forward.x, forward.y, forward.z};
     }
+
 
 }
 

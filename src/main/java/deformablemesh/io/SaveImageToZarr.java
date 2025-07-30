@@ -94,63 +94,50 @@ public class SaveImageToZarr {
             N5Utils.saveRegion(Views.translate(img,translation ), writer, datasetPath + arrayDatasetPath);
         }
     }
-    public static <T extends NativeType<T> & NumericType<T>> void saveToZarr(ImagePlus plus, Path op) throws Exception {
+    public static <T extends NativeType<T> & NumericType<T>> void saveToZarr(ImagePlus plus, Path op, int[] blocks) throws Exception {
         N5Factory factory = new N5Factory();
         factory.zarrDimensionSeparator("/");
-
+        RandomAccessibleInterval<T> img = getXYZCTRandomAccessIntervale(plus);
         try( N5Writer writer = factory.openWriter(op.toString()) ){
-            RandomAccessibleInterval<T> img = getXYZCTRandomAccessIntervale(plus);
             Calibration cb = plus.getCalibration();
             String datasetPath = "";
             String arrayDatasetPath = "/s0";
             long[] dimensions = img.dimensionsAsLongArray();
-            int[] blocks = new int[dimensions.length];
             double[] scale = new double[dimensions.length];
-            //TODO why isn't there a time offset?
             double[] translation = new double[dimensions.length];
 
             int spatial = 0;
             Axis[] axes = new Axis[dimensions.length];
 
             //keep xyczt order
-            //x
-            blocks[spatial] = plus.getWidth();
             scale[spatial] = cb.pixelWidth;
             translation[spatial] = - cb.xOrigin * cb.pixelWidth;
             axes[spatial] = new Axis(Axis.SPACE, "x", cb.getXUnit());
             //y
-            blocks[spatial + 1] = plus.getHeight();
             scale[spatial+1] = cb.pixelHeight;
             translation[spatial+1] = - cb.yOrigin * cb.pixelHeight;
             axes[spatial + 1] = new Axis(Axis.SPACE, "y", cb.getYUnit());
 
-            blocks[spatial + 2] = plus.getNSlices();
             scale[spatial+2] = cb.pixelDepth;
             translation[spatial+2] = - cb.zOrigin * cb.pixelDepth;
             axes[spatial + 2] = new Axis(Axis.SPACE, "z", cb.getZUnit());
 
             //c (if present.)
-            //TODO always saving with 5 axes no need to check.
-            if(plus.getNChannels()  > 0){
-                spatial++;
-                blocks[3] = 1;
-                scale[3] = 1;
-                translation[3] = 0;
-                axes[3] = new Axis(Axis.CHANNEL, "c", null, true);
-            }
+            spatial++;
+            scale[3] = 1;
+            translation[3] = 0;
+            axes[3] = new Axis(Axis.CHANNEL, "c", null, true);
 
-            if(plus.getNFrames() > 0){
-                blocks[spatial + 3] = 1;
-                double ds = cb.frameInterval == 0 ? 1 : cb.frameInterval;
-                scale[spatial + 3] = ds;
-                axes[spatial + 3] = new Axis(Axis.TIME, "t", cb.getTimeUnit());
-            }
+            double ds = cb.frameInterval == 0 ? 1 : cb.frameInterval;
+            scale[spatial + 3] = ds;
+            axes[spatial + 3] = new Axis(Axis.TIME, "t", cb.getTimeUnit());
 
             DataType type = getDataType(plus);
             DatasetAttributes da = new DatasetAttributes(
                     dimensions,
                     blocks, type, new BloscCompression()
             );
+
             NgffSingleScaleAxesMetadata metadata = new NgffSingleScaleAxesMetadata(
                     arrayDatasetPath,
                     scale,
@@ -181,6 +168,11 @@ public class SaveImageToZarr {
 
             N5Utils.save(img, writer,datasetPath + arrayDatasetPath, blocks, new BloscCompression());
         }
+
+    }
+    public static <T extends NativeType<T> & NumericType<T>> void saveToZarr(ImagePlus plus, Path op) throws Exception {
+        int[] blocks = {plus.getWidth(), plus.getHeight(), plus.getNSlices(), 1, 1};
+        saveToZarr(plus, op, blocks);
     }
     public static void main(String[] args) throws Exception {
         Path p = Paths.get(IJ.getFilePath("select image to convert")).toAbsolutePath();

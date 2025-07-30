@@ -528,18 +528,46 @@ public class GuiTools {
         JFileChooser chooser = new JFileChooser();
         chooser.setDialogTitle(title);
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        chooser.showDialog(parent, "select");
-        File f = chooser.getSelectedFile();
-        File d = chooser.getCurrentDirectory();
-        System.out.println(f + ", " + d);
-        if( f == null ){
-            return null;
-        } else{
-            lastUsed = f.getParentFile().toPath();
+        if(lastUsed != null) {
+            chooser.setCurrentDirectory(lastUsed.toFile());
         }
-        return f;
+        int result = chooser.showDialog(parent, "select");
+        if(result == JFileChooser.APPROVE_OPTION) {
+            File f = chooser.getSelectedFile();
+            File d = chooser.getCurrentDirectory();
+            System.out.println(f + ", " + d);
+            if (f == null) {
+                return null;
+            } else {
+                lastUsed = f.getParentFile().toPath();
+            }
+            return f;
+        }
+        return null;
     }
 
+    static public Path getSaveFile(Frame parent, String title){
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle(title);
+        chooser.setFileSelectionMode(JFileChooser.SAVE_DIALOG);
+        if(lastUsed != null) {
+            chooser.setCurrentDirectory(lastUsed.toFile());
+        }
+        int result = chooser.showDialog(parent, "select");
+        if(result == JFileChooser.APPROVE_OPTION) {
+            File f = chooser.getSelectedFile();
+            File d = chooser.getCurrentDirectory();
+            System.out.println(f + ", " + d);
+            if (f == null) {
+                return null;
+            } else {
+                lastUsed = f.getParentFile().toPath();
+            }
+
+            return f.toPath();
+        }
+        return null;
+    }
     static public Path getOpenFile(Frame parent, String title){
         JFileChooser chooser = new JFileChooser();
         chooser.setDialogTitle(title);
@@ -559,6 +587,28 @@ public class GuiTools {
 
         return f.toPath();
     }
+
+    static public Path getAFile(Frame parent, String title){
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle(title);
+        chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+        if(lastUsed != null) {
+            chooser.setCurrentDirectory(lastUsed.toFile());
+        }
+        chooser.showDialog(parent, "select");
+        File f = chooser.getSelectedFile();
+        File d = chooser.getCurrentDirectory();
+        System.out.println(f + ", " + d);
+        if( f == null ){
+            return null;
+        } else{
+            lastUsed = f.getParentFile().toPath();
+        }
+
+        return f.toPath();
+    }
+
+
 
     static public ImagePlus selectOpenImage(Frame parent, String title){
         JDialog log = new JDialog(parent, title, true);

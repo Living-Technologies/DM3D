@@ -28,6 +28,7 @@ package deformablemesh;
 import deformablemesh.geometry.Box3D;
 import deformablemesh.geometry.Furrow3D;
 import deformablemesh.geometry.FurrowTransformer;
+import deformablemesh.gui.FrameListener;
 import deformablemesh.meshview.TextureProducer;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -908,9 +909,7 @@ public class MeshImageStack {
         return new MeshImageStack(plus);
     }
 
-    public static MeshImageStack unbufferedStack(TextureProducer tp, MeshImageStack geometry){
-
-
+    public static MeshImageStack unbufferedStack(TextureProducer tp, FrameListener fl, MeshImageStack geometry){
         MeshImageStack ub = new MeshImageStack(){
             @Override
             public void copyValues(){
@@ -919,6 +918,10 @@ public class MeshImageStack {
             @Override
             public double getValue( int x, int y, int z){
                 return tp.get(x, y, z);
+            }
+            @Override
+            public void setFrame(int frame){
+                fl.frameChanged(frame);
             }
         };
         ub.SLICES = geometry.getNSlices();

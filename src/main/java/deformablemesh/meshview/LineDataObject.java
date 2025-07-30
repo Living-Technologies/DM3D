@@ -37,6 +37,7 @@ import org.jogamp.java3d.Node;
 import org.jogamp.java3d.Shape3D;
 import org.jogamp.java3d.Transform3D;
 import org.jogamp.java3d.TransformGroup;
+import org.jogamp.vecmath.Color3f;
 import org.jogamp.vecmath.Vector3d;
 
 import java.util.Arrays;
@@ -53,7 +54,7 @@ public class LineDataObject implements DataObject {
      *
      */
 
-    final float LINEWIDTH;
+    float LINEWIDTH;
 
     Shape3D line3d;
     Transform3D scale;
@@ -63,6 +64,7 @@ public class LineDataObject implements DataObject {
     double[] positions;
     int[] indexes;
     IndexedLineArray line;
+    Color3f color = new Color3f(1, 0, 0);
     public LineDataObject(List<Node3D> points){
         this(points, 3f);
     }
@@ -78,6 +80,7 @@ public class LineDataObject implements DataObject {
 
         line3d = new Shape3D(line);
         line3d.setCapability(Shape3D.ALLOW_GEOMETRY_WRITE);
+        line3d.setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
         LINEWIDTH=width;
 
         line3d.setAppearance(createAppearance());
@@ -88,6 +91,10 @@ public class LineDataObject implements DataObject {
         line3d.removeAllGeometries();
     }
 
+    public void setLineWidth(float lw){
+        LINEWIDTH = lw;
+        line3d.setAppearance(createAppearance());
+    }
 
     public BranchGroup getBranchGroup(){
         if(BG==null){
@@ -110,7 +117,7 @@ public class LineDataObject implements DataObject {
     public Appearance createAppearance(){
         Appearance a = new Appearance();
 
-        c_at = new ColoringAttributes(1f, 0f, 0f, ColoringAttributes.NICEST);
+        c_at = new ColoringAttributes(color, ColoringAttributes.NICEST);
         c_at.setCapability(ColoringAttributes.ALLOW_COLOR_WRITE);
 
         LineAttributes la = new LineAttributes();
@@ -193,8 +200,9 @@ public class LineDataObject implements DataObject {
         return line3d;
     }
 
-    public void setColor(float r, float g, float v){
-        c_at.setColor(r, g, v);
+    public void setColor(float r, float g, float b){
+        color = new Color3f(r, g, b);
+        c_at.setColor(color);
     }
 
 

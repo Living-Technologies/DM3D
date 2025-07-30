@@ -273,6 +273,17 @@ public class DeformableMeshDataObject implements DataObject {
 
     }
 
+    public Appearance createHiddenLineAppearance(){
+        Appearance a = new Appearance();
+        LineAttributes la = new LineAttributes();
+        la.setLineWidth(0);
+        a.setLineAttributes(la);
+        ColoringAttributes c_at = new ColoringAttributes(0, 0, 0, ColoringAttributes.NICEST);
+        a.setColoringAttributes(c_at);
+        a.setTransparencyAttributes(new TransparencyAttributes(TransparencyAttributes.FASTEST, 1));
+        return a;
+    }
+
 
 
     @Override
@@ -282,6 +293,10 @@ public class DeformableMeshDataObject implements DataObject {
 
 
     public void setWireColor(Color color) {
+        if( color.equals(wires) && showWires){
+            //no changes
+            return;
+        }
         wires = color;
         showWires = true;
         mesh_object.setAppearance(createLineAppearance());
@@ -328,12 +343,9 @@ public class DeformableMeshDataObject implements DataObject {
     }
 
     public void setShowWires(boolean showWires) {
-        if(showWires == this.showWires){
-            return;
-        }
         this.showWires = showWires;
-        if(showWires) {
-            mesh_object.setAppearance(hiddenSurface());
+        if(!showWires) {
+            mesh_object.setAppearance(createHiddenLineAppearance());
         } else{
             mesh_object.setAppearance(createLineAppearance());
         }

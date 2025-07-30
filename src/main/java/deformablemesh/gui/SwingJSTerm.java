@@ -383,6 +383,39 @@ public class SwingJSTerm {
                 });
             }
         }
+
+        String[] examples = {
+                "filter-snippet.js",
+                "plotting-snippet.js",
+                "coloring-snippet.js"
+        };
+
+        JMenu snippets = new JMenu("examples");
+        bar.add(snippets);
+
+
+        for( String snippet : examples){
+            URL url = getClass().getResource("/javascript/" + snippet);
+            if(url != null){
+                JMenuItem item = new JMenuItem(snippet.replace("-snippet.js", ""));
+                snippets.add(item);
+                item.addActionListener(evt->{
+                        try(BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()))){
+                            String line = reader.readLine();
+                            input.append(line);
+                            while( (line = reader.readLine()) != null ) {
+                                input.append("\n");
+                                input.append(line);
+                            }
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                });
+            };
+        }
+
+
+
         return bar;
     }
     public void clearDisplay(){

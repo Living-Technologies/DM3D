@@ -32,6 +32,8 @@
  }
 
 DoubleArray = Java.type("double[]");
+Double = Java.type("java.lang.Double");
+Integer = Java.type("java.lang.Integer");
 DeformableMesh3D = Java.type("deformablemesh.geometry.DeformableMesh3D");
 Track = Java.type("deformablemesh.track.Track");
 RayCastMesh = Java.type("deformablemesh.geometry.RayCastMesh");
@@ -39,6 +41,7 @@ MeshImageStack = Java.type("deformablemesh.MeshImageStack");
 GuiTools = Java.type("deformablemesh.gui.GuiTools");
 Vector3DOps = Java.type("deformablemesh.util.Vector3DOps");
 SnapShotRecorder = Java.type("deformablemesh.util.SnapShotRecorder");
+MeshReader = Java.type("deformablemesh.io.MeshReader");
 ImageStack = Java.type("ij.ImageStack");
 ColorProcessor = Java.type("ij.process.ColorProcessor");
 ImagePlus = Java.type("ij.ImagePlus");
@@ -56,7 +59,7 @@ FolderOpener = Java.type("ij.plugin.FolderOpener");
 MeshAnalysis = Java.type("deformablemesh.util.MeshAnalysis");
 GroupDynamics = Java.type("deformablemesh.util.GroupDynamics");
 
-
+Graph = Java.type("lightgraph.Graph");
 
 
 
@@ -139,5 +142,60 @@ function showPreviousMeshes(){
         }
     }
 
+}
+
+function filterCurrentFrame( filter ){
+    tracks = controls.getAllTracks();
+    filtered = controls.getEmptyTrackList();
+    frame = controls.getCurrentFrame();
+
+
+    for( id in tracks){
+      track = tracks[id];
+      if( track.containsKey(frame)){
+          next = new Track(track.getName());
+          for( k in track.getTrack()){
+            if(k == frame){
+                mesh = track.getMesh(k);
+                if(filter(mesh)){
+                    next.addMesh(k, mesh);
+                }
+            } else{
+                next.addMesh(k, track.getMesh(k));
+            }
+            if(next.getTrack().size() > 0){
+                filtered.add(next);
+            }
+          }
+
+      } else{
+          filtered.add(track);
+      }
+
+    }
+    controls.setMeshTracks(filtered);
+}
+
+/*
+ Select all of the meshes from the current frame and sets their color based on
+ the color from the getColor function.
+*/
+function applyToCurrentMeshes(modifier){
+    f = controls.getCurrentFrame();
+
+    meshes = controls.getAllTracks().stream().filter(
+        function(track) {
+          return track.containsKey(f);
+        }
+    ).map(
+        function(track){ return track.getMesh(f);}
+    ).toList();
+
+    meshes.forEach(
+      function( mesh ){
+          mesh.setColor( modifier(mesh) )
+          mesh.setShowSurface(true);
+      }
+    );
 }
 

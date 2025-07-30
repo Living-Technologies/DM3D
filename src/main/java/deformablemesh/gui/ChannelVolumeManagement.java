@@ -105,7 +105,7 @@ public class ChannelVolumeManagement {
 
         JButton remove = new JButton("remove");
         remove.addActionListener(evt->{
-            mf3d.chooseToremoveChannelVolume();
+            mf3d.chooseToRemoveChannelVolume();
             channelManager.setVisible(false);
         });
 

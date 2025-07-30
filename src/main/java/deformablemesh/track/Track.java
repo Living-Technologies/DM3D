@@ -42,7 +42,7 @@ public class Track {
     boolean showSurface = false;
     private Map<Integer, DeformableMesh3D> track = new TreeMap<>();
     private boolean selected;
-    private boolean showWires;
+    private boolean showWires = true;
 
     public Track(List<Color> usedColors){
         this.color = ColorSuggestions.getSuggestion(usedColors);
@@ -206,5 +206,9 @@ public class Track {
 
     public void putAll(Map<Integer, DeformableMesh3D> newMeshes) {
         track.putAll(newMeshes);
+    }
+
+    public boolean getShowWires() {
+        return showWires;
     }
 }

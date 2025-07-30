@@ -126,6 +126,7 @@ public class SegmentationController {
 
     AtomicLong lastSaved = new AtomicLong(-1);
     ExceptionThrowingService main = new ExceptionThrowingService();
+    List<Runnable> shutdownActions = new ArrayList<>();
     private double minConnectionLength = 0.01;
     private double maxConnectionLength = 0.02;
     private ExecutorService globalExecutor;
@@ -1100,7 +1101,15 @@ public class SegmentationController {
         List<DeformableMesh3D> meshes = regions.stream().map(
                 mesher::fillBlobWithMesh
         ).collect(Collectors.toList());
-        startNewMeshTracks( meshes );
+        List<Integer> labels = regions.stream().map(
+                Region::getLabel
+        ).collect(Collectors.toList());
+        List<Track> tracks = startNewMeshTracks( meshes );
+        for(int i = 0; i<labels.size(); i++){
+            Track track = tracks.get(i);
+            int lbl = labels.get(i);
+            track.setName(track.getName() + "-lbl_" + lbl);
+        }
     }
 
     public List<DeformableMesh3D> repairTopology( DeformableMesh3D mesh){
@@ -1492,12 +1501,12 @@ public class SegmentationController {
      * Starts a new Track for each of provided meshes. Used with guess meshes.
      * @param meshes If the list is empty, this is a non-op.
      */
-    public void startNewMeshTracks(List<DeformableMesh3D> meshes){
-        if(meshes.size() == 0 ) return;
-
+    public List<Track> startNewMeshTracks(List<DeformableMesh3D> meshes){
+        if(meshes.size() == 0 ) return new ArrayList<>();
+        final List<Track> tracks = new ArrayList<>(meshes.size());
         actionStack.postAction(new UndoableActions() {
             final int frame = getCurrentFrame();
-            final List<Track> tracks = new ArrayList<>(meshes.size());
+
             @Override
             public void perform() {
                 submit(()->{
@@ -1526,6 +1535,7 @@ public class SegmentationController {
                 return "Added " + tracks.size() + " mesh tracks";
             }
         });
+        return new ArrayList<>(tracks);
     }
     /**
      * The provided normal and position represent a plane. This transformer is used for transforming between the
@@ -2484,6 +2494,9 @@ public class SegmentationController {
         });
     }
 
+    public void setLastSavedFile(File f){
+        model.setLastSavedFile( f );
+    }
     /**
      * The action stack controls the undo/redo commands. Each time a new command is posted and
      * performed it updates the id. This returns the current id of the action stack.
@@ -3418,9 +3431,11 @@ public class SegmentationController {
     /**
      * Adds a new frame listener that gets notified whenever: nextFrame, previousFrame, setFrame, or the backing imageplus is changed.
      * @param listener
+     * @return the provided listener. For working with anonymous classes and lambdas.
      */
-    public void addFrameListener(FrameListener listener){
+    public FrameListener addFrameListener(FrameListener listener){
         model.addFrameListener(listener);
+        return listener;
     }
 
     /**
@@ -3561,6 +3576,8 @@ public class SegmentationController {
         if(globalExecutor != null){
             main.submit(globalExecutor::shutdown);
         }
+
+        shutdownActions.forEach(run -> main.submit(run::run));
         main.submit(main::shutdown);
     }
 
@@ -3649,6 +3666,9 @@ public class SegmentationController {
         guessVoxelMeshes(2);
     }
 
+    public void addShutdownListener(Runnable action) {
+        shutdownActions.add(action);
+    }
 }
 
 

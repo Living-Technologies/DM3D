@@ -53,6 +53,7 @@ public class Axis3D implements DataObject {
     double lx, ly, lz, hx, hy, hz;
     List<LineDataObject> wires = new ArrayList<>();
     double[] positions;
+    float lineWidth = 0.5f;
     void generatePositions(){
         positions = new double[] {
                 lx, ly, lz,
@@ -121,20 +122,20 @@ public class Axis3D implements DataObject {
         for(int i = 0; i<positions.length/3; i++){
             nodes.add(new Node3D(positions, i));
         }
-        LineDataObject obj = new LineDataObject(Arrays.asList(nodes.get(0), nodes.get(1), nodes.get(2), nodes.get(3), nodes.get(0)), 0.5f);
+        LineDataObject obj = new LineDataObject(Arrays.asList(nodes.get(0), nodes.get(1), nodes.get(2), nodes.get(3), nodes.get(0)), lineWidth);
         wires.add(obj);
-        obj = new LineDataObject(Arrays.asList(nodes.get(4), nodes.get(5), nodes.get(6), nodes.get(7), nodes.get(4)), 0.5f);
+        obj = new LineDataObject(Arrays.asList(nodes.get(4), nodes.get(5), nodes.get(6), nodes.get(7), nodes.get(4)), lineWidth);
         wires.add(obj);
         for(int i = 0; i<4; i++){
-            obj = new LineDataObject(Arrays.asList(nodes.get(i), nodes.get(i+4)), 0.5f);
+            obj = new LineDataObject(Arrays.asList(nodes.get(i), nodes.get(i+4)), lineWidth);
             wires.add(obj);
         }
 
-        obj = new LineDataObject(Arrays.asList(nodes.get(8), nodes.get(9)), 0.5f);
+        obj = new LineDataObject(Arrays.asList(nodes.get(8), nodes.get(9)), lineWidth);
         wires.add(obj);
-        obj = new LineDataObject(Arrays.asList(nodes.get(8), nodes.get(10)), 0.5f);
+        obj = new LineDataObject(Arrays.asList(nodes.get(8), nodes.get(10)), lineWidth);
         wires.add(obj);
-        obj = new LineDataObject(Arrays.asList(nodes.get(8), nodes.get(11)), 0.5f);
+        obj = new LineDataObject(Arrays.asList(nodes.get(8), nodes.get(11)), lineWidth);
         wires.add(obj);
 
         //four xs
@@ -172,6 +173,12 @@ public class Axis3D implements DataObject {
             bg.addChild(ldo.getBranchGroup());
         }
     }
+    public void setLineWidth(float lw){
+        lineWidth = lw;
+        for(LineDataObject ldo : wires){
+            ldo.setLineWidth(lineWidth);
+        }
+    }
 
     private void drawTics(double[] a, double[] b, double[] n){
         double[] axis = Vector3DOps.difference(b, a);
@@ -190,7 +197,7 @@ public class Axis3D implements DataObject {
             double tl = i%5 == 0 ? 2*minor : minor;
             double[] a1 = Vector3DOps.add(a0, n, tl);
             LineDataObject ldo = new LineDataObject(
-                    Arrays.asList(new Node3D(a0, 0), new Node3D(a1, 0)), 0.5f
+                    Arrays.asList(new Node3D(a0, 0), new Node3D(a1, 0)), lineWidth
             );
             wires.add(ldo);
         }

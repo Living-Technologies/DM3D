@@ -291,7 +291,7 @@ public class HotKeyDelegate {
                 KeyStroke.getKeyStroke(KeyEvent.VK_X, 0, true),
                 "REMOVE_VOLUME",
                 "remove volume channel",
-                frame::chooseToremoveChannelVolume
+                frame::chooseToRemoveChannelVolume
         );
         createActionMapKey(
                 KeyStroke.getKeyStroke(KeyEvent.VK_A, 0, true),

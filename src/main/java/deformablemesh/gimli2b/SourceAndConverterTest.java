@@ -4,6 +4,7 @@ import bdv.viewer.Source;
 import bdv.viewer.SourceAndConverter;
 import bvb.core.BigVolumeBrowser;
 import bvb.shapes.MeshColor;
+import bvb.shapes.MultiMeshColor;
 import bvvpg.core.VolumeViewerFrame;
 import bvvpg.core.VolumeViewerPanel;
 import bvvpg.vistools.Bvv;
@@ -13,6 +14,7 @@ import bvvpg.vistools.BvvOptions;
 import bvvpg.vistools.BvvStackSource;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.gui.GuiTools;
+import deformablemesh.gui.SwingJSTerm;
 import deformablemesh.io.LoadZarr;
 import deformablemesh.io.MeshReader;
 import deformablemesh.track.Track;
@@ -34,6 +36,8 @@ import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -49,7 +53,9 @@ public class SourceAndConverterTest {
 
     static public void buildController(Bvv bvv){
         BvvHandleFrame handle = (BvvHandleFrame)bvv.getBvvHandle();
-
+        SwingJSTerm terminal = new SwingJSTerm();
+        terminal.addToScriptEngine("bvv", bvv);
+        terminal.showTerminal();
         VolumeViewerPanel viewer = handle.getBigVolumeViewer().getViewer();
         VolumeViewerFrame frame = handle.getBigVolumeViewer().getViewerFrame();
         JDialog log = new JDialog(frame, "browse volumes", false);
@@ -147,19 +153,39 @@ public class SourceAndConverterTest {
             //bvvSource.setDisplayRange(0, 4000);
         }
 
-        Path mesh = GuiTools.getOpenFile(IJ.getInstance(), "Select Mesh File");
+        Path mesh = GuiTools.getAFile(IJ.getInstance(), "Select Mesh File");
         if(mesh != null){
-            List<Track> tracks = MeshReader.loadMeshes(mesh.toFile());
-            for(Track t : tracks){
-                for(Integer frame : t.getTrack().keySet()){
-                    DeformableMesh3D dm3dMesh = t.getMesh(frame);
-                    Mesh m = Imglib2Mesh.convert(dm3dMesh, mist);
-                    MeshColor mc = new MeshColor(m, bvb);
+            MultiMeshColor mmc = new MultiMeshColor();
+            if(Files.isDirectory(mesh)){
+                try(DirectoryStream<Path> stream = Files.newDirectoryStream(mesh)){
+                    for(Path p : stream){
+                        List<Track> tracks = MeshReader.loadMeshes(p.toFile());
+                        while(tracks.size() > 0){
+                            Track t = tracks.remove(tracks.size() - 1);
+                            for(Integer frame : t.getTrack().keySet()){
+                                DeformableMesh3D dm3dMesh = t.getMesh(frame);
+                                Mesh m = Imglib2Mesh.convert(dm3dMesh, mist);
+                                mmc.addMesh(m, frame, new Color(255, 250, 100, 100));
+                            }
+                        }
+                    }
+                }
+            } else{
+                List<Track> tracks = MeshReader.loadMeshes(mesh.toFile());
+                while(tracks.size() > 0){
+                    Track t = tracks.remove(tracks.size() - 1);
+                    for(Integer frame : t.getTrack().keySet()){
+                        DeformableMesh3D dm3dMesh = t.getMesh(frame);
+                        Mesh m = Imglib2Mesh.convert(dm3dMesh, mist);
+                    /*MeshColor mc = new MeshColor(m);
                     mc.setTimePoint(frame);
-                    mc.setColor(t.getColor());
-                    bvb.addShape(mc);
+                    mc.setColor(t.getColor());*/
+                        mmc.addMesh(m, frame, t.getColor());
+                    }
                 }
             }
+            bvb.addShape(mmc);
+
 
         }
 

@@ -25,12 +25,12 @@
  */
 package deformablemesh.meshview;
 
-import deformablemesh.BoundingBoxTransformer;
 import deformablemesh.MeshImageStack;
 import deformablemesh.SegmentationController;
 import deformablemesh.geometry.Box3D;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Furrow3D;
+import deformablemesh.gui.FrameListener;
 import deformablemesh.gui.FurrowController;
 import deformablemesh.gui.GuiTools;
 import deformablemesh.track.Track;
@@ -235,7 +235,8 @@ public class    MeshFrame3D {
                             }
                         }
                     };
-                    MeshImageStack db = MeshImageStack.unbufferedStack(tp, geometry);
+                    FrameListener fl = stack::setFrame;
+                    MeshImageStack db = MeshImageStack.unbufferedStack(tp, fl, geometry);
 
                     cv = new ChannelVolume(db, c, volumeDataObject.volume, volumeDataObject.getGeometry());
                 } else{
@@ -257,7 +258,7 @@ public class    MeshFrame3D {
         return cv;
     }
 
-    public void chooseToremoveChannelVolume(){
+    public void chooseToRemoveChannelVolume(){
         if(channelVolumes.size() == 0 ) return;
         Object[] choices = channelVolumes.toArray();
 
@@ -622,7 +623,9 @@ public class    MeshFrame3D {
         }
         canvas.removeObject(mesh);
     }
-
+    public Axis3D getAxis(){
+        return axis;
+    }
     public BufferedImage snapShot(){
         return canvas.snapShot();
     }
@@ -741,6 +744,7 @@ public class    MeshFrame3D {
                     mesh.data_object.setWireColor(Color.GREEN);
                 } else{
                     mesh.data_object.setWireColor(track.getColor());
+                    mesh.data_object.setShowWires(track.getShowWires());
                 }
                 addDataObject(mesh.data_object);
                 showing.add(mesh);
@@ -748,7 +752,9 @@ public class    MeshFrame3D {
                 if(mesh==selectedMesh){
                     mesh.data_object.setWireColor(Color.GREEN);
                 } else{
+
                     mesh.data_object.setWireColor(track.getColor());
+                    mesh.data_object.setShowWires(track.getShowWires());
                 }
             }
 

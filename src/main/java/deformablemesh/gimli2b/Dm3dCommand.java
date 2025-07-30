@@ -25,21 +25,16 @@ import java.util.List;
 
 public class Dm3dCommand <T extends NumericType<T>&NativeType<T>&RealType<T>> implements Command {
     @Parameter(required=false)
-    private Dataset currentData;
+    private ImagePlus currentData;
     @Parameter
-    private Context context;
-
-    public SegmentationController controller;
-
+    private Dm3dService dm3dService;
 
     @Override
     public void run() {
-        if(controller == null){
-            controller = Deforming3DMesh_Plugin.createDeformingMeshApplication();
-        }
-        if(currentData != null){
-            ImagePlus plus = ImageJFunctions.wrap((RandomAccessibleInterval)currentData.getImgPlus(), currentData.getTypeLabelLong());
-            controller.setOriginalPlus(plus);
+        SegmentationController controller = dm3dService.getApplicationController();
+
+        if(currentData != null && currentData.getStack().size() > 0 ){
+            controller.setOriginalPlus(currentData);
         }
     }
 
