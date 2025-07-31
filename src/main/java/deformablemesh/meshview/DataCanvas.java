@@ -59,7 +59,10 @@ import java.awt.Rectangle;
 import java.awt.Window;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -470,11 +473,12 @@ public class DataCanvas extends Canvas3D {
         off.setPhysicalScreenWidth(screen.getPhysicalScreenWidth());
         off.setPhysicalScreenHeight(screen.getPhysicalScreenHeight());
         universe.getViewer().getView().addCanvas3D(offscreen);
+
     }
     public void destroyOffscreenCanvas(){
         universe.getViewer().getView().removeCanvas3D(offscreen);
+        offscreen.setOffScreenBuffer(null);
         offscreen = null;
-
     }
 
     public BufferedImage snapShot(){

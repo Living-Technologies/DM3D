@@ -122,7 +122,6 @@ public class ControlFrame implements ReadyObserver, FrameListener {
     JTabbedPane tabbedPane;
     JPanel mainContent;
     JMenuItem undo, redo;
-    public static Component instance;
     Component mainDisplay;
 
     SwingJSTerm terminal;
@@ -168,7 +167,6 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         if(terminal != null){
             terminal.addToScriptEngine("controlFrame", this);
         }
-        instance=frame;
         segmentationController.addFrameListener(this);
 
     }
@@ -178,9 +176,10 @@ public class ControlFrame implements ReadyObserver, FrameListener {
     }
 
     public void shutdownControllerOnClose(){
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.addWindowListener(new WindowAdapter() {
             @Override
-            public void windowClosed(WindowEvent e) {
+            public void windowClosed(WindowEvent e){
                 segmentationController.shutdown();
             }
         });

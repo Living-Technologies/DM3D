@@ -24,12 +24,23 @@
  * #L%
  */
 
+function echo(obj){
+    terminal.echo(obj);
+}
+
  function importer( fullName ){
  	tokens = fullName.split(".");
  	className = tokens[ tokens.length - 1];
  	eval(className + " = Java.type('" + fullName + "');");
  	echo(className + " imported");
  }
+
+helpers = {importer : "Imports java classes so they can be used similar to how they would be used in java."};
+function help(item){
+    for(key in helpers){
+        echo(key + " :: " + helpers[key])
+    }
+}
 
 DoubleArray = Java.type("double[]");
 Double = Java.type("java.lang.Double");
@@ -63,9 +74,6 @@ Graph = Java.type("lightgraph.Graph");
 
 
 
-function echo(obj){
-    terminal.echo(obj);
-}
 
 //Sets the color of the outline for drawing the selected mesh in 2D
 function setSelectedMeshColor(color){

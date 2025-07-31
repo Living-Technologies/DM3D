@@ -1091,25 +1091,27 @@ public class SegmentationController {
      * @param remeshSteps number of times a mesh is remesh to represent binary mesh.
      */
     public void meshesFromLabelledImage(int relaxSteps, int remeshSteps){
-        MeshDetector detector = new MeshDetector(getMeshImageStack());
-        List<Region> regions = detector.getRegionsFromLabelledImage();
-        System.out.println(regions.size());
-        FillingBinaryImage mesher = new FillingBinaryImage(getMeshImageStack());
-        mesher.setMinMaxLengths(getMinConnectionLength(),getMaxConnectionLength());
-        mesher.setRemeshSteps(remeshSteps);
-        mesher.setRelaxSteps(relaxSteps);
-        List<DeformableMesh3D> meshes = regions.stream().map(
-                mesher::fillBlobWithMesh
-        ).collect(Collectors.toList());
-        List<Integer> labels = regions.stream().map(
-                Region::getLabel
-        ).collect(Collectors.toList());
-        List<Track> tracks = startNewMeshTracks( meshes );
-        for(int i = 0; i<labels.size(); i++){
-            Track track = tracks.get(i);
-            int lbl = labels.get(i);
-            track.setName(track.getName() + "-lbl_" + lbl);
-        }
+        submit(()->{
+            MeshDetector detector = new MeshDetector(getMeshImageStack());
+            List<Region> regions = detector.getRegionsFromLabelledImage();
+            System.out.println(regions.size());
+            FillingBinaryImage mesher = new FillingBinaryImage(getMeshImageStack());
+            mesher.setMinMaxLengths(getMinConnectionLength(),getMaxConnectionLength());
+            mesher.setRemeshSteps(remeshSteps);
+            mesher.setRelaxSteps(relaxSteps);
+            List<DeformableMesh3D> meshes = regions.stream().map(
+                    mesher::fillBlobWithMesh
+            ).collect(Collectors.toList());
+            List<Integer> labels = regions.stream().map(
+                    Region::getLabel
+            ).collect(Collectors.toList());
+            List<Track> tracks = startNewMeshTracks( meshes );
+            for(int i = 0; i<labels.size(); i++){
+                    Track track = tracks.get(i);
+                    int lbl = labels.get(i);
+                    track.setName(track.getName() + "-lbl_" + lbl);
+            }
+        });
     }
 
     public List<DeformableMesh3D> repairTopology( DeformableMesh3D mesh){
@@ -1144,10 +1146,10 @@ public class SegmentationController {
     }
 
     public void voxelMeshesFromLabelledImage(int openSteps, int closeSteps){
-        BinaryMeshGenerator generator = new BinaryMeshGenerator();
-        generator.setOpenSteps(openSteps);
-        generator.setCloseSteps(closeSteps);
         submit(()->{
+            BinaryMeshGenerator generator = new BinaryMeshGenerator();
+            generator.setOpenSteps(openSteps);
+            generator.setCloseSteps(closeSteps);
             List<DeformableMesh3D> meshes = generator.meshesFromLabels(getMeshImageStack());
             List<DeformableMesh3D> validated = new ArrayList<>();
             for(DeformableMesh3D mesh : meshes){
@@ -1184,21 +1186,21 @@ public class SegmentationController {
             System.out.println("cannot remesh with a min length longer than a short length!");
             return;
         }
-        int f = model.getCurrentFrame();
-        List<Track> tracks = model.getAllTracks().stream().filter(t -> t.containsKey(f)).collect(Collectors.toList());
         submit( ()->{
+            int f = model.getCurrentFrame();
+            List<Track> tracks = model.getAllTracks().stream().filter(t -> t.containsKey(f)).collect(Collectors.toList());
             List<DeformableMesh3D> remeshed = tracks.stream().map( t->{
-                DeformableMesh3D mesh = t.getMesh(f);
-                ConnectionRemesher remesher =  new ConnectionRemesher();
-                remesher.setMinAndMaxLengths(minConnectionLength, maxConnectionLength);
-                DeformableMesh3D rep;
-                try{
-                    rep = remesher.remesh(mesh);
-                } catch(Exception e){
-                    System.err.println(e.getMessage());
-                    rep = mesh;
-                }
-                return rep;
+                    DeformableMesh3D mesh = t.getMesh(f);
+                    ConnectionRemesher remesher =  new ConnectionRemesher();
+                    remesher.setMinAndMaxLengths(minConnectionLength, maxConnectionLength);
+                    DeformableMesh3D rep;
+                    try{
+                        rep = remesher.remesh(mesh);
+                    } catch(Exception e){
+                        System.err.println(e.getMessage());
+                        rep = mesh;
+                    }
+                    return rep;
 
             }).collect(Collectors.toList());
             setMeshes(tracks, f,  remeshed);
@@ -3576,7 +3578,6 @@ public class SegmentationController {
         if(globalExecutor != null){
             main.submit(globalExecutor::shutdown);
         }
-
         shutdownActions.forEach(run -> main.submit(run::run));
         main.submit(main::shutdown);
     }
@@ -3656,11 +3657,13 @@ public class SegmentationController {
     }
 
     public void guessVoxelMeshes(int threshold){
-        BinaryMeshGenerator generator = new BinaryMeshGenerator();
-        generator.setInitialThreshold(threshold);
+        submit(()->{
+            BinaryMeshGenerator generator = new BinaryMeshGenerator();
+            generator.setInitialThreshold(threshold);
 
-        List<DeformableMesh3D> meshes = generator.predictMeshes(getMeshImageStack());
-        startNewMeshTracks(meshes);
+            List<DeformableMesh3D> meshes = generator.predictMeshes(getMeshImageStack());
+            startNewMeshTracks(meshes);
+        });
     }
     public void guessVoxelMeshes() {
         guessVoxelMeshes(2);

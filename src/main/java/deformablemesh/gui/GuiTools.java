@@ -94,8 +94,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static deformablemesh.gui.ControlFrame.instance;
-
 /**
  * User: msmith
  * Date: 8/6/13
@@ -255,7 +253,7 @@ public class GuiTools {
     }
 
     public static void errorMessage(String s) {
-        JOptionPane.showMessageDialog(instance, s);
+        JOptionPane.showMessageDialog(IJ.getInstance(), s);
     }
 
     public static void showAboutWindow(JFrame owner){

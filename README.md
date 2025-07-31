@@ -28,7 +28,25 @@ which can be found in "plugins"->"PL_Mesh3D"->"Deforming Mesh 3D", and JFilament
 
 This includes guides for using the plugin, and javadoc for using the plugin via scripting.
 
+### imglib2 style scripting.
+
+From fiji go to file->new->script.
+
+Then select Groovy (or javascript) for the language.
+
+```
+#@ Dm3dService service
+
+controls = service.getApplicationController();
+
+```
+That provide access to the same controls found in the javascript console.
+
 # Changes
+1.3
+- Generative mesh algorithms are improved.
+- imglib2 scripting interface
+- 
 1.2.0
 - Creating meshes from labelled images
 - Displaying labelled images in the 3D viewer
