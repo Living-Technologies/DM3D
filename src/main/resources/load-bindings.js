@@ -28,6 +28,26 @@ function echo(obj){
     terminal.echo(obj);
 }
 
+helpers = {};
+function help(item){
+    if(item){
+        echo("specific item");
+    } else{
+        echo("functions: ")
+        for(key in helpers){
+            echo(key + " :: " + helpers[key])
+        }
+    }
+}
+
+function addHelper(key, value){
+    echo("added:")
+    helpers[key] = value;
+    echo(key + " :: " + helpers[key])
+}
+
+helpers["importer( String name)"] = "Imports a java class eg. importer('java.lang.Thread')" +
+"will create a Thread that can be used, thread = new Thread();"
  function importer( fullName ){
  	tokens = fullName.split(".");
  	className = tokens[ tokens.length - 1];
@@ -35,12 +55,6 @@ function echo(obj){
  	echo(className + " imported");
  }
 
-helpers = {importer : "Imports java classes so they can be used similar to how they would be used in java."};
-function help(item){
-    for(key in helpers){
-        echo(key + " :: " + helpers[key])
-    }
-}
 
 DoubleArray = Java.type("double[]");
 Double = Java.type("java.lang.Double");
@@ -75,13 +89,17 @@ Graph = Java.type("lightgraph.Graph");
 
 
 
-//Sets the color of the outline for drawing the selected mesh in 2D
+helpers["setSelectedMeshColor(Color c)"] = "Sets the color of the outline for "+
+"drawing the selected mesh in 2D"
 function setSelectedMeshColor(color){
   if( color instanceof Color){
       GuiTools.SELECTED_MESH_COLOR = color;
   }
 }
 
+
+helpers["snapshotsThreeSixty(steps)"] = "Creates an image stack of snapshots" +
+                                        " after rotating the 3D view 360 degrees"
 function snapshotsThreeSixty(steps){
     total = 1260
     mf3d = controls.getMeshFrame3D();
@@ -103,6 +121,8 @@ function snapshotsThreeSixty(steps){
     plus.show();
 }
 
+helpers["meshToNewTrack()"] = "Removes the selected mesh from an existing track " +
+"and adds it to a new track."
 function meshToNewTrack(){
   track = controls.getSelectedMeshTrack();
   mesh = controls.getSelectedMesh();
@@ -112,22 +132,15 @@ function meshToNewTrack(){
   controls.selectMesh(mesh);
 }
 
-
+helpers["restartOffscreenCanvas()"] = "Changing images in the 3D display can cause " +
+"snapshots to stop working. This will restart the canvas and snapshots should work again."
 function restartOffscreenCanvas(){
   mf3d = controls.getMeshFrame3D();
   can = mf3d.getCanvas();
   can.destroyOffscreenCanvas();
 }
 
-function normalizeColors(){
-  tracks = controls.getAllTracks();
-
-  for(i = 0; i<tracks.size(); i++){
-      track = tracks.get(i);
-      track.setColor( new Color(i+1));
-  }
-}
-
+helpers["showPreviousMeshes()"] = "Shows all of the meshes from the previous frame. "
 function showPreviousMeshes(){
     controls.clearTransientObjects();
     alpha = 100;
@@ -152,6 +165,8 @@ function showPreviousMeshes(){
 
 }
 
+helpers["filterCurrentFrame( Function filter )"] = "Applies the filter function to all of the meshes in the " +
+"current frame. true keeps the mesh, false removes the mesh";
 function filterCurrentFrame( filter ){
     tracks = controls.getAllTracks();
     filtered = controls.getEmptyTrackList();
@@ -184,10 +199,10 @@ function filterCurrentFrame( filter ){
     controls.setMeshTracks(filtered);
 }
 
-/*
- Select all of the meshes from the current frame and sets their color based on
- the color from the getColor function.
-*/
+
+helpers["applyToCurrentMeshes(Function getColor)"] = "Parses all of the meshes from the current frame" +
+" and sets their color based on the color returned from the getColor function."
+
 function applyToCurrentMeshes(modifier){
     f = controls.getCurrentFrame();
 
@@ -206,4 +221,3 @@ function applyToCurrentMeshes(modifier){
       }
     );
 }
-

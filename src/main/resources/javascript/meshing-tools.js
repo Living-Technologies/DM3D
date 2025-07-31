@@ -6,6 +6,9 @@ importer("java.util.ArrayList");
  * Applies the threshold to find seeds for the resulting meshes, then grows the seeds to
  * the next
  */
+
+addHelper("predictVoxelMeshes(downsample, t1, t2)", "downsample lowers xy-resolution, t1 label threshold" +
+", t2 region growing threshold. returns meshes does not add them.");
 function predictVoxelMeshes(downsample, threshold1, threshold2){
 	generator = new BinaryMeshGenerator();
 	generator.setDownsample(downsample);
@@ -31,6 +34,8 @@ MESHING_CONSTANTS = {
     'volume_minimum' : 0.00001
 };
 
+addHelper("binaryRemesher(downsample, t1)", "downsample lowers xy-resolution, t1 region growing " +
+"threshold. returns meshes does not add them.");
 function binaryRemesher( downsample, threshold ){
 	filtered = controls.getMeshImageStack().getCurrentFrame();
 	stack = filtered.getStack();
@@ -63,9 +68,11 @@ function binaryRemesher( downsample, threshold ){
 			});
 	  }
 	}
-	controls.startNewMeshTracks( next );
+	return next;
 }
 
+addHelper("binaryRemeshSelectedMesh(downsample, t1)", "downsample lowers xy-resolution, t1 region growing " +
+"threshold. returns meshes does not add them.");
 function binaryRemeshSelectedMesh(downsample, threshold){
 	filtered = controls.getMeshImageStack().getCurrentFrame();
 	stack = filtered.getStack();

@@ -387,7 +387,8 @@ public class SwingJSTerm {
         String[] examples = {
                 "filter-snippet.js",
                 "plotting-snippet.js",
-                "coloring-snippet.js"
+                "coloring-snippet.js",
+                "mesh_folder-snippet.js"
         };
 
         JMenu snippets = new JMenu("examples");
