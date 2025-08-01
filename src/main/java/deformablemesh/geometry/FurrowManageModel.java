@@ -26,6 +26,7 @@
 package deformablemesh.geometry;
 
 import deformablemesh.MeshImageStack;
+import deformablemesh.util.Vector3DOps;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
@@ -59,7 +60,7 @@ public class FurrowManageModel implements Iterable<Integer>{
     private Furrow3D furrow;
 
     public FurrowManageModel(){
-
+        furrow = new Furrow3D(new double[3], Vector3DOps.zhat);
         furrows = new TreeMap<>();
         stack = MeshImageStack.getEmptyStack();
 

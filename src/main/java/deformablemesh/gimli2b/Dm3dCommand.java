@@ -21,9 +21,9 @@ import org.scijava.ui.swing.search.SwingSearchBar;
 
 import java.util.List;
 
-@Plugin(type = Command.class, name="Start DM3D", menuPath="Plugins > DM3D> Experimental > Start DM3D ")
+@Plugin(type = Command.class, name="Start DM3D", menuPath="Plugins > DM3D>  Start DM3D ")
 
-public class Dm3dCommand <T extends NumericType<T>&NativeType<T>&RealType<T>> implements Command {
+public class Dm3dCommand implements Command {
     @Parameter(required=false)
     private ImagePlus currentData;
     @Parameter

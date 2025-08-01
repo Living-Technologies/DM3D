@@ -371,8 +371,10 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         JButton split = new JButton("split mesh");
         split.addActionListener(evt->segmentationController.splitMesh());
         buttons.add(split);
-        JButton nodeSelect = new JButton("select");
-        nodeSelect.setToolTipText("select nodes for manual editing");
+        String modifyText = "modify mesh";
+        String selectText = "select nodes";
+        JButton nodeSelect = new JButton(modifyText);
+        nodeSelect.setToolTipText("start manual editing mode");
         buttons.add(nodeSelect);
 
         JButton finish = new JButton("finish");
@@ -381,8 +383,13 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         JButton translate = new JButton("translate");
 
         nodeSelect.addActionListener(evt->{
-            ringController.selectNodes();
+
+            boolean beginModification = ringController.selectNodes();
+            if(beginModification){
+                nodeSelect.setText(selectText);
+            }
             if(ringController.modifyingMesh()){
+
                 setReady(false);
 
                 //buttons.forEach(b->b.setEnabled(false));
@@ -419,11 +426,13 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         });
         finish.addActionListener(evt->{
             ringController.finishedClicked();
+            nodeSelect.setText(modifyText);
             finished();
         });
 
         cancel.addActionListener(evt->{
             ringController.cancel();
+            nodeSelect.setText(modifyText);
             finished();
         });
         gbc.gridx = 0;
@@ -1133,21 +1142,17 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         mesh.addSeparator();
         JMenuItem fromLabelledImage = new JMenuItem("Relax Meshes from Labels");
         mesh.add(fromLabelledImage);
-        fromLabelledImage.addActionListener(evt->{
-            segmentationController.submit(segmentationController::meshesFromLabelledImage);
-        });
+        fromLabelledImage.addActionListener( new ModelAction(segmentationController::meshesFromLabelledImage ));
 
         JMenuItem voxelMeshGeneration = new JMenuItem("Voxel Meshes from Labels");
         mesh.add(voxelMeshGeneration);
-       voxelMeshGeneration.addActionListener(new ModelAction(segmentationController::voxelMeshesFromLabelledImage) );
+        voxelMeshGeneration.addActionListener(new ModelAction(segmentationController::voxelMeshesFromLabelledImage) );
         mesh.addSeparator();
         JMenuItem predictEllipses = new JMenuItem("Ellispes from DT");
         mesh.add(predictEllipses);
-        predictEllipses.addActionListener(new UiAction(()->{
-            segmentationController.submit(()->{
-                segmentationController.guessMeshes(3, true, 0.8);
-            });
-        }));
+        predictEllipses.addActionListener(
+            new ModelAction(()->segmentationController.guessMeshes(3, true, 0.8))
+        );
 
         JMenuItem predictVoxels = new JMenuItem("Voxels from DT");
         mesh.add(predictVoxels);

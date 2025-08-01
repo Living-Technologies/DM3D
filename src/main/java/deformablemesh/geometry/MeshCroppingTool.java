@@ -34,7 +34,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class MeshCroppingTool {
-    double factor = 1.5;
+    double factor = 1.0;
     int size = 64;
 
     static class PrincipleAxes{

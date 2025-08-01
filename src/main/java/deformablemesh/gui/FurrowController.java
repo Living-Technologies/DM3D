@@ -42,6 +42,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
+import java.awt.EventQueue;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Shape;
@@ -52,6 +53,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 /**
@@ -127,25 +129,35 @@ public class FurrowController implements FrameListener, ListDataListener {
         }
 
     }
-
+    private final ReentrantLock modifierLock = new ReentrantLock();
+    public void grab(){
+        modifierLock.lock();
+    }
+    public void release(){
+        modifierLock.unlock();
+    }
     public boolean modifyingMesh(){
         return modifier != null;
     }
 
     /**
-     * Startes the select nodes activity.
+     * Starts the select nodes activity.
      *
-     * @param evt
+     * TODO: Select nodes either begins modification, or just changes the mode.
+     *
+     * @return If this starts a new modifier or just changes the mode.
      */
-    public void selectNodes(){
+    public boolean selectNodes(){
         if(model.getSelectedMesh() == null){
-            return;
+            return false;
         }
-
         if(modifier == null){
             initializeModifier();
+            modifierLock.lock();
+            return true;
         }
         modifier.setSelectNodesMode();
+        return false;
     }
     void initializeModifier(){
         modifier = new MeshModifier();
@@ -189,6 +201,12 @@ public class FurrowController implements FrameListener, ListDataListener {
             }
         });
         modifier.setMesh( model.getSelectedMesh() );
+
+        grab();
+        model.submit(()->{
+            grab();
+            release();
+        });
     }
     public void sculptClicked(){
         if(model.getSelectedMesh() == null){
@@ -225,16 +243,16 @@ public class FurrowController implements FrameListener, ListDataListener {
         }
         sliceView.removeDrawable(modifier);
         modifier = null;
-
         activateSelectMeshMode();
+        release();
     }
     public void cancel(){
         if(modifier==null) return;
-
         modifier.deactivate();
         sliceView.removeDrawable(modifier);
         modifier = null;
         activateSelectMeshMode();
+        release();
         sliceView.repaint();
     }
 
