@@ -130,10 +130,10 @@ public class FurrowController implements FrameListener, ListDataListener {
 
     }
     private final ReentrantLock modifierLock = new ReentrantLock();
-    public void grab(){
+    private void grab(){
         modifierLock.lock();
     }
-    public void release(){
+    private void release(){
         modifierLock.unlock();
     }
     public boolean modifyingMesh(){

@@ -13,6 +13,7 @@ import deformablemesh.track.Track;
 import deformablemesh.util.Vector3DOps;
 import deformablemesh.util.connectedcomponents.Region;
 import ij.IJ;
+import ij.ImageJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.measure.Calibration;
@@ -34,8 +35,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class MeshCroppingTool {
-    double factor = 1.0;
-    int size = 64;
+    double factor;
+    int size;
 
     static class PrincipleAxes{
         double[] e0, e1, e2;
@@ -47,6 +48,15 @@ public class MeshCroppingTool {
             this.e1 = e1;
             this.e2 = e2;
         }
+    }
+
+    public MeshCroppingTool(){
+        this(1.5, 64);
+    }
+
+    public MeshCroppingTool(double factor, int size){
+        this.factor = factor;
+        this.size = size;
     }
 
     private PrincipleAxes getPrincipleAxis(Region r, double[] pxSizes){
@@ -127,7 +137,7 @@ public class MeshCroppingTool {
         return cropd;
     }
 
-    public static CroppedVolume cropMeshImages(List<Track> tracks, MeshImageStack mist){
+    public CroppedVolume cropMeshImages(List<Track> tracks, MeshImageStack mist){
         MeshCroppingTool mct = new MeshCroppingTool();
         int count = 0;
         CroppedVolume accumulated = null;
@@ -236,7 +246,16 @@ public class MeshCroppingTool {
         ret.attributes.add(line);
         return ret;
     }
-    CroppedVolume cropLabelledImage(MeshImageStack lbls, MeshImageStack image){
+
+    /**
+     * Both images represent the same space, but they can have different dimensions.
+     *
+     * The
+     * @param image
+     * @param lbls
+     * @return
+     */
+    CroppedVolume cropLabelledImage(MeshImageStack image, MeshImageStack lbls){
 
         CroppedVolume accumulated = null;
         int tally = 0;
@@ -244,15 +263,28 @@ public class MeshCroppingTool {
         MeshDetector md = new MeshDetector(lbls);
         List<Region> regions = md.getRegionsFromLabelledImage();
         System.out.println("cropping regions: " + regions.size());
-        for (Region r : regions) {
 
-            PrincipleAxes pa = getPrincipleAxis(r, image.pixel_dimensions);
-            pa.cm[0] = pa.cm[0] / image.SCALE - image.offsets[0];
-            pa.cm[1] = pa.cm[1] / image.SCALE - image.offsets[1];
-            pa.cm[2] = pa.cm[2] / image.SCALE - image.offsets[2];
+        double normalizedLength = image.getMinPx()*factor*size;
+        double[] pxSizes = lbls.scaleToNormalizedLength(new double[]{1, 1, 1});
+        int[] mxd = {
+                (int)(normalizedLength/pxSizes[0] + 1),
+                (int)(normalizedLength/pxSizes[1] + 1),
+                (int)(normalizedLength/pxSizes[2] + 1)
+        };
+        for (Region r : regions) {
+            int[] dims = r.getDimensions();
+            if(dims[0]>mxd[0] || dims[1] > mxd[1] || dims[2] > mxd[2]){
+                System.out.println("too big " + Arrays.toString(dims) + " vs " + Arrays.toString(mxd));
+                continue;
+            }
+            PrincipleAxes pa = getPrincipleAxis(r, lbls.pixel_dimensions);
+            pa.cm[0] = pa.cm[0] / lbls.SCALE - lbls.offsets[0];
+            pa.cm[1] = pa.cm[1] / lbls.SCALE - lbls.offsets[1];
+            pa.cm[2] = pa.cm[2] / lbls.SCALE - lbls.offsets[2];
+
             final int label = r.getLabel();
             IsMasked maskIt = nc->{
-                double[] ic = image.getImageCoordinates(nc);
+                double[] ic = lbls.getImageCoordinates(nc);
                 int ix = (int) ic[0];
                 int iy = (int) ic[1];
                 int iz = (int) ic[2];
@@ -264,9 +296,6 @@ public class MeshCroppingTool {
             if (croppedVolume == null) {
                 continue;
             }
-
-            double[] cm = image.getImageCoordinates(pa.cm);
-
 
             if (accumulated == null) {
                 accumulated = croppedVolume;
@@ -288,7 +317,8 @@ public class MeshCroppingTool {
                 accumulated.attributes.addAll(croppedVolume.attributes);
             }
         }
-
+        System.out.println("tally: " + tally);
+        new ImageJ();
         ImagePlus plus = accumulated.data;
         ImagePlus maskPlus = accumulated.mask;
 
@@ -302,7 +332,7 @@ public class MeshCroppingTool {
     }
 
 
-    public static void processMeshes() throws Exception {
+    public void processMeshes() throws Exception {
         File zarr = GuiTools.getDirectory(null, "select zarr folder");
         Path tf;
         if(zarr == null){
@@ -319,8 +349,6 @@ public class MeshCroppingTool {
             base = folder.toPath();
         }
 
-        //Path tf = Paths.get("D:\\working\\maria\\extraction-tests\\labels.tif");
-        //Path base = Paths.get("D:\\working\\maria\\extraction-tests\\meshes.bmf");
         String cropBase = tf.getFileName().toString().replace(".zarr", "-mesh-crops");
         Path target = tf.getParent().resolve(cropBase);
         System.out.println("saving to: " + target);
@@ -335,7 +363,6 @@ public class MeshCroppingTool {
         } else{
             stack = LoadZarr.loadMeshImageStack2(tf);
         }
-        MeshCroppingTool tool = new MeshCroppingTool();
         for(int i = 0; i<stack.getNFrames(); i++){
             Path meshFile;
             if(Files.isDirectory(base)) {
@@ -347,7 +374,7 @@ public class MeshCroppingTool {
                 i = stack.getNFrames();
             }
             List<Track> tracks = MeshReader.loadMeshes(meshFile.toFile());
-            CroppedVolume cv = MeshCroppingTool.cropMeshImages(tracks, stack);
+            CroppedVolume cv = cropMeshImages(tracks, stack);
             if(Files.exists(imageCrops)){
                 SaveImageToZarr.appendToZarr(cv.data, imageCrops);
             } else{
@@ -370,19 +397,18 @@ public class MeshCroppingTool {
         }
     }
 
-    public static void processLabelledImages(MeshImageStack stack, MeshImageStack labels, Path cropFolder) throws Exception {
+    public void processLabelledImages(MeshImageStack stack, MeshImageStack labels, Path cropFolder) throws Exception {
 
         if(!Files.exists(cropFolder)){
             Files.createDirectories(cropFolder);
         }
 
-        MeshCroppingTool mct = new MeshCroppingTool();
         Path imageZarr = cropFolder.resolve("images.zarr");
         Path masksZarr = cropFolder.resolve("masks.zarr");
         for(int i = 0; i<stack.getNFrames(); i++){
             stack.setFrame(i);
             labels.setFrame(i);
-            CroppedVolume cv = mct.cropLabelledImage(labels, stack);
+            CroppedVolume cv = cropLabelledImage(stack, labels);
             if(Files.exists(imageZarr)){
                 SaveImageToZarr.appendToZarr(cv.data, imageZarr);
             } else{
@@ -408,27 +434,15 @@ public class MeshCroppingTool {
 
     }
 
-    static public void processLabelledImages() throws Exception {
-        File zarr = GuiTools.getDirectory(IJ.getInstance(), "select image data as zarr folder");
-        Path tf;
-        if(zarr == null){
-            tf = GuiTools.getOpenFile(IJ.getInstance(), "select image file");
-        } else{
-            tf = zarr.toPath();
-        }
+    public void processLabelledImages() throws Exception {
+
+        Path tf = GuiTools.getAFile(IJ.getInstance(), "select original image data");
 
         if(tf == null) return;
 
-        Path lbls;
+        Path lbls = GuiTools.getAFile(IJ.getInstance(), "select labels image data");
 
-        File lzarr = GuiTools.getDirectory(IJ.getInstance(), "select labels data as zarr folder");
-        if(lzarr == null){
-            lbls = GuiTools.getOpenFile(IJ.getInstance(), "select image file");
-        } else{
-            lbls = lzarr.toPath();
-        }
 
-        if(lbls == null) return;
 
         MeshImageStack stack;
         MeshImageStack labels;
@@ -462,8 +476,13 @@ public class MeshCroppingTool {
     }
 
     public static void main(String[] args) throws Exception {
+        MeshCroppingTool tool = new MeshCroppingTool(1, 64);
+        tool.processLabelledImages(
+                LoadZarr.loadMeshImageStack2(Paths.get("D:\\working\\jari\\swelling-assay-1\\hNEC0267-3.zarr\\")),
+                LoadZarr.loadMeshImageStack2(Paths.get("D:\\working\\jari\\swelling-assay-1\\hNEC0267-3-cp_masks.zarr")),
+                        Paths.get("D:\\working\\jari\\swelling-assay-1\\hNEC0267-3-crops\\"));
         //processMeshes();
-        processLabelledImages();
+        //tool.processLabelledImages();
     }
 
 
