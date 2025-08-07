@@ -4,6 +4,7 @@ import deformablemesh.geometry.MeshCroppingTool;
 import deformablemesh.gui.GuiTools;
 import ij.IJ;
 import ij.ImagePlus;
+import ij.gui.GenericDialog;
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
@@ -14,28 +15,23 @@ import java.nio.file.Path;
 
 @Plugin(type = Command.class, name="Crop Volumes", menuPath="Plugins > DM3D> tools > Crop Volumes ")
 public class MeshCroppingCommand implements Command {
-    public void cropLabelledRegions(){
-        Path img = GuiTools.getAFile(IJ.getInstance(), "select original images");
-        Path lbls = GuiTools.getAFile(IJ.getInstance(), "select label image");
-        File out = GuiTools.getDirectory(IJ.getInstance(), "select destination");
-        MeshCroppingTool tool = new MeshCroppingTool();
-        
-    }
+    @Parameter(label="Use Labelled Image", description="Loaded a labelled image if true\n" +
+    "otherwise load from a mesh file/folder")
+    boolean useLabels;
+    @Parameter(label="scale factor", description="Resulting pixel size will be the smallest pixel\n"+
+    "size times the scale factor.")
+    double scale;
+    @Parameter(label="size", description="Size of the volumes cropped. Each object will\n"+
+    "be cropped to sizexsizexsize volumes")
+    int size;
 
-    public void cropMeshedRegions(){
-
-    }
     @Override
-    public void run() {
-        int result = JOptionPane.showInternalConfirmDialog(IJ.getInstance(), "Process from Mesh Files?", "Cropping Tool Initialization", JOptionPane.YES_NO_CANCEL_OPTION);
-        switch(result){
-            case JOptionPane.CANCEL_OPTION:
-                return;
-            case JOptionPane.NO_OPTION:
-                cropLabelledRegions();
-                break;
-            case JOptionPane.YES_OPTION:
-                cropMeshedRegions();
+    public void run(){
+        MeshCroppingTool tool = new MeshCroppingTool(scale, size);
+        if(useLabels){
+            tool.processLabelledImages();
+        } else{
+            tool.processMeshes();
         }
     }
 }

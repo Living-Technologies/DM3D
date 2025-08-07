@@ -17,6 +17,7 @@ import ij.ImageJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.measure.Calibration;
+import ij.plugin.FileInfoVirtualStack;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
@@ -24,6 +25,7 @@ import ij.process.ShortProcessor;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -31,6 +33,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -141,20 +144,11 @@ public class MeshCroppingTool {
         MeshCroppingTool mct = new MeshCroppingTool();
         int count = 0;
         CroppedVolume accumulated = null;
-        Pattern p = Pattern.compile(".*lbl_(\\d+)");
-
-        for(Track t: tracks){
-            int label;
-            Matcher m = p.matcher(t.getName());
-            if(m.find()){
-                label = Integer.parseInt(m.group(1));
-            } else{
-                label = 255;
-            }
-            for(Integer key : t.getTrack().keySet()){
-                if(key != mist.CURRENT){
-                    mist.setFrame(key);
-                }
+        int key = mist.CURRENT;
+        for(int i = 0; i<tracks.size(); i++){
+            Track t = tracks.get(i);
+            int label = i+1;
+            if( t.containsKey(key)){
                 DeformableMesh3D mesh = t.getMesh(key);
                 CroppedVolume mopd = mct.getCroppedMesh(mesh, mist, label);
                 if(mopd == null){
@@ -164,9 +158,9 @@ public class MeshCroppingTool {
                     accumulated = mopd;
                 } else {
                     int n = mopd.data.getNSlices();
-                    for (int i = 1; i <= n; i++) {
-                        accumulated.data.getStack().addSlice(mopd.data.getStack().getProcessor(i));
-                        accumulated.mask.getStack().addSlice(mopd.mask.getStack().getProcessor(i));
+                    for (int slice = 1; slice <= n; slice++) {
+                        accumulated.data.getStack().addSlice(mopd.data.getStack().getProcessor(slice));
+                        accumulated.mask.getStack().addSlice(mopd.mask.getStack().getProcessor(slice));
                     }
                     accumulated.attributes.addAll(mopd.attributes);
                 }
@@ -261,6 +255,7 @@ public class MeshCroppingTool {
         int tally = 0;
 
         MeshDetector md = new MeshDetector(lbls);
+        md.setSplitRegions(false);
         List<Region> regions = md.getRegionsFromLabelledImage();
         System.out.println("cropping regions: " + regions.size());
 
@@ -271,10 +266,12 @@ public class MeshCroppingTool {
                 (int)(normalizedLength/pxSizes[1] + 1),
                 (int)(normalizedLength/pxSizes[2] + 1)
         };
+        int tooBig = 0;
+        int ob = 0;
         for (Region r : regions) {
             int[] dims = r.getDimensions();
             if(dims[0]>mxd[0] || dims[1] > mxd[1] || dims[2] > mxd[2]){
-                System.out.println("too big " + Arrays.toString(dims) + " vs " + Arrays.toString(mxd));
+                tooBig++;
                 continue;
             }
             PrincipleAxes pa = getPrincipleAxis(r, lbls.pixel_dimensions);
@@ -294,6 +291,7 @@ public class MeshCroppingTool {
 
             CroppedVolume croppedVolume = crop(pa, maskIt, image, r.getLabel());
             if (croppedVolume == null) {
+                ob++;
                 continue;
             }
 
@@ -306,7 +304,6 @@ public class MeshCroppingTool {
                 for (int i = 1; i <= stack.size(); i++) {
                     pop.addSlice(stack.getProcessor(i));
                 }
-                ;
                 stack = croppedVolume.mask.getStack();
                 ImageStack mpop = accumulated.mask.getStack();
                 for (int i = 1; i <= stack.size(); i++) {
@@ -317,8 +314,7 @@ public class MeshCroppingTool {
                 accumulated.attributes.addAll(croppedVolume.attributes);
             }
         }
-        System.out.println("tally: " + tally);
-        new ImageJ();
+        System.out.println("tally: " + tally + ", too big: " + tooBig + ", out of image: " + ob);
         ImagePlus plus = accumulated.data;
         ImagePlus maskPlus = accumulated.mask;
 
@@ -332,58 +328,90 @@ public class MeshCroppingTool {
     }
 
 
-    public void processMeshes() throws Exception {
-        File zarr = GuiTools.getDirectory(null, "select zarr folder");
-        Path tf;
-        if(zarr == null){
-            tf = GuiTools.getOpenFile(null, "select image file");
-        } else{
-            tf = zarr.toPath();
-        }
+    /**
+     * Uses a gui to choose mesh file and
+     */
+    public void processMeshes() {
+        Path tf = GuiTools.getAFile(IJ.getInstance(), "select original image data");
 
-        Path base;
-        File folder = GuiTools.getDirectory(null, "select folder with .bmf files");
-        if(folder == null){
-            base = GuiTools.getOpenFile(null, "select mesh file");
-        } else{
-            base = folder.toPath();
-        }
+        if(tf == null) return;
 
-        String cropBase = tf.getFileName().toString().replace(".zarr", "-mesh-crops");
-        Path target = tf.getParent().resolve(cropBase);
+        Path base = GuiTools.getAFile(IJ.getInstance(), "mesh file or select folder with .bmf files");
+
+
+        Path target = getCropFolderName(tf, "-mesh-crops");
         System.out.println("saving to: " + target);
-        if(!Files.exists(target)){
-            Files.createDirectories(target);
-        }
         Path imageCrops = target.resolve("images.zarr");
         Path maskCrops = target.resolve("masks.zarr");
+
         MeshImageStack stack;
-        if(tf.getFileName().toString().endsWith(".tif")){
-            stack = new MeshImageStack(tf);
+        String fname = tf.getFileName().toString();
+        if(fname.endsWith(".zarr")){
+            try {
+                stack = LoadZarr.loadMeshImageStack2(tf);
+            } catch (IOException e) {
+                System.out.println("Unable to load zarr file");
+                throw new RuntimeException(e);
+            }
+        }else if(tf.getFileName().toString().endsWith(".tif")){
+            ImagePlus plus = FileInfoVirtualStack.openVirtual(tf.toAbsolutePath().toString());
+            stack = new MeshImageStack(plus);
         } else{
-            stack = LoadZarr.loadMeshImageStack2(tf);
+            stack = new MeshImageStack(tf);
         }
+
+        Function<Integer, List<Track>> meshProvider;
+
+        if(Files.isDirectory(base)) {
+            meshProvider = (key)->{
+                Path meshFile = base.resolve("frame-" + key + ".bmf");
+                try {
+                    return MeshReader.loadMeshes(meshFile.toFile());
+                } catch (IOException e) {
+                    System.err.println("Could not open " + base.resolve("frame-" + key + ".bmf"));
+                    return new ArrayList<>();
+                }
+            };
+
+        } else {
+            try {
+                List<Track> tracks = MeshReader.loadMeshes(base.toFile());
+                meshProvider = key->tracks;
+            } catch (IOException e) {
+                System.out.println("Unable to open mesh file: " + base);
+                throw new RuntimeException(e);
+            }
+
+        }
+
+        if(!Files.exists(target)){
+            try {
+                Files.createDirectories(target);
+            } catch (IOException e) {
+                System.out.println("Unable to create destination directory");
+                throw new RuntimeException(e);
+            }
+        }
+
         for(int i = 0; i<stack.getNFrames(); i++){
-            Path meshFile;
-            if(Files.isDirectory(base)) {
-                meshFile = base.resolve("frame-" + i + ".bmf");
-            } else {
-                //all of the meshes are in meshfile.
-                //all time points will get handled.
-                meshFile = base;
-                i = stack.getNFrames();
-            }
-            List<Track> tracks = MeshReader.loadMeshes(meshFile.toFile());
+            stack.setFrame(i);
+            List<Track> tracks = meshProvider.apply(i);
             CroppedVolume cv = cropMeshImages(tracks, stack);
-            if(Files.exists(imageCrops)){
-                SaveImageToZarr.appendToZarr(cv.data, imageCrops);
-            } else{
-                SaveImageToZarr.saveToZarr(cv.data, imageCrops);
-            }
-            if(Files.exists(maskCrops)){
-                SaveImageToZarr.appendToZarr(cv.mask, maskCrops);
-            } else{
-                SaveImageToZarr.saveToZarr(cv.mask, maskCrops);
+
+            try {
+                if (Files.exists(imageCrops)) {
+                    SaveImageToZarr.appendToZarr(cv.data, imageCrops);
+                } else {
+                    SaveImageToZarr.saveToZarr(cv.data, imageCrops);
+                }
+                if (Files.exists(maskCrops)) {
+                    SaveImageToZarr.appendToZarr(cv.mask, maskCrops);
+                } else {
+                    SaveImageToZarr.saveToZarr(cv.mask, maskCrops);
+                }
+            } catch(Exception e){
+                System.out.println("Unable to write crop data!");
+                throw new RuntimeException(e);
             }
 
             Path p = target.resolve("attributes-" + i + ".txt");
@@ -392,6 +420,9 @@ public class MeshCroppingTool {
                     bw.write(line);
                     bw.write("\n");
                 }
+            } catch (IOException e) {
+                System.out.println("Unable to write attirbutes file: " + p);
+                throw new RuntimeException(e);
             }
 
         }
@@ -434,14 +465,33 @@ public class MeshCroppingTool {
 
     }
 
-    public void processLabelledImages() throws Exception {
+    private Path getCropFolderName(Path tf, String suffix){
+        Path up = tf.getParent();
+        String baseName;
+        String filename = tf.getFileName().toString();
+        int ei = filename.lastIndexOf(".");
+        if( ei > 0){
+            String ext = filename.substring(ei);
+            baseName = filename.replace(ext, "") + suffix;
+        } else{
+            baseName = filename + suffix;
+        }
+
+        return up.resolve(baseName);
+    }
+
+    /**
+     * Uses a gui to create the required Images.
+     *
+     */
+    public void processLabelledImages(){
 
         Path tf = GuiTools.getAFile(IJ.getInstance(), "select original image data");
 
         if(tf == null) return;
 
         Path lbls = GuiTools.getAFile(IJ.getInstance(), "select labels image data");
-
+        if(lbls == null) return;
 
 
         MeshImageStack stack;
@@ -450,39 +500,33 @@ public class MeshCroppingTool {
         if(!Files.isDirectory(tf)){
             stack = new MeshImageStack(tf);
         } else{
-            stack = LoadZarr.loadMeshImageStack2(tf);
+            try {
+                stack = LoadZarr.loadMeshImageStack2(tf);
+            } catch (IOException e) {
+                System.out.println("unable to load Zarr data structure: " + tf);
+                throw new RuntimeException(e);
+            }
         }
 
         if(!Files.isDirectory(lbls)){
             labels = new MeshImageStack(lbls);
         } else{
-            labels = LoadZarr.loadMeshImageStack2(lbls);
+            try {
+                labels = LoadZarr.loadMeshImageStack2(lbls);
+            } catch (IOException e) {
+                System.out.println("unable to load Zarr data structure: " + lbls);
+                throw new RuntimeException(e);
+            }
         }
 
-        Path up = tf.getParent();
-        String baseName;
-        String filename = tf.getFileName().toString();
-        int ei = filename.lastIndexOf(".");
-        if( ei > 0){
-            String ext = filename.substring(ei);
-            baseName = filename.replace(ext, "") + "-crops";
-        } else{
-            baseName = filename + "-crops";
+        Path cropFolder = getCropFolderName(tf, "-crops");
+
+        try {
+            processLabelledImages(stack, labels, cropFolder);
+        } catch (Exception e) {
+            System.out.println("Unable to write data!");
+            throw new RuntimeException(e);
         }
-
-        Path cropFolder = up.resolve(baseName);
-
-        processLabelledImages(stack, labels, cropFolder);
-    }
-
-    public static void main(String[] args) throws Exception {
-        MeshCroppingTool tool = new MeshCroppingTool(1, 64);
-        tool.processLabelledImages(
-                LoadZarr.loadMeshImageStack2(Paths.get("D:\\working\\jari\\swelling-assay-1\\hNEC0267-3.zarr\\")),
-                LoadZarr.loadMeshImageStack2(Paths.get("D:\\working\\jari\\swelling-assay-1\\hNEC0267-3-cp_masks.zarr")),
-                        Paths.get("D:\\working\\jari\\swelling-assay-1\\hNEC0267-3-crops\\"));
-        //processMeshes();
-        //tool.processLabelledImages();
     }
 
 

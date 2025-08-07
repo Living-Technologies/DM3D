@@ -12,6 +12,11 @@ public class ReChunkZarrFile {
         ImagePlus plus = LoadZarr.load3DStackFromZarrFile(location).get(0);
         Path out = GuiTools.getSaveFile(null, "select destination folder");
         long start = System.nanoTime();
+        int frames = plus.getNFrames();
+
+        int chunkSize = frames/50;
+        if(chunkSize > 1000) chunkSize = 1000;
+
         SaveImageToZarr.saveToZarr(plus, out, new int[]{plus.getWidth(), plus.getHeight(), plus.getNSlices(), 1, 1000});
         System.out.println("finished after: " + ((System.nanoTime() - start)*1e-9) + "s");
     }

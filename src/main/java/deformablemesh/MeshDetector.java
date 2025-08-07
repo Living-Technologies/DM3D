@@ -60,6 +60,7 @@ public class MeshDetector {
     public static int MAX_LABELLED_REGIONS = 100000;
     double minL = -1;
     double maxL = -1;
+    boolean splitRegions = true;
 
     public MeshDetector(MeshImageStack mis){
         this.mis = mis;
@@ -176,6 +177,11 @@ public class MeshDetector {
         System.out.println(regions.size() + " regions detected in " + (end - start)/1000);
         return regions;
     }
+
+    public void setSplitRegions(boolean b) {
+        splitRegions = b;
+    }
+
     @FunctionalInterface
     private interface BackgroundCheck{
         boolean isBackground(int i);
@@ -209,20 +215,23 @@ public class MeshDetector {
         List<Region> regions = new ArrayList<>();
         for(Integer label: pxRegions.keySet()){
             Region r = new Region(label, pxRegions.get(label));
-            List<Region> split = r.split();
-            if(split.size() > 1){
-                String s = split.stream().map(g->Integer.toString(g.getPoints().size())).collect(Collectors.joining(","));
-                System.out.println("splits: " + s);
-            }
-            for(Region sr: split){
-                if(sr.getPoints().size() > 2){
-                    regions.add(sr);
-                    if(regions.size() > MAX_LABELLED_REGIONS){
-                        throw new RuntimeException(
-                                "Too many labelled regions. Change MAX_LABELLED_REGIONS" +
-                                "if this is incorrect.");
+            if(splitRegions) {
+                List<Region> split = r.split();
+                //if (split.size() > 1) {
+                //    String s = split.stream().map(g -> Integer.toString(g.getPoints().size())).collect(Collectors.joining(","));
+                //}
+                for (Region sr : split) {
+                    if (sr.getPoints().size() > 2) {
+                        regions.add(sr);
+                        if (regions.size() > MAX_LABELLED_REGIONS) {
+                            throw new RuntimeException(
+                                    "Too many labelled regions. Change MAX_LABELLED_REGIONS" +
+                                            "if this is incorrect.");
+                        }
                     }
                 }
+            } else{
+                regions.add(new Region(label, pxRegions.get(label)));
             }
 
         }

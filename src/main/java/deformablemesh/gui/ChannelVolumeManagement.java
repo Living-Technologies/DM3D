@@ -81,6 +81,17 @@ public class ChannelVolumeManagement {
             gbc.gridy += 1;
             addRow(available, gbc, row);
         }
+
+        gbc.gridy+=1;
+        gbc.gridwidth = 5;
+        gbc.gridx = 2;
+        available.add(new JLabel("volumes showing"), gbc);
+        gbc.gridwidth = 1;
+        for(List<JComponent> row : existing){
+            gbc.gridy += 1;
+            addRow(available, gbc, row);
+        }
+
         available.setLayout(layout);
         content.add( available, BorderLayout.CENTER );
 
@@ -127,30 +138,43 @@ public class ChannelVolumeManagement {
     private void removeRow(JComponent comp){
 
     }
+
+    List<JComponent> getRow(ChannelVolume cv, MeshFrame3D mf3d){
+        VolumeDataObject vdo = cv.getVolumeDataObject();
+        JButton color = colorSelector( vdo.getColor());
+        double[] mnmx = vdo.getMinMaxExtents();
+        JTextField min = new JTextField(4);
+        min.setText("" + mnmx[0]);
+
+        JTextField max = new JTextField(4);
+        max.setText("" + mnmx[1]);
+        MeshImageStack stack = cv.getMeshImageStack();
+        JLabel label = new JLabel(stack.getShortTitle() + "c:" + stack.getChannel());
+        JCheckBox asLabels = new JCheckBox();
+        asLabels.setSelected(vdo.shownAsLabels());
+        JButton remove = new JButton("remove");
+        remove.addActionListener(evt->{
+            controller.submit( ()->{
+                mf3d.removeChannelVolume( cv );
+            });
+        });
+        List<JComponent> row = new ArrayList<>();
+        row.add(label);
+        row.add(min);
+        row.add(max);
+        row.add(color);
+        row.add(asLabels);
+        row.add(remove);
+        return row;
+    }
+
+
     List<List<JComponent>> showingChannels( MeshFrame3D mf3d){
         List<List<JComponent>> rows = new ArrayList<>();
         List<ChannelVolume> displayed = mf3d.getChannelVolumes();
         for(ChannelVolume cv : displayed){
-            VolumeDataObject vdo = cv.getVolumeDataObject();
-            JButton color = colorSelector( vdo.getColor());
-            double[] mnmx = vdo.getMinMaxExtents();
-            JTextField min = new JTextField(4);
-            min.setText("" + mnmx[0]);
-
-            JTextField max = new JTextField(4);
-            max.setText("" + mnmx[1]);
-            MeshImageStack stack = cv.getMeshImageStack();
-            JLabel label = new JLabel(stack.getShortTitle() + "c:" + stack.getChannel());
-            JCheckBox asLabels = new JCheckBox();
-            asLabels.setSelected(vdo.shownAsLabels());
-            JButton remove = new JButton("remove");
-            remove.addActionListener(evt->{
-                controller.submit( ()->{
-                    mf3d.removeChannelVolume( cv );
-                });
-            });
-            List<JComponent> row = new ArrayList<>();
-
+            List<JComponent> row = getRow(cv, mf3d);
+            rows.add(row);
         }
 
         return rows;
@@ -201,10 +225,6 @@ public class ChannelVolumeManagement {
         return comps;
     }
 
-    List<JComponent> displayedChannels(){
-        List<JComponent> comps = new ArrayList<>();
-        return comps;
-    }
     JButton colorSelector( Color current){
         JButton button = new JButton();
         button.setOpaque(true);
