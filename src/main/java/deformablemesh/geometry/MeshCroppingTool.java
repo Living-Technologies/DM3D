@@ -38,8 +38,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class MeshCroppingTool {
-    double factor;
-    int size;
+    final double factor;
+    final int size;
 
     static class PrincipleAxes{
         double[] e0, e1, e2;
@@ -141,7 +141,6 @@ public class MeshCroppingTool {
     }
 
     public CroppedVolume cropMeshImages(List<Track> tracks, MeshImageStack mist){
-        MeshCroppingTool mct = new MeshCroppingTool();
         int count = 0;
         CroppedVolume accumulated = null;
         int key = mist.CURRENT;
@@ -150,7 +149,7 @@ public class MeshCroppingTool {
             int label = i+1;
             if( t.containsKey(key)){
                 DeformableMesh3D mesh = t.getMesh(key);
-                CroppedVolume mopd = mct.getCroppedMesh(mesh, mist, label);
+                CroppedVolume mopd = getCroppedMesh(mesh, mist, label);
                 if(mopd == null){
                     continue;
                 }
@@ -167,8 +166,8 @@ public class MeshCroppingTool {
                 count += 1;
             }
         }
-        accumulated.data.setStack(accumulated.data.getStack(), 1, mct.size, count);
-        accumulated.mask.setStack(accumulated.mask.getStack(), 1, mct.size, count);
+        accumulated.data.setStack(accumulated.data.getStack(), 1, size, count);
+        accumulated.mask.setStack(accumulated.mask.getStack(), 1, size, count);
         accumulated.data.setOpenAsHyperStack(true);
         accumulated.mask.setOpenAsHyperStack(true);
         accumulated.data.setTitle("mesh-original");
