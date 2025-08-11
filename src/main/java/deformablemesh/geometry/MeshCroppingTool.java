@@ -22,6 +22,9 @@ import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
+import loci.formats.FormatException;
+import loci.plugins.BF;
+import loci.plugins.in.ImporterOptions;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -40,7 +43,7 @@ import java.util.regex.Pattern;
 public class MeshCroppingTool {
     final double factor;
     final int size;
-
+    String prefix="";
     static class PrincipleAxes{
         double[] e0, e1, e2;
         double[] cm;
@@ -239,92 +242,36 @@ public class MeshCroppingTool {
         ret.attributes.add(line);
         return ret;
     }
-
-    /**
-     * Both images represent the same space, but they can have different dimensions.
-     *
-     * The
-     * @param image
-     * @param lbls
-     * @return
-     */
-    CroppedVolume cropLabelledImage(MeshImageStack image, MeshImageStack lbls){
-
-        CroppedVolume accumulated = null;
-        int tally = 0;
-
-        MeshDetector md = new MeshDetector(lbls);
-        md.setSplitRegions(false);
-        List<Region> regions = md.getRegionsFromLabelledImage();
-        System.out.println("cropping regions: " + regions.size());
-
-        double normalizedLength = image.getMinPx()*factor*size;
-        double[] pxSizes = lbls.scaleToNormalizedLength(new double[]{1, 1, 1});
-        int[] mxd = {
-                (int)(normalizedLength/pxSizes[0] + 1),
-                (int)(normalizedLength/pxSizes[1] + 1),
-                (int)(normalizedLength/pxSizes[2] + 1)
-        };
-        int tooBig = 0;
-        int ob = 0;
-        for (Region r : regions) {
-            int[] dims = r.getDimensions();
-            if(dims[0]>mxd[0] || dims[1] > mxd[1] || dims[2] > mxd[2]){
-                tooBig++;
-                continue;
+    MeshImageStack getMeshImageStack(Path p){
+        MeshImageStack stack;
+        String fname = p.getFileName().toString();
+        if(fname.endsWith(".zarr")){
+            try {
+                stack = LoadZarr.loadMeshImageStack2(p);
+            } catch (IOException e) {
+                System.out.println("Unable to load zarr file");
+                throw new RuntimeException(e);
             }
-            PrincipleAxes pa = getPrincipleAxis(r, lbls.pixel_dimensions);
-            pa.cm[0] = pa.cm[0] / lbls.SCALE - lbls.offsets[0];
-            pa.cm[1] = pa.cm[1] / lbls.SCALE - lbls.offsets[1];
-            pa.cm[2] = pa.cm[2] / lbls.SCALE - lbls.offsets[2];
+        }else if(p.getFileName().toString().endsWith(".tif")){
+            ImagePlus plus = FileInfoVirtualStack.openVirtual(p.toAbsolutePath().toString());
+            stack = new MeshImageStack(plus);
+        } else{
+            ImporterOptions options;
+            try {
+                options = new ImporterOptions();
+                options.setVirtual(true);
+                options.setOpenAllSeries(true);
+                options.setId(p.toAbsolutePath().toString());
+                ImagePlus[] pluses = BF.openImagePlus(options);
+                stack = new MeshImageStack(pluses[0]);
 
-            final int label = r.getLabel();
-            IsMasked maskIt = nc->{
-                double[] ic = lbls.getImageCoordinates(nc);
-                int ix = (int) ic[0];
-                int iy = (int) ic[1];
-                int iz = (int) ic[2];
-                int px = (int)lbls.getValue(ix, iy, iz);
-                return px == label;
-            };
-
-            CroppedVolume croppedVolume = crop(pa, maskIt, image, r.getLabel());
-            if (croppedVolume == null) {
-                ob++;
-                continue;
-            }
-
-            if (accumulated == null) {
-                accumulated = croppedVolume;
-                tally++;
-            } else {
-                ImageStack stack = croppedVolume.data.getStack();
-                ImageStack pop = accumulated.data.getStack();
-                for (int i = 1; i <= stack.size(); i++) {
-                    pop.addSlice(stack.getProcessor(i));
-                }
-                stack = croppedVolume.mask.getStack();
-                ImageStack mpop = accumulated.mask.getStack();
-                for (int i = 1; i <= stack.size(); i++) {
-                    mpop.addSlice(stack.getProcessor(i));
-                }
-                ;
-                tally++;
-                accumulated.attributes.addAll(croppedVolume.attributes);
+            } catch (IOException | FormatException e) {
+                throw new RuntimeException(e);
             }
         }
-        System.out.println("tally: " + tally + ", too big: " + tooBig + ", out of image: " + ob);
-        ImagePlus plus = accumulated.data;
-        ImagePlus maskPlus = accumulated.mask;
-
-        plus.setStack(plus.getStack(), 1, size, tally);
-        maskPlus.setStack(maskPlus.getStack(), 1, size, tally);
-        plus.setOpenAsHyperStack(true);
-        maskPlus.setOpenAsHyperStack(true);
-        plus.setTitle("lbls-original");
-        maskPlus.setTitle("lbls-labels");
-        return accumulated;
+        return stack;
     }
+
 
 
     /**
@@ -332,32 +279,20 @@ public class MeshCroppingTool {
      */
     public void processMeshes() {
         Path tf = GuiTools.getAFile(IJ.getInstance(), "select original image data");
-
-        if(tf == null) return;
-
         Path base = GuiTools.getAFile(IJ.getInstance(), "mesh file or select folder with .bmf files");
+        processMeshImages(tf, base);
 
+    }
+
+    public void processMeshImages(Path tf, Path base){
+        if(tf == null || base == null) return;
 
         Path target = getCropFolderName(tf, "-mesh-crops");
         System.out.println("saving to: " + target);
         Path imageCrops = target.resolve("images.zarr");
         Path maskCrops = target.resolve("masks.zarr");
 
-        MeshImageStack stack;
-        String fname = tf.getFileName().toString();
-        if(fname.endsWith(".zarr")){
-            try {
-                stack = LoadZarr.loadMeshImageStack2(tf);
-            } catch (IOException e) {
-                System.out.println("Unable to load zarr file");
-                throw new RuntimeException(e);
-            }
-        }else if(tf.getFileName().toString().endsWith(".tif")){
-            ImagePlus plus = FileInfoVirtualStack.openVirtual(tf.toAbsolutePath().toString());
-            stack = new MeshImageStack(plus);
-        } else{
-            stack = new MeshImageStack(tf);
-        }
+        MeshImageStack stack = getMeshImageStack(tf);
 
         Function<Integer, List<Track>> meshProvider;
 
@@ -427,7 +362,8 @@ public class MeshCroppingTool {
         }
     }
 
-    public void processLabelledImages(MeshImageStack stack, MeshImageStack labels, Path cropFolder) throws Exception {
+
+    private void processLabelledImages(MeshImageStack stack, MeshImageStack labels, Path cropFolder) throws Exception {
 
         if(!Files.exists(cropFolder)){
             Files.createDirectories(cropFolder);
@@ -464,8 +400,104 @@ public class MeshCroppingTool {
 
     }
 
+    /**
+     * Both images represent the same space, but they can have different dimensions.
+     * Crops objects found in the selected time frame.
+     *
+     * The
+     * @param image
+     * @param lbls
+     * @return
+     */
+    CroppedVolume cropLabelledImage(MeshImageStack image, MeshImageStack lbls){
+
+        CroppedVolume accumulated = null;
+        int tally = 0;
+
+        MeshDetector md = new MeshDetector(lbls);
+        md.setSplitRegions(false);
+        List<Region> regions = md.getRegionsFromLabelledImage();
+        System.out.println("cropping regions: " + regions.size());
+
+        double normalizedLength = image.getMinPx()*factor*size;
+        double[] pxSizes = lbls.scaleToNormalizedLength(new double[]{1, 1, 1});
+        int[] mxd = {
+                (int)(normalizedLength/pxSizes[0] + 1),
+                (int)(normalizedLength/pxSizes[1] + 1),
+                (int)(normalizedLength/pxSizes[2] + 1)
+        };
+        int tooBig = 0;
+        int ob = 0;
+        boolean floatLabels = lbls.getType() == MeshImageStack.FLOAT32;
+
+        for (Region r : regions) {
+            int[] dims = r.getDimensions();
+            if(dims[0]>mxd[0] || dims[1] > mxd[1] || dims[2] > mxd[2]){
+                tooBig++;
+                continue;
+            }
+            PrincipleAxes pa = getPrincipleAxis(r, lbls.pixel_dimensions);
+            pa.cm[0] = pa.cm[0] / lbls.SCALE - lbls.offsets[0];
+            pa.cm[1] = pa.cm[1] / lbls.SCALE - lbls.offsets[1];
+            pa.cm[2] = pa.cm[2] / lbls.SCALE - lbls.offsets[2];
+
+            final int label = floatLabels ? (int)Float.intBitsToFloat(r.getLabel()) : r.getLabel();
+            IsMasked maskIt = nc->{
+                double[] ic = lbls.getImageCoordinates(nc);
+                int ix = (int) ic[0];
+                int iy = (int) ic[1];
+                int iz = (int) ic[2];
+                int px = (int)lbls.getValue(ix, iy, iz);
+                return px == label;
+            };
+
+            CroppedVolume croppedVolume = crop(pa, maskIt, image, label);
+            if (croppedVolume == null) {
+                ob++;
+                continue;
+            }
+
+            if (accumulated == null) {
+                accumulated = croppedVolume;
+                tally++;
+            } else {
+                ImageStack stack = croppedVolume.data.getStack();
+                ImageStack pop = accumulated.data.getStack();
+                for (int i = 1; i <= stack.size(); i++) {
+                    pop.addSlice(stack.getProcessor(i));
+                }
+                stack = croppedVolume.mask.getStack();
+                ImageStack mpop = accumulated.mask.getStack();
+                for (int i = 1; i <= stack.size(); i++) {
+                    mpop.addSlice(stack.getProcessor(i));
+                }
+                ;
+                tally++;
+                accumulated.attributes.addAll(croppedVolume.attributes);
+            }
+        }
+        System.out.println("tally: " + tally + ", too big: " + tooBig + ", out of image: " + ob);
+        ImagePlus plus = accumulated.data;
+        ImagePlus maskPlus = accumulated.mask;
+
+        plus.setStack(plus.getStack(), 1, size, tally);
+        maskPlus.setStack(maskPlus.getStack(), 1, size, tally);
+        plus.setOpenAsHyperStack(true);
+        maskPlus.setOpenAsHyperStack(true);
+        plus.setTitle("lbls-original");
+        maskPlus.setTitle("lbls-labels");
+        plus.show();
+        maskPlus.show();
+
+        return accumulated;
+    }
+
+    public void setPrefix(String s){
+        prefix = s;
+    }
+
     private Path getCropFolderName(Path tf, String suffix){
-        Path up = tf.getParent();
+        Path up = tf.toAbsolutePath().getParent();
         String baseName;
         String filename = tf.getFileName().toString();
         int ei = filename.lastIndexOf(".");
@@ -476,7 +508,7 @@ public class MeshCroppingTool {
             baseName = filename + suffix;
         }
 
-        return up.resolve(baseName);
+        return up.resolve(prefix + baseName);
     }
 
     /**
@@ -492,31 +524,17 @@ public class MeshCroppingTool {
         Path lbls = GuiTools.getAFile(IJ.getInstance(), "select labels image data");
         if(lbls == null) return;
 
+        processLabelledImages(tf, lbls);
 
+    }
+
+    public void processLabelledImages(Path tf, Path lbls){
         MeshImageStack stack;
         MeshImageStack labels;
 
-        if(!Files.isDirectory(tf)){
-            stack = new MeshImageStack(tf);
-        } else{
-            try {
-                stack = LoadZarr.loadMeshImageStack2(tf);
-            } catch (IOException e) {
-                System.out.println("unable to load Zarr data structure: " + tf);
-                throw new RuntimeException(e);
-            }
-        }
+        stack = getMeshImageStack(tf);
 
-        if(!Files.isDirectory(lbls)){
-            labels = new MeshImageStack(lbls);
-        } else{
-            try {
-                labels = LoadZarr.loadMeshImageStack2(lbls);
-            } catch (IOException e) {
-                System.out.println("unable to load Zarr data structure: " + lbls);
-                throw new RuntimeException(e);
-            }
-        }
+        labels = getMeshImageStack(lbls);
 
         Path cropFolder = getCropFolderName(tf, "-crops");
 
@@ -528,5 +546,20 @@ public class MeshCroppingTool {
         }
     }
 
+    public static void main(String[] args){
+        Path image = Paths.get("D:/working/cropping-dev/jurica-sample.tif");
+        Path labels = Paths.get("D:/working/cropping-dev/jurica-sample-laels.tif");
+        new ImageJ();
+
+        MeshCroppingTool tool = new MeshCroppingTool(1, 64);
+        tool.setPrefix("f1p_");
+        tool.processLabelledImages(image, labels);
+
+        MeshCroppingTool tool2 = new MeshCroppingTool(2, 64);
+        tool2.setPrefix("f2_");
+        tool2.processLabelledImages(image, labels);
+
+
+    }
 
 }

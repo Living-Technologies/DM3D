@@ -38,8 +38,11 @@ import ij.plugin.FileInfoVirtualStack;
 import ij.plugin.FolderOpener;
 import ij.plugin.Resizer;
 import ij.plugin.Scaler;
+import ij.process.ByteProcessor;
+import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
+import ij.process.ShortProcessor;
 
 import java.awt.Image;
 import java.awt.image.BufferedImage;
@@ -61,6 +64,11 @@ import static deformablemesh.geometry.DeformableMesh3D.ORIGIN;
  * Date: 7/3/13
  */
 public class MeshImageStack {
+    public final static int INT8 = 1;
+    public final static int INT16 = 2;
+    public final static int INT32 = 3;
+    public final static int FLOAT32 = 4;
+    public final static int UNKNOWN = -1;
     static interface Filter{
         void filter(ImageProcessor proc);
     }
@@ -95,7 +103,7 @@ public class MeshImageStack {
     public double MIN_VALUE;
     public double MAX_VALUE;
     protected double PX;
-
+    int type;
     /**
      * Creates a null mesh image stack.
      */
@@ -110,6 +118,7 @@ public class MeshImageStack {
         max_dex = new int[3];
         dims = new int[3];
         FRAMES = 999;
+        type = UNKNOWN;
     }
 
     /**
@@ -120,6 +129,20 @@ public class MeshImageStack {
      */
     public MeshImageStack(ImagePlus original, int frame, int channel){
         this.original=original;
+
+        ImageProcessor p = original.getStack().getProcessor(1);
+        if(p instanceof ByteProcessor){
+            type = INT8;
+        } else if(p instanceof ShortProcessor){
+            type = INT16;
+        } else if( p instanceof ColorProcessor){
+            type = INT32;
+        } else if(p instanceof FloatProcessor){
+            type = FLOAT32;
+        } else{
+            type = UNKNOWN;
+        }
+
         SLICES = original.getNSlices();
         FRAMES = original.getNFrames();
         CHANNELS = original.getNChannels();
@@ -213,6 +236,10 @@ public class MeshImageStack {
             unit = original.getFileInfo().unit;
         }
         return unit;
+    }
+
+    public int getType(){
+        return type;
     }
 
     public MeshImageStack duplicate()
