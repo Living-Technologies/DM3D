@@ -1305,9 +1305,9 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         JMenuItem load = new JMenuItem("load zarr");
         zarr.add(load);
         load.addActionListener(evt->{
-            String ijf = IJ.getDirectory("select zarr folder");
+            File ijf = GuiTools.getDirectory(IJ.getInstance(), "Select zarr folder");
             if(ijf == null) return;
-            Path folder = Paths.get(ijf);
+            Path folder = ijf.toPath();
             try {
                 MeshImageStack zStack = LoadZarr.loadMeshImageStack2(folder);
                 segmentationController.setMeshImageStack(zStack);
@@ -1320,13 +1320,13 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         JMenuItem save = new JMenuItem("save-zarr");
         zarr.add(save);
         save.addActionListener(evt->{
-            String out = IJ.getFilePath("Select file to save zarr too.");
+            File out = GuiTools.getDirectory(IJ.getInstance(),  "file to save zarr too.");
             if(out == null || !segmentationController.hasImage()  ){
                 return;
             }
             setReady(false);
             segmentationController.submit(()->{
-                SaveImageToZarr.saveToZarr(segmentationController.getMeshImageStack().getOriginalPlus(), Paths.get(out));
+                SaveImageToZarr.saveToZarr(segmentationController.getMeshImageStack().getOriginalPlus(), out.toPath());
                 finished();
             });
         });

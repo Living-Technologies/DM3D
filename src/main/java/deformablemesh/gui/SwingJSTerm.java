@@ -542,7 +542,8 @@ public class SwingJSTerm {
 
 
 class TextBoxSelections{
-    final static String staticClassName = "jdk.dynalink.beans.StaticClass";
+    //either jdk. or jdk.internal.
+    final static String staticClassName = "dynalink.beans.StaticClass";
 
     Popup lastPopUp;
     JScrollPane view;
@@ -791,7 +792,7 @@ class TextBoxSelections{
     }
     List<String> getAvailableFields( Object obj){
         Class<?> c = obj.getClass();
-        if(staticClassName.equals(c.getName())){
+        if(c.getName().endsWith(staticClassName)){
             try{
                 Method m = c.getMethod("getRepresentedClass");
                 c = (Class<?>)m.invoke(obj);
@@ -827,7 +828,7 @@ class TextBoxSelections{
         Class<?> c;
         c = obj.getClass();
         //for finding static methods.
-        if(staticClassName.equals(c.getName())){
+        if(c.getName().contains(staticClassName)){
             try{
                 Method m = c.getMethod("getRepresentedClass");
                 c = (Class<?>)m.invoke(obj);
