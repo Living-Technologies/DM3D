@@ -857,6 +857,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
                 if (id.endsWith(".tif") ) {
                     ImagePlus plus = FileInfoVirtualStack.openVirtual(id);
                     plus.show();
+
                     segmentationController.setOriginalPlus(plus);
                 } else{
                     ImporterOptions options = new ImporterOptions();

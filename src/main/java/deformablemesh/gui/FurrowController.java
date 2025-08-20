@@ -153,7 +153,6 @@ public class FurrowController implements FrameListener, ListDataListener {
         }
         if(modifier == null){
             initializeModifier();
-            modifierLock.lock();
             return true;
         }
         modifier.setSelectNodesMode();

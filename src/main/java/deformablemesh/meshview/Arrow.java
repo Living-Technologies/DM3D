@@ -41,9 +41,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
 public class Arrow implements DataObject {
-    float length = 1.0f;
-    float width = length/3f;
-
     BranchGroup b = new BranchGroup();
 
     double[] position = {0, 0, 0};
