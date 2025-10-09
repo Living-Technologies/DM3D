@@ -168,15 +168,15 @@ function showPreviousMeshes(){
 helpers["filterCurrentFrame( Function filter )"] = "Applies the filter function to all of the meshes in the " +
 "current frame. true keeps the mesh, false removes the mesh";
 function filterCurrentFrame( filter ){
-    tracks = controls.getAllTracks();
-    filtered = controls.getEmptyTrackList();
-    frame = controls.getCurrentFrame();
+    var tracks = controls.getAllTracks();
+    var filtered = controls.getEmptyTrackList();
+    var frame = controls.getCurrentFrame();
 
 
     for( id in tracks){
-      track = tracks[id];
+      var track = tracks[id];
       if( track.containsKey(frame)){
-          next = new Track(track.getName());
+          var next = new Track(track.getName());
           for( k in track.getTrack()){
             if(k == frame){
                 mesh = track.getMesh(k);

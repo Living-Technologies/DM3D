@@ -2,9 +2,7 @@ importer("deformablemesh.meshview.MultiChannelVolumeTexture");
 IntArray = Java.type("int[]");
 importer("deformablemesh.meshview.VolumeDataObject");
 
-
-typeA = {
-    function stylizeMeshSurface(o){
+createShinyMeshes(o){
         o.shininess = 1;
         o.amb  = 1;
         o.emm = 0;
@@ -13,7 +11,7 @@ typeA = {
 
         o.setShowSurface(false);
         o.setShowSurface(true);
-    }
+}
 
 
 

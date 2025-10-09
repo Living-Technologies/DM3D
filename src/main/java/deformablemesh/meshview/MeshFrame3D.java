@@ -94,7 +94,6 @@ import java.util.stream.IntStream;
  */
 public class    MeshFrame3D {
     DataCanvas canvas;
-
     JFrame frame;
     Axis3D axis;
     Map<Object, DataObject> observedObjects = new HashMap<>();
@@ -237,6 +236,8 @@ public class    MeshFrame3D {
                     };
                     FrameListener fl = stack::setFrame;
                     MeshImageStack db = MeshImageStack.unbufferedStack(tp, fl, geometry);
+                    db.setMinValue(stack.getMinValue() );
+                    db.setMaxValue( stack.getMaxValue() );
 
                     cv = new ChannelVolume(db, c, volumeDataObject.volume, volumeDataObject.getGeometry());
                 } else{

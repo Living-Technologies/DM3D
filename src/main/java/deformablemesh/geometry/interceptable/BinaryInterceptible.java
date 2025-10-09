@@ -28,6 +28,7 @@ package deformablemesh.geometry.interceptable;
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.Intersection;
 import deformablemesh.geometry.PixelBlob;
+import deformablemesh.util.Vector3DOps;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,6 +45,8 @@ public class BinaryInterceptible implements Interceptable {
     double[] maxs = {-mins[0], -mins[1], -mins[2]};
     PixelBlob blob;
     MeshImageStack stack;
+    double[] offset;
+    final static double fuzz = 0.0001;
 
     /**
      *
@@ -83,7 +86,7 @@ public class BinaryInterceptible implements Interceptable {
 
         blob = new PixelBlob(pixels);
 
-        double[] offset = stack.scaleToNormalizedLength(new double[]{0.5, 0.5, 0.5});
+        offset = stack.scaleToNormalizedLength(new double[]{0.5, 0.5, 0.5});
         center[0] = center[0]/pixels.size() + offset[0];
         center[1] = center[1]/pixels.size() + offset[1];
         center[2] = center[2]/pixels.size() + offset[2];
@@ -120,39 +123,91 @@ public class BinaryInterceptible implements Interceptable {
 
     /**
      * Assuming the origin is contained within the shape, and and the pixels are points.
-     * //TODO update calculation of pixels as voxels.
      * @param origin normalized coordinates
      * @param direction normalized coordinates
      * @return closest edge pixel the array passes.
      */
     @Override
     public List<Intersection> getIntersections(double[] origin, double[] direction) {
-        double min = Double.MAX_VALUE;
-        double[] best = origin;
+        List<Intersection> intersections = new ArrayList<>();
         for(double[] pt: edge){
-            double dx = pt[0] - origin[0];
-            double dy = pt[1] - origin[1];
-            double dz = pt[2] - origin[2];
-            double m = Math.sqrt(dx*dx + dy*dy + dz*dz);
-            if(m==0){
-                continue;
+            Intersection x = getXIntersection(origin, direction, pt);
+            if(x != null){
+                intersections.add(x);
             }
-            dx = dx/m;
-            dy = dy/m;
-            dz = dz/m;
-
-            dx = direction[0] - dx;
-            dy = direction[1] - dy;
-            dz = direction[2] - dz;
-
-            m = Math.sqrt(dx*dx + dy*dy + dz*dz);
-            if(m<min){
-                min = m;
-                best = pt;
+            Intersection y = getYIntersection(origin, direction, pt);
+            if(y != null){
+                intersections.add(y);
+            }
+            Intersection z = getZIntersection(origin, direction, pt);
+            if(z != null){
+                intersections.add(z);
             }
         }
 
-        return Arrays.asList(new Intersection(best, direction));
+        return intersections;
+    }
+
+    private Intersection getXIntersection(double[] origin, double[] direction, double[] pt) {
+        if(direction[0] == 0){
+            return null;
+        }
+        double x0 = direction[0] > 0 ? pt[0] + 2 * offset[0] : pt[0];
+        double[] n = direction[0] > 0 ? Vector3DOps.xhat : Vector3DOps.nxhat;
+
+        double dx = x0 - origin[0];
+        double l = dx/direction[0];
+        if( l > 0 ){
+            double z0 = origin[2] + l * direction[2];
+            double y0 = origin[1] + l * direction[1];
+            if(
+                    z0 >= pt[2] - fuzz * offset[2] && z0 <= pt[2] + 2 * (1 + fuzz) * offset[2] &&
+                    y0 >= pt[1] - fuzz * offset[1] && y0 <= pt[1] + 2 * (1 + fuzz) * offset[1]  ){
+                return new Intersection(new double[]{x0, y0, z0}, n);
+            }
+        }
+        return null;
+    }
+    private Intersection getYIntersection(double[] origin, double[] direction, double[] pt) {
+        if(direction[1] == 0){
+            return null;
+        }
+        double y0 = direction[1] > 0 ? pt[1] + 2*offset[1] : pt[1];
+        double[] n = direction[1] > 0 ? Vector3DOps.yhat : Vector3DOps.nyhat;
+
+        double dy = y0 - origin[1];
+        double l = dy/direction[1];
+        if( l > 0 ){
+            double z0 = origin[2] + l*direction[2];
+            double x0 = origin[0] + l*direction[0];
+            if(
+                    x0 >= pt[0] - fuzz * offset[0] && x0 <= pt[0] + 2 * (1 + fuzz) * offset[0] &&
+                    z0 >= pt[2] - fuzz * offset[2] && z0 <= pt[2] + 2 * (1 + fuzz) *  offset[2]  ){
+                return new Intersection(new double[]{x0, y0, z0}, n);
+            }
+        }
+        return null;
+    }
+
+    private Intersection getZIntersection(double[] origin, double[] direction, double[] pt) {
+        if(direction[2] == 0){
+            return null;
+        }
+        double z0 = direction[2] > 0 ? pt[2] + 2*offset[2] : pt[2];
+        double[] n = direction[2] > 0 ? Vector3DOps.zhat : Vector3DOps.nzhat;
+
+        double dz = z0 - origin[2];
+        double l = dz/direction[2];
+        if( l > 0 ){
+            double x0 = origin[0] + l*direction[0];
+            double y0 = origin[1] + l*direction[1];
+            if(
+                    x0 >= pt[0] - fuzz * offset[0] && x0 <= pt[0] + 2 * (1 + fuzz) * offset[0] &&
+                    y0 >= pt[1] - fuzz * offset[1] && y0<= pt[1] + 2 * (1 + fuzz) * offset[1]  ){
+                return new Intersection(new double[]{x0, y0, z0}, n);
+            }
+        }
+        return null;
     }
 
     @Override

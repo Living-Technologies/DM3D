@@ -153,60 +153,47 @@ public class SwingJSTerm {
         engine.put(name, obj);
     }
 
-    public void runFile(Path path){
-        try(BufferedReader reader  = Files.newBufferedReader(path)){
+    private PrintWriter getDisplayWriter(){
+        PrintWriter writer = new PrintWriter(new Writer() {
+            StringBuilder builder = new StringBuilder();
+
+            @Override
+            public void write(char[] cbuf, int off, int len) throws IOException {
+                for (int i = off; i < off + len; i++) {
+                    builder.append(cbuf[i]);
+                }
+            }
+
+            @Override
+            public void flush() throws IOException {
+                echo(builder);
+                builder = new StringBuilder();
+            }
+
+            @Override
+            public void close() throws IOException {
+                echo(builder);
+            }
+        });
+        return writer;
+    }
+    private void runScriptFile(Path path){
+        try (BufferedReader reader = Files.newBufferedReader(path)) {
             engine.eval(reader);
         } catch (IOException e) {
             echo("Error reading file!");
-            PrintWriter writer = new PrintWriter(new Writer() {
-                StringBuilder builder = new StringBuilder();
-                @Override
-                public void write(char[] cbuf, int off, int len) throws IOException {
-                    for(int i = off; i<off + len; i++){
-                        builder.append(cbuf[i]);
-                    }
-                }
-
-                @Override
-                public void flush() throws IOException {
-                    echo(builder);
-                    builder = new StringBuilder();
-                }
-
-                @Override
-                public void close() throws IOException {
-                    echo(builder);
-                }
-            });
-
+            PrintWriter writer = getDisplayWriter();
             e.printStackTrace(writer);
             writer.close();
         } catch (ScriptException e) {
             echo("Error running script!");
-            PrintWriter writer = new PrintWriter(new Writer() {
-                StringBuilder builder = new StringBuilder();
-                @Override
-                public void write(char[] cbuf, int off, int len) throws IOException {
-                    for(int i = off; i<off + len; i++){
-                        builder.append(cbuf[i]);
-                    }
-                }
-
-                @Override
-                public void flush() throws IOException {
-                    echo(builder);
-                    builder = new StringBuilder();
-                }
-
-                @Override
-                public void close() throws IOException {
-                    echo(builder);
-                }
-            });
-
+            PrintWriter writer = getDisplayWriter();
             e.printStackTrace(writer);
             writer.close();
         }
+    }
+    public void runFile(Path path){
+        executor.submit( () -> runScriptFile(path));
     }
 
     public void displayText(String text){

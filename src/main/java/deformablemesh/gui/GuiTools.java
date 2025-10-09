@@ -546,11 +546,11 @@ public class GuiTools {
 
     static public Path getSaveFile(Frame parent, String title){
         JFileChooser chooser = new JFileChooser();
-        chooser.setDialogTitle(title);
-        chooser.setFileSelectionMode(JFileChooser.SAVE_DIALOG);
         if(lastUsed != null) {
             chooser.setCurrentDirectory(lastUsed.toFile());
         }
+        chooser.setDialogTitle(title);
+        chooser.setFileSelectionMode(JFileChooser.SAVE_DIALOG);
         int result = chooser.showDialog(parent, "select");
         if(result == JFileChooser.APPROVE_OPTION) {
             File f = chooser.getSelectedFile();

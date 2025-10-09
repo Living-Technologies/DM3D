@@ -189,13 +189,6 @@ public class Track {
         }
     }
 
-    public void setShowWires(boolean show){
-        showWires = show;
-        for(DeformableMesh3D mesh: track.values()){
-            mesh.setShowWires(show);
-        }
-    }
-
     public boolean isSelected() {
         return selected;
     }
@@ -210,5 +203,11 @@ public class Track {
 
     public boolean getShowWires() {
         return showWires;
+    }
+    public void setShowWires(boolean value){
+        if(showWires != value){
+            showWires = value;
+            track.values().forEach(mesh -> mesh.setShowWires(value));
+        }
     }
 }

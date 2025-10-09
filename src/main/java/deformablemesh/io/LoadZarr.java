@@ -13,17 +13,21 @@ import net.imglib2.cache.img.CachedCellImg;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.NumericType;
 import net.imglib2.type.numeric.RealType;
+import org.janelia.saalfeldlab.n5.DatasetAttributes;
 import org.janelia.saalfeldlab.n5.N5Reader;
 import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
 import org.janelia.saalfeldlab.n5.universe.N5Factory;
+import org.janelia.saalfeldlab.n5.universe.metadata.N5Metadata;
 import org.janelia.saalfeldlab.n5.universe.metadata.axes.Axis;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class LoadZarr {
@@ -76,7 +80,6 @@ public class LoadZarr {
     public static <T extends NumericType<T> & NativeType<T>> MultiscaleImageAdapter<T> load3DZarrFile(String location) throws IOException {
         N5Factory factory = new N5Factory();
         N5Reader reader = factory.openReader(location);
-
         Path origin = Paths.get(location);
 
         String[] sets = reader.deepListDatasets("/");
@@ -121,6 +124,19 @@ public class LoadZarr {
 
         MeshImageStack2<T> mist = new MeshImageStack2<>(sources);
         mist.setShortTitle(location.getFileName().toString());
+        Calibration ij = mist.getImageJCalibration();
+        msia.calibrateUnits(ij);
+        return mist;
+    }
+
+    public static <T extends NumericType<T> & NativeType<T> & RealType<T>> MeshImageStack2<T> loadMeshImageStack2(URI uri) throws IOException {
+        MultiscaleImageAdapter<T> msia = load3DZarrFile(uri.toString());
+        List<Source<T>> sources = new ArrayList<>();
+        for(int i = 0; i<msia.getNChannels(); i++){
+            sources.add(msia.getAsBdvSource(i));
+        }
+        MeshImageStack2<T> mist = new MeshImageStack2<>(sources);
+        mist.setShortTitle(uri.getPath());
         Calibration ij = mist.getImageJCalibration();
         msia.calibrateUnits(ij);
         return mist;

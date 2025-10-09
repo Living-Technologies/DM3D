@@ -13,12 +13,14 @@ import java.awt.Image;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class BinaryRemesher {
     int downsample = 4;
     int threshold = 1;
     MeshImageStack fullResolution;
+    List<DeformableMesh3D> constraints = new ArrayList<>();
     public BinaryRemesher(MeshImageStack original){
         fullResolution = original;
     }
@@ -31,6 +33,9 @@ public class BinaryRemesher {
         threshold = t;
     }
 
+    public void addConstraints(List<DeformableMesh3D> meshes){
+
+    }
     public List<DeformableMesh3D> remeshMeshes(List<DeformableMesh3D> meshes){
         ImagePlus start;
         if(downsample != 1){
@@ -64,6 +69,16 @@ public class BinaryRemesher {
             regions.add(r);
 
         }
+
+        for(int i = 0; i<constraints.size(); i++){
+            DeformableMesh3D mesh = constraints.get(i);
+            int lbl = meshes.size() + i;
+            List<int[]> points = DeformableMesh3DTools.getContainedPixels(original, mesh);
+            for(int[] pt : points){
+                binaryStack.getProcessor(pt[2]+1).set(pt[0], pt[1], lbl);
+            }
+        }
+
         RegionGrowing growing = new RegionGrowing(binaryStack, stack);
         growing.setRegions(regions);
 
@@ -76,16 +91,26 @@ public class BinaryRemesher {
 
         List<DeformableMesh3D> newMeshes = regions.stream().map(
                 r ->{
+
                     r.validate();
                     List<Region> rs = r.split();
-                    System.out.println(rs.size());
+
                     rs.sort( Comparator.comparingInt(reg->reg.getPoints().size()));
+                    if(rs.size() == 0){
+                        return null;
+                    }
                     return BinaryMeshGenerator.voxelMesh(rs.get(rs.size() - 1), labelledMis);
                 }
-        ).collect(Collectors.toList());
+        ).filter(Objects::nonNull).collect(Collectors.toList());
 
         return newMeshes;
 
+    }
+    public static List<DeformableMesh3D> remesh(List<DeformableMesh3D> meshes, List<DeformableMesh3D> neighbors, MeshImageStack original, int threshold){
+        BinaryRemesher br = new BinaryRemesher(original);
+        br.setThreshold(threshold);
+        br.addConstraints( neighbors );
+        return br.remeshMeshes(meshes);
     }
     public static List<DeformableMesh3D> remesh(List<DeformableMesh3D> meshes, MeshImageStack original, int threshold){
         BinaryRemesher br = new BinaryRemesher(original);

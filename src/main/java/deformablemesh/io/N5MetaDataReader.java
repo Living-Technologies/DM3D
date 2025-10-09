@@ -20,9 +20,14 @@ public class N5MetaDataReader {
     public void getMetaData(String location){
         N5Factory factory = new N5Factory();
         N5Reader reader = factory.openReader(location);
+
         List<ImagePlus> pluses = new ArrayList<>();
 
         N5Metadata rootMetadata = N5MetadataUtils.parseMetadata(reader, "/");
+        String[] sets = reader.deepListDatasets("/");
+        if(sets.length==0){
+            sets = new String[]{"s0"};
+        }
         System.out.println("root metadata: " + rootMetadata);
         if(rootMetadata instanceof OmeNgffMetadata){
             OmeNgffMetadata metadata = (OmeNgffMetadata)rootMetadata;
@@ -31,7 +36,7 @@ public class N5MetaDataReader {
             }
 
         }
-        String[] sets = reader.deepListDatasets("/");
+        //String[] sets = reader.deepListDatasets("/");
         for(String s: sets) {
             N5Metadata n5md = N5MetadataUtils.parseMetadata(reader, s);
             System.out.println(n5md);
@@ -73,5 +78,9 @@ public class N5MetaDataReader {
         }
 
     }
+    public static void main(String[] args){
+        N5MetaDataReader dr = new N5MetaDataReader();
+        dr.getMetaData("http://127.0.0.1:5050");
 
+    }
 }

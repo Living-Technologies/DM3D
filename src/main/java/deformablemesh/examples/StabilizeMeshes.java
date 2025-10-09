@@ -40,10 +40,17 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class StabilizeMeshes {
+    File primary;
+    List<File> auxilary;
     final static double[] origin = {0, 0, 0};
+    public StabilizeMeshes(String primary, List<String> auxilary){
+        this.primary = new File(primary);
+        this.auxilary = auxilary.stream().map(File::new).collect(Collectors.toList());
+    }
 
-    public static void main(String[] args) throws IOException {
-        List<Track> tracks = MeshReader.loadMeshes(new File(args[0]));
+
+    public void process() throws IOException {
+        List<Track> tracks = MeshReader.loadMeshes(primary);
 
         List<List<DeformableMesh3D>> stacked = new ArrayList<>();
 
@@ -79,7 +86,7 @@ public class StabilizeMeshes {
             if(previous != null ) {
                 List<Track> filtered = tracks.stream().filter(
                         t-> t.containsKey(frame - 1) && t.containsKey(frame)
-                    ).collect(Collectors.toList());
+                ).collect(Collectors.toList());
 
                 List<DeformableMesh3D> first = filtered.stream().map(t->t.getMesh(frame-1)).collect(Collectors.toList());
                 List<DeformableMesh3D> second = filtered.stream().map(t->t.getMesh(frame)).collect(Collectors.toList());
@@ -98,12 +105,13 @@ public class StabilizeMeshes {
             previous = meshes;
 
         }
-        String name = args[0].replace(".bmf", "-aligned.bmf");
-        MeshWriter.saveMeshes(new File(name), tracks);
+        String on = primary.getName().replace(".bmf", "-aligned.bmf");
+        File out = new File(primary.getParentFile(), on);
+        MeshWriter.saveMeshes(out, tracks);
 
         //additional meshes can be transformed.
-        for(int i = 1; i<args.length; i++){
-            List<Track> at = MeshReader.loadMeshes(new File(args[i]));
+        for(File aux : auxilary){
+            List<Track> at = MeshReader.loadMeshes(aux);
             int dex = 0;
             for(int j = min; j<=max; j++){
                 int frame = j;
@@ -120,9 +128,17 @@ public class StabilizeMeshes {
                 }
                 dex++;
             }
-            MeshWriter.saveMeshes(new File(args[i].replace(".bmf", "-aux-aligned.bmf")), at );
+            File auxOut = new File(aux.getParentFile(), aux.getName().replace(".bmf", "-aux-aligned.bmf"));
+            MeshWriter.saveMeshes(auxOut, at );
         }
 
+    }
+    public static void main(String[] args) throws IOException {
+        List<String> aux = new ArrayList<>();
+        for(int i = 1; i<args.length; i++){
+            aux.add(args[i]);
+        }
+        StabilizeMeshes sm = new StabilizeMeshes(args[0], aux);
 
     }
 

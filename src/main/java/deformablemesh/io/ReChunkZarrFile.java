@@ -17,7 +17,7 @@ public class ReChunkZarrFile {
         int chunkSize = frames/50;
         if(chunkSize > 1000) chunkSize = 1000;
 
-        SaveImageToZarr.saveToZarr(plus, out, new int[]{plus.getWidth(), plus.getHeight(), plus.getNSlices(), 1, 1000});
+        SaveImageToZarr.saveToZarr(plus, out, new int[]{plus.getWidth(), plus.getHeight(), plus.getNSlices(), 1, chunkSize});
         System.out.println("finished after: " + ((System.nanoTime() - start)*1e-9) + "s");
     }
 }

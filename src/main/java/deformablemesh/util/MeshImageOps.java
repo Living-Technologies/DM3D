@@ -35,6 +35,7 @@ import ij.process.ImageProcessor;
  */
 public class MeshImageOps {
 
+
     public static void refineBinary(ImageStack binary_stack, ImageStack original_stack){
         //first go through and find points along the edge of the binary.
         for(int k = 0; k<binary_stack.getSize(); k+=1){

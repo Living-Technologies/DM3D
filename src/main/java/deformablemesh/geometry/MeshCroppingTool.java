@@ -244,6 +244,9 @@ public class MeshCroppingTool {
                 accumulated.attributes.addAll(mopd.attributes);
             }
         }
+        if(accumulated == null){
+            return accumulated;
+        }
         System.out.println("checked: " + checked + ", to big: " + sizeLimit + ", out of bounds: " + boundaryLimit +", accepted: " + count);
         accumulated.data.setStack(accumulated.data.getStack(), 1, size, count);
         accumulated.mask.setStack(accumulated.mask.getStack(), 1, size, count);
@@ -425,18 +428,21 @@ public class MeshCroppingTool {
             List<Track> tracks = meshProvider.apply(i);
             CroppedVolume cv = cropMeshImages(tracks, stack);
 
-            try {
-                saveVolumeData(cv);
-            } catch(Exception e){
-                System.out.println("Unable to write crop data!");
-                throw new RuntimeException(e);
+            if(cv != null) {
+                try {
+                    saveVolumeData(cv);
+                } catch (Exception e) {
+                    System.out.println("Unable to write crop data!");
+                    throw new RuntimeException(e);
+                }
             }
-
             Path p = target.resolve("attributes-" + i + ".txt");
             try(BufferedWriter bw = Files.newBufferedWriter(p, StandardCharsets.UTF_8)){
-                for(String line : cv.attributes){
-                    bw.write(line);
-                    bw.write("\n");
+                if(cv != null) {
+                    for (String line : cv.attributes) {
+                        bw.write(line);
+                        bw.write("\n");
+                    }
                 }
             } catch (IOException e) {
                 System.out.println("Unable to write attirbutes file: " + p);

@@ -92,6 +92,9 @@ public class    CurvatureCalculator {
 
         for(Triangle3D triangle: triangles){
             triangle.update();
+            if(triangle.area == 0){
+                continue;
+            }
             Node3D[] nodes = {triangle.A, triangle.B, triangle.C};
             int dex = 0;
             for(int i = 0; i<3; i++){
@@ -139,7 +142,9 @@ public class    CurvatureCalculator {
             } else{
                 v = 0.125*(mab*cotB + mca*cotC);
             }
-
+            if( v > 0.5*triangle.area){
+                v = 0;
+            }
             for(int i = 0; i<3; i++){
                 normal[i] += triangle.normal[i]*v;
             }
@@ -384,6 +389,9 @@ public class    CurvatureCalculator {
 
         for(Triangle3D triangle: triangles){
             triangle.update();
+            if(triangle.area == 0){
+                continue;
+            }
             Node3D[] nodes = {triangle.A, triangle.B, triangle.C};
             //The index is the starting point, if the node is not in this triangle error.
             int dex = -1;
@@ -432,6 +440,9 @@ public class    CurvatureCalculator {
                 v = triangle.area/4;
             } else{
                 v = 0.125*(mab*cotB + mca*cotC);
+            }
+            if(v > 0.5*triangle.area){
+                v = 0;
             }
             Amixed += v;
 

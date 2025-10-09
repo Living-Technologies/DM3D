@@ -45,7 +45,7 @@ import java.util.stream.IntStream;
  * Created by msmith on 12/1/15.
  */
 public class Deforming3DMesh_Plugin implements PlugInFilter {
-    public static final String version = "1.3.5";
+    public static final String version = "1.4.0";
     public static SegmentationController createDeformingMeshApplication(){
 
         MeshFrame3D mf3d = new MeshFrame3D();

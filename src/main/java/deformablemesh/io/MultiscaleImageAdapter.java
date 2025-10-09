@@ -204,7 +204,7 @@ public class MultiscaleImageAdapter<T extends NumericType<T> & NativeType<T>> {
         ImagePlus plus = new ImagePlus();
         plus.setTitle(getTitle());
         ImageStack stack = getImageStack(level);
-        System.out.println(stack.size() + " E " + images.getNChannels() + ", " + images.getNSlices(level) + ", " + images.getNFrames());
+        //System.out.println(stack.size() + " E " + images.getNChannels() + ", " + images.getNSlices(level) + ", " + images.getNFrames());
         plus.setStack(stack, images.getNChannels(), images.getNSlices(level), images.getNFrames());
         Calibration cb = plus.getCalibration();
         images.calibrate(cb, level);
@@ -229,9 +229,9 @@ public class MultiscaleImageAdapter<T extends NumericType<T> & NativeType<T>> {
             a.translate(offset[images.xDex], offset[images.yDex], offset[images.zDex]);
             a.scale(scale[images.xDex], scale[images.yDex], scale[images.zDex]);
             transforms[i] = a;
-            System.out.println(a);
-            System.out.println(i + ", " + Arrays.toString(scale));
-            System.out.println(Arrays.toString(rai.dimensionsAsLongArray()));
+            //System.out.println(a);
+            //System.out.println(i + ", " + Arrays.toString(scale));
+            //System.out.println(Arrays.toString(rai.dimensionsAsLongArray()));
         }
         DefaultVoxelDimensions vd = new DefaultVoxelDimensions(4);
         RandomAccessibleIntervalMipmapSource4D<T> source = new RandomAccessibleIntervalMipmapSource4D<>(

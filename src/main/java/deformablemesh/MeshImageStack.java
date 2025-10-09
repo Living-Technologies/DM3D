@@ -49,6 +49,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -69,6 +70,15 @@ public class MeshImageStack {
     public final static int INT32 = 3;
     public final static int FLOAT32 = 4;
     public final static int UNKNOWN = -1;
+
+    public void setMinValue(double minValue) {
+        MIN_VALUE = minValue;
+    }
+
+    public void setMaxValue(double mx){
+        MAX_VALUE = mx;
+    }
+
     static interface Filter{
         void filter(ImageProcessor proc);
     }
@@ -935,12 +945,19 @@ public class MeshImageStack {
         plus.setCalibration(c);
         return new MeshImageStack(plus);
     }
+    public static MeshImageStack fromVirtualTiff(String location){
+        Path p = Paths.get(location);
 
+        ImagePlus plus = FileInfoVirtualStack.openVirtual(p.toAbsolutePath().toString());
+        return new MeshImageStack(plus);
+    }
     public static MeshImageStack unbufferedStack(TextureProducer tp, FrameListener fl, MeshImageStack geometry){
         MeshImageStack ub = new MeshImageStack(){
             @Override
             public void copyValues(){
-
+                System.out.println("copying");
+                MIN_VALUE=geometry.MIN_VALUE;
+                MAX_VALUE=geometry.MAX_VALUE;
             }
             @Override
             public double getValue( int x, int y, int z){

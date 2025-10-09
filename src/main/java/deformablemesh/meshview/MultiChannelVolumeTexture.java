@@ -203,7 +203,7 @@ public class MultiChannelVolumeTexture extends Texture3D {
      * @return
      */
     public int addChannel(TextureProducer channelValues, double minRange, double maxRange, Color3f c){
-
+        System.out.println("adding: " + minRange + " max: " + maxRange);
         Calibration cal = new Calibration();
         cal.color = c;
         cal.min = minRange;

@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
  * Created by msmith on 6/21/16.
  */
 public class ColorSuggestions {
+    final static private Object cursorLock = new Object();
     static int next = 0;
     static Random ng = new Random();
 
@@ -114,9 +115,11 @@ public class ColorSuggestions {
 
 
     public static Color getSuggestion(){
-        Color c = colors.get(next++);
-        next = next%colors.size();
-        return c;
+        synchronized (cursorLock) {
+            Color c = colors.get(next);
+            next = (next + 1) % colors.size();
+            return c;
+        }
     }
 
     /**
@@ -135,7 +138,6 @@ public class ColorSuggestions {
             Color c;
             do {
                 c = new Color(ng.nextInt()&(0xffffff));
-                next = next % colors.size();
             } while (existing.contains(c));
             return c;
         }

@@ -11,6 +11,7 @@ import org.scijava.plugin.Plugin;
 
 import javax.swing.JOptionPane;
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 @Plugin(type = Command.class, name="Crop Volumes", menuPath="Plugins > DM3D> tools > Crop Volumes ")
@@ -25,13 +26,27 @@ public class MeshCroppingCommand implements Command {
     "be cropped to sizexsizexsize volumes")
     int size;
 
+    @Parameter(label="image path", description = "Location of Image", required = false)
+    Path image;
+    @Parameter(label="mesh or label source", description= "Location of labels", required = false)
+    Path labels;
     @Override
     public void run(){
         MeshCroppingTool tool = new MeshCroppingTool(scale, size);
+
+
         if(useLabels){
-            tool.processLabelledImages();
+            if(image != null & labels != null){
+                tool.processLabelledImages(image, labels);
+            } else{
+                tool.processLabelledImages();
+            }
         } else{
-            tool.processMeshes();
+            if(image != null & labels != null){
+                tool.processMeshImages(image, labels);
+            } else{
+                tool.processMeshes();
+            }
         }
     }
 }
