@@ -2,6 +2,7 @@ package deformablemesh.examples;
 
 import deformablemesh.BoundingBoxTransformer;
 import deformablemesh.DeformableMesh3DTools;
+import deformablemesh.ImageRegion3D;
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.Box3D;
 import deformablemesh.geometry.DeformableMesh3D;
@@ -12,6 +13,9 @@ import deformablemesh.io.SaveImageToZarr;
 import deformablemesh.track.Track;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.measure.Calibration;
+import ij.process.FloatProcessor;
+import ij.process.ImageProcessor;
 
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -28,6 +32,32 @@ public class CropAlongMeshTrack {
     CropAlongMeshTrack(MeshImageStack stack, Track track){
         this.stack = stack;
         this.track = track;
+    }
+
+    static public ImagePlus getCrop(MeshImageStack original, Box3D region){
+
+        ImageRegion3D r = original.getImageCropValues(region);
+
+        int w = r.hx - r.lx + 1;
+        int h = r.hy - r.ly + 1;
+        int d = r.hz - r.lz + 1;
+        ImageStack stack = new ImageStack(w, h);
+        for(int z = r.lz; z <= r.hz; z++){
+            ImageProcessor proc = original.getProcessor(original.CURRENT, original.getChannel(), z).duplicate();
+            proc.setRoi(r.lx, r.ly, w, h);
+            ImageProcessor proc2 = proc.crop();
+            stack.addSlice(proc2);
+        }
+        ImagePlus plus = original.createImagePlus();
+        plus.setStack(stack, 1, d, 1);
+        Calibration c = plus.getCalibration();
+        Calibration oc = original.getImageJCalibration();
+
+        c.zOrigin = oc.zOrigin - r.lz;
+        c.yOrigin = oc.yOrigin - r.ly;
+        c.xOrigin = oc.xOrigin - r.lx;
+        plus.setCalibration(c);
+        return plus;
     }
 
     public void process(){
@@ -53,16 +83,16 @@ public class CropAlongMeshTrack {
             List<ImageStack> stacks = new ArrayList<>();
             for(int j = 0; j<stack.getNChannels(); j++){
                 stack.setFrameAndChannel(frame, j);
-                MeshImageStack cropped = stack.getCrop(bb);
-                if(j == 0){
-                    BoundingBoxTransformer bbt = new BoundingBoxTransformer(stack, cropped);
+                ImagePlus cropped = getCrop(stack, bb);
+                if(j == 100){
+                    BoundingBoxTransformer bbt = new BoundingBoxTransformer(stack, new MeshImageStack(cropped));
                     DeformableMesh3D mesh = DeformableMesh3DTools.copyOf(track.getMesh(frame));
                     bbt.transformMesh(mesh);
                     transformed.addMesh(frame, mesh);
                 }
-                stacks.add(cropped.getOriginalPlus().getStack());
+                stacks.add(cropped.getStack());
                 if(plus == null){
-                    plus = cropped.getOriginalPlus();
+                    plus = cropped;
                 }
             }
             if(out == null){

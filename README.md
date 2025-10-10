@@ -43,10 +43,13 @@ controls = service.getApplicationController();
 That provide access to the same controls found in the javascript console.
 
 # Changes
+1.4
+- Improving javascript interface with some tools and snippets
+- BUG FIX: multi-channel multiresolution volumes display.
+- 
 1.3
 - Generative mesh algorithms are improved.
 - imglib2 scripting interface
-- 
 1.2.0
 - Creating meshes from labelled images
 - Displaying labelled images in the 3D viewer
