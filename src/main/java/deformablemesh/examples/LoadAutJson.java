@@ -70,6 +70,17 @@ public class LoadAutJson {
 
     }
 
+    /**
+     * Reads the data file, a results.txt generated from shapy blobs. It maps
+     * the frame/trackid to the computed shapy blob values.
+     *
+     * Note Track ID's can and probably are different at each timepoint!
+     *
+     * The Track ID can be the id of a mesh, or the id of a labelled component.
+     *
+     * @param dataFile
+     * @return Map[ Time ID -> Map[ Track ID -> values ] ]
+     */
     static public Map<Integer, Map<Integer, double[]>> getMappings(Path dataFile){
         Map<Integer, Map<Integer, double[]>> results = new HashMap<>();
         try{
@@ -116,7 +127,7 @@ public class LoadAutJson {
      * @param frame
      * @return a map that maps the meshes index/track id to the id in tracks.
      */
-    static Map<Integer, Integer> getLabelMap(List<Track> tracks, List<Track> meshes, int frame){
+    public static Map<Integer, Integer> getLabelMap(List<Track> tracks, List<Track> meshes, int frame){
         Map<Integer, Integer> labelMap = new HashMap<>();
         for(int tid = 0; tid<tracks.size(); tid++){
             Track t = tracks.get(tid);
@@ -195,7 +206,8 @@ public class LoadAutJson {
         g.show(false, "5th element");
 
     }
-    public static void main(String[] args) throws IOException {
+
+    public static void processMeshAndAut() throws IOException {
         String loc = "D:\\working\\maria\\Jurica\\Organoid 1 (lactate).aut";
         String zarr = "D:\\working\\maria\\Jurica\\1.zarr";
         String resultsFile = "D:\\working\\maria\\Jurica\\1-mask-crops\\results.txt";
@@ -255,8 +267,8 @@ public class LoadAutJson {
         File cropped = new File("D:\\working\\maria\\Jurica\\1-mask-crops\\cropped-tracks.bmf");
         MeshWriter.saveMeshes(cropped, ohNo);
         File out = new File("D:\\working\\maria\\Jurica\\1-mask-crops\\analyzed-tracks.bmf");
-        MeshWriter.saveMeshes(out, replacements.stream().filter(t->!t.isEmpty()).collect(Collectors.toList()));
 
+        MeshWriter.saveMeshes(out, replacements.stream().filter(t->!t.isEmpty()).collect(Collectors.toList()));
         Graph g = new Graph();
         for(Integer i : values.keySet()){
 
@@ -277,6 +289,11 @@ public class LoadAutJson {
             }
         }
         g.show(false, "5th element");
+
+    }
+    public static void main(String[] args) throws IOException {
+
+
 
     }
 }

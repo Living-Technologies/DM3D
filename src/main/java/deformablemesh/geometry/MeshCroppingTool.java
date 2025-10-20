@@ -408,8 +408,7 @@ public class MeshCroppingTool {
                 List<Track> tracks = MeshReader.loadMeshes(base.toFile());
                 meshProvider = key->tracks;
             } catch (IOException e) {
-                System.out.println("Unable to open mesh file: " + base);
-                throw new RuntimeException(e);
+                throw new RuntimeException("Unable to open mesh file: " + base, e);
             }
 
         }
@@ -418,7 +417,15 @@ public class MeshCroppingTool {
             try {
                 Files.createDirectories(target);
             } catch (IOException e) {
-                System.out.println("Unable to create destination directory");
+                throw new RuntimeException("Unable to create destination directory: " + target, e);
+            }
+        }
+
+        Path attributesFolder = target.resolve("attributes");
+        if(!Files.exists(attributesFolder)){
+            try {
+                Files.createDirectories(attributesFolder);
+            } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
@@ -436,7 +443,7 @@ public class MeshCroppingTool {
                     throw new RuntimeException(e);
                 }
             }
-            Path p = target.resolve("attributes-" + i + ".txt");
+            Path p = attributesFolder.resolve("attributes-" + i + ".txt");
             try(BufferedWriter bw = Files.newBufferedWriter(p, StandardCharsets.UTF_8)){
                 if(cv != null) {
                     for (String line : cv.attributes) {
@@ -461,7 +468,10 @@ public class MeshCroppingTool {
 
         imageZarr = cropFolder.resolve("images.zarr");
         maskZarr = cropFolder.resolve("masks.zarr");
-
+        Path attributesFolder = cropFolder.resolve("attributes");
+        if(!Files.exists(attributesFolder)){
+            Files.createDirectories(attributesFolder);
+        }
         for(int i = 0; i<stack.getNFrames(); i++){
             stack.setFrame(i);
             labels.setFrame(i);
@@ -472,7 +482,7 @@ public class MeshCroppingTool {
                 continue;
             }
 
-            Path p = cropFolder.resolve("attributes-" + i + ".txt");
+            Path p = attributesFolder.resolve("attributes-" + i + ".txt");
             try(BufferedWriter bw = Files.newBufferedWriter(p, StandardCharsets.UTF_8)){
                 for(String line : cv.attributes){
                     bw.write(line);
