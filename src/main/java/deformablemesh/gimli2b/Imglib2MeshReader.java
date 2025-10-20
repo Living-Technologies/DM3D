@@ -10,6 +10,7 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
@@ -21,22 +22,23 @@ public class Imglib2MeshReader {
 
     final long limit;
     File input;
-    long current = 0;
     DataInputStream dis;
     long pos = 0;
+    List<String> names;
     public Imglib2MeshReader(File meshFile){
         input = meshFile;
         this.limit = meshFile.length();
+        names = new ArrayList<>();
     }
-
+    public static List<Map<Integer, Mesh>> loadMeshes(File file) throws IOException {
+        return new Imglib2MeshReader(file).loadMeshes();
+    }
     private DataInputStream startReading() throws IOException{
 
         dis = new DataInputStream(
-                new MeshReader.CountingInputStream(
-                        new BufferedInputStream(
-                                Files.newInputStream(input.toPath(), StandardOpenOption.READ)
-                        )
-                )
+            new BufferedInputStream(
+                            Files.newInputStream(input.toPath(), StandardOpenOption.READ)
+            )
         );
 
         return dis;
@@ -51,13 +53,14 @@ public class Imglib2MeshReader {
 
 
             int version = dis.readInt();
-            current += Integer.BYTES;
+            pos += Integer.BYTES;
 
             if (version > 0) {
                 //instead of a version number there was a number of frames.
                 throw new IOException("BMF version not supported by this reader");
             } else if (version == -1) {
                 int trackCount = dis.readInt();
+                pos += Integer.BYTES;
                 for (int i = 0; i < trackCount; i++) {
                     Map<Integer, Mesh> t = loadTrack();
                     tracks.add(t);
@@ -78,26 +81,34 @@ public class Imglib2MeshReader {
      */
     private void readMesh(DataInputStream dis, Map<Integer, Mesh> map) throws IOException {
         int current = dis.readInt();
-
+        pos += Integer.BYTES;
         int pos_count = checkCount(dis.readInt(), Double.BYTES);
+        pos += Integer.BYTES;
+
         double[] positions = new double[pos_count];
+        pos += pos_count * Double.BYTES;
         for (int j = 0; j < pos_count; j++) {
             positions[j] = dis.readDouble();
         }
 
         int con_count = checkCount(dis.readInt(), Integer.BYTES);
+        pos += Integer.BYTES;
         int remaining = con_count*4;
+
         while(remaining > 0){
             long next = dis.skip(remaining);
             remaining -= next;
         }
+        pos += con_count*Integer.BYTES;
 
         int tri_count = checkCount(dis.readInt(), Integer.BYTES);
-        int[] triangle_indices = new int[tri_count];
+        pos += Integer.BYTES;
 
+        int[] triangle_indices = new int[tri_count];
         for (int j = 0; j < tri_count; j++) {
             triangle_indices[j] = dis.readInt();
         }
+        pos += tri_count*Integer.BYTES;
         Mesh mesh = new BufferMesh(pos_count/3, tri_count/3);
         for( int i = 0; i<pos_count/3; i++){
             mesh.vertices().add(
@@ -106,6 +117,7 @@ public class Imglib2MeshReader {
                     positions[3*i+2]
             );
         }
+
         for( int i = 0; i<tri_count/3; i++){
             mesh.triangles().add(
                     triangle_indices[3*i + 0],
@@ -120,8 +132,11 @@ public class Imglib2MeshReader {
 
     private Map<Integer, Mesh> loadTrack() throws IOException {
         String name = dis.readUTF();
+        names.add(name);
+        pos += 2 + name.getBytes(StandardCharsets.UTF_8).length;
 
         int timePoints = dis.readInt();
+        pos += Integer.BYTES;
         Map<Integer, Mesh> map = new HashMap<>();
 
         for(int i = 0; i<timePoints; i++){
@@ -131,9 +146,6 @@ public class Imglib2MeshReader {
         return map;
     }
 
-    public double progress(){
-        return 1.0*pos/limit;
-    }
 
     /**
      * When a counting variable is read this check if it will go out of bounds or if it

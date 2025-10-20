@@ -77,6 +77,7 @@ public class SegmentationModel {
     double BETA = 0.0;
     double pressure = 0.0;
     double stericNeighborWeight;
+    double connectionLength = 0.015;
 
     private double cortex_thickness = 0.3;
 
@@ -274,6 +275,14 @@ public class SegmentationModel {
                 reshape=true;
                 ALPHA=alpha;
             }
+    }
+
+    public void setConnectionLength(double length){
+        connectionLength = length;
+    }
+
+    public double getConnectionLength(){
+        return connectionLength;
     }
 
     public void setBeta(double beta) {

@@ -40,6 +40,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Trying to create simple examples built on the imglib2 structure
@@ -159,28 +160,25 @@ public class SourceAndConverterTest {
             if(Files.isDirectory(mesh)){
                 try(DirectoryStream<Path> stream = Files.newDirectoryStream(mesh)){
                     for(Path p : stream){
-                        List<Track> tracks = MeshReader.loadMeshes(p.toFile());
+                        List<Map<Integer, Mesh>> tracks = Imglib2MeshReader.loadMeshes(p.toFile());
                         while(tracks.size() > 0){
-                            Track t = tracks.remove(tracks.size() - 1);
-                            for(Integer frame : t.getTrack().keySet()){
-                                DeformableMesh3D dm3dMesh = t.getMesh(frame);
-                                Mesh m = Imglib2Mesh.convert(dm3dMesh, mist);
+                            Map<Integer, Mesh> t = tracks.remove(tracks.size() - 1);
+                            for(Integer frame : t.keySet()){
+                                Mesh m = t.get(frame);
+                                Imglib2Mesh.transformFromNormalizedSpaceToImageSpace(m, mist);
                                 mmc.addMesh(m, frame, new Color(255, 250, 100, 100));
                             }
                         }
                     }
                 }
             } else{
-                List<Track> tracks = MeshReader.loadMeshes(mesh.toFile());
+                List<Map<Integer, Mesh>> tracks = Imglib2MeshReader.loadMeshes(mesh.toFile());
                 while(tracks.size() > 0){
-                    Track t = tracks.remove(tracks.size() - 1);
-                    for(Integer frame : t.getTrack().keySet()){
-                        DeformableMesh3D dm3dMesh = t.getMesh(frame);
-                        Mesh m = Imglib2Mesh.convert(dm3dMesh, mist);
-                    /*MeshColor mc = new MeshColor(m);
-                    mc.setTimePoint(frame);
-                    mc.setColor(t.getColor());*/
-                        mmc.addMesh(m, frame, t.getColor());
+                    Map<Integer, Mesh> t = tracks.remove(tracks.size() - 1);
+                    for(Integer frame : t.keySet()){
+                        Mesh m = t.get(frame);
+                        Imglib2Mesh.transformFromNormalizedSpaceToImageSpace(m, mist);
+                        mmc.addMesh(m, frame, Color.BLUE);
                     }
                 }
             }

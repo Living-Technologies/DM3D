@@ -127,8 +127,7 @@ public class SegmentationController {
     AtomicLong lastSaved = new AtomicLong(-1);
     ExceptionThrowingService main = new ExceptionThrowingService();
     List<Runnable> shutdownActions = new ArrayList<>();
-    private double minConnectionLength = 0.01;
-    private double maxConnectionLength = 0.02;
+
     private ExecutorService globalExecutor;
 
     /**
@@ -210,7 +209,28 @@ public class SegmentationController {
         model.setDivisions(d);
     }
 
+    /**
+     * Sets the desired connection length for connection remeshing. The minimum
+     * length is 2/3 length and the maximum length 4/3 the length.
+     *
+     * @param length the mean length between the minimum length and the maximum
+     *               for connection based remeshing.
+     */
+    public void setMeanConnectionLength(double length){
+        model.setConnectionLength(length);
+    }
 
+    public double getMeanConnectionLength(){
+        return model.getConnectionLength();
+    }
+
+    public double getMinConnectionLength(){
+        return 2*model.getConnectionLength()/3;
+    }
+
+    public double getMaxConnectionLength(){
+        return 4*model.getConnectionLength()/3;
+    }
 
     public double getGamma() {
         return model.getGamma();
@@ -222,37 +242,6 @@ public class SegmentationController {
 
     public double getPressure() {
         return model.getPressure();
-    }
-
-    public double getMinConnectionLength(){
-        return minConnectionLength;
-    }
-
-    /**
-     * Gets the minimum connection length when doing a connection remesh. Connections shorter that
-     * this will be replaced if possible.
-     *
-     * @param mcl must be greater than 0 less than max.
-     */
-    public void setMinConnectionLength(double mcl){
-        minConnectionLength = mcl;
-    }
-
-    public double getMaxConnectionLength(){
-        return maxConnectionLength;
-    }
-
-    /**
-     * Set the maximum connection length that is used when doing a connection remesh. Connections
-     * longer than this length will be split.
-     *
-     * Should probably be more than to about double the minimum length.
-     *
-     * @param mcl greater than zero, greater than minimum length.
-     */
-
-    public void setMaxConnectionLength(double mcl){
-        maxConnectionLength = mcl;
     }
 
     /**

@@ -60,7 +60,21 @@ public class PropertySaver {
             loadProperties(control, props);
         }
     }
+    private static double parseDouble(String value){
+        try{
+            return Double.parseDouble(value);
+        } catch (Exception e){
+            return 0.0;
+        }
+    }
 
+    private static int parseInt(String value){
+        try{
+            return Integer.parseInt(value);
+        } catch (Exception e){
+            return 0;
+        }
+    }
     /**
      * Tries to find a user.home and .dmesh3d file for user preferences to reload the last used constants.
      *
@@ -71,36 +85,42 @@ public class PropertySaver {
     static public void loadProperties(SegmentationController control, File props) throws IOException {
         //try to read them properties.
         List<String> lines = Files.readAllLines(props.toPath(), StandardCharsets.UTF_8);
+
         for(String line: lines){
             String[] pair = line.split("\\t");
+            String key = pair[0];
+            String value = pair.length > 1 ? pair[1] : "";
+
             try {
-                switch (pair[0]) {
+                switch (key) {
                     case "gamma":
-                        control.setGamma(Double.parseDouble(pair[1]));
+                        control.setGamma(parseDouble(value));
                         break;
                     case "pressure":
-                        control.setPressure(Double.parseDouble(pair[1]));
+                        control.setPressure(parseDouble(value));
                         break;
                     case "image-weight":
-                        control.setWeight(Double.parseDouble(pair[1]));
+                        control.setWeight(parseDouble(value));
                         break;
                     case "alpha":
-                        control.setAlpha(Double.parseDouble(pair[1]));
+                        control.setAlpha(parseDouble(value));
                         break;
                     case "divisions":
-                        control.setDivisions(Integer.parseInt(pair[1]));
+                        control.setDivisions(parseInt(value));
                         break;
                     case "beta":
-                        control.setBeta(Double.parseDouble(pair[1]));
+                        control.setBeta(parseDouble(value));
                         break;
                     case "steric-weight":
-                        control.setStericNeighborWeight(Double.parseDouble(pair[1]));
+                        control.setStericNeighborWeight(parseDouble(value));
                         break;
                     case "prediction-host":
-                        GuiTools.setPredictionHost(pair[1]);
+                        GuiTools.setPredictionHost(value);
                         break;
+                    case "connection-length":
+                        control.setMeanConnectionLength(parseDouble(value));
                     default:
-                        System.out.println("skipping: " + pair[0]);
+                        System.out.println("skipping: " + key);
 
                 }
             } catch(Exception e){
@@ -132,6 +152,7 @@ public class PropertySaver {
             writer.write(String.format("%s\t%s\n","steric-weight", Double.toHexString(control.getStericNeighborWeight())));
             writer.write(String.format("%s\t%d\n","divisions", control.getDivisions()));
             writer.write(String.format("%s\t%s\n","beta", Double.toHexString(control.getBeta())));
+            writer.write(String.format("%s\t%s\n", "connection-length", Double.toHexString(control.getMeanConnectionLength())));
             writer.write(String.format("%s\t%s\n", "prediction-host", GuiTools.getPredictionHost()));
         } catch(IOException exc){
             canSave = false;

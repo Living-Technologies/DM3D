@@ -35,12 +35,10 @@ public class Imglib2MeshBenchMark {
         ImagePlus plus = mis.getCurrentFrame();
         Img<UnsignedByteType> img = ImageJFunctions.wrap(plus);
         Mesh mesh = MarchingCubesRealType.calculate(img, 3);
-        Imglib2Mesh.ImageSpaceTransformer ist = new Imglib2Mesh.ImageSpaceTransformer(mis);
+        ImageSpaceTransformer ist = new ImageSpaceTransformer(mis);
         long start0 = System.currentTimeMillis();
         mesh = Imglib2Mesh.removeDuplicateVertices(mesh, ist);
         System.out.println("only duplicates: " + (System.currentTimeMillis() - start0));
-
-
         //DeformableMesh3D m2 = convertMesh(mesh, new ImageSpaceTransformer(mis));
         long start = System.currentTimeMillis();
         //List<DeformableMesh3D> m3 = partition(m2, connectedComponents(m2.triangles));
@@ -60,7 +58,7 @@ public class Imglib2MeshBenchMark {
         long start = System.currentTimeMillis();
         mesh = RemoveDuplicateVertices.calculate(mesh, 0);
         System.out.println("vertices removed: " + (System.currentTimeMillis() - start));
-        Imglib2Mesh.ImageSpaceTransformer ist = new Imglib2Mesh.ImageSpaceTransformer(mis);
+        ImageSpaceTransformer ist = new ImageSpaceTransformer( mis);
 
 
         List<DeformableMesh3D> meshes = new ArrayList<>();

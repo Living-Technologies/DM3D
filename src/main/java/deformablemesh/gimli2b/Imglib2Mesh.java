@@ -30,10 +30,7 @@ import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImg;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.basictypeaccess.array.ByteArray;
-import net.imglib2.mesh.Mesh;
-import net.imglib2.mesh.Triangle;
-import net.imglib2.mesh.Triangles;
-import net.imglib2.mesh.Vertex;
+import net.imglib2.mesh.*;
 import net.imglib2.mesh.alg.MarchingCubesRealType;
 import net.imglib2.mesh.alg.MeshConnectedComponents;
 import net.imglib2.mesh.impl.nio.BufferMesh;
@@ -50,59 +47,15 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class Imglib2Mesh {
-
-
-    /**
-     * This is used for converting image coordinate meshes into
-     * normalized coordinate meshes.
-     */
-    static class ImageSpaceTransformer{
-        int ox, oy, oz;
-        double iscale;
-        double dx, dy, dz;
-        double sx, sy, sz;
-        int w, h, d;
-        public ImageSpaceTransformer(MeshImageStack stack){
-            iscale = 1.0/stack.SCALE;
-            dx = stack.pixel_dimensions[0];
-            dy = stack.pixel_dimensions[1];
-            dz = stack.pixel_dimensions[2];
-            sx = -stack.offsets[0];
-            sy = -stack.offsets[1];
-            sz = -stack.offsets[2];
-
-            w = stack.getWidthPx();
-            h = stack.getHeightPx();
-            d = stack.getNSlices();
+    static public void transformFromNormalizedSpaceToImageSpace(Mesh mesh, MeshImageStack img){
+        NormalizedSpaceTransformer tr = new NormalizedSpaceTransformer(img);
+        Vertices vertices = mesh.vertices();
+        for(int i = 0; i<vertices.size(); i++){
+            double x = tr.getX(vertices.x(i));
+            double y = tr.getY(vertices.y(i));
+            double z = tr.getZ(vertices.z(i));
+            vertices.set(i, x, y, z);
         }
-
-        /**
-         * Sets the pixel origin of this transformer to be the origin of the
-         * pixel based region.
-         *
-         * @param r the region that pixels will correspond to.
-         */
-        public void update(Region r){
-            ox = (int)r.getLowCorner()[0];
-            oy = (int)r.getLowCorner()[1];
-            oz = (int)r.getLowCorner()[2];
-            w = (int)r.getHighCorner()[0] - ox;
-            h = (int)r.getHighCorner()[1] - oy;
-            d = (int)r.getHighCorner()[2] - oz;
-        }
-        double getX(double x){
-            return (x + ox + 0.5)*dx * iscale  + sx;
-        }
-        double getY(double y){
-            return (y + oy + 0.5)*dy * iscale + sy;
-        }
-        double getZ(double z){
-            return (z + oz + 0.5)*dz * iscale + sz;
-        }
-
-    }
-
-    static public Mesh transformFromNormalizedSpaceToImageSpace(Mesh mesh, ImageSpaceTransformer tr){
 
     }
 

@@ -677,12 +677,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
                     } else{
                         scaledMeanUnits.setText("");
                     }
-                    //The mean length is the average of the min and max
-                    //2*min = max.
-                    double max = 4*v/3;
-                    double min = 2*v/3;
-                    segmentationController.setMaxConnectionLength(max);
-                    segmentationController.setMinConnectionLength(min);
+                    segmentationController.setMeanConnectionLength(v);
                 },
                 initialMean,
                 this
