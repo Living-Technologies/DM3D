@@ -142,7 +142,7 @@ public class    CurvatureCalculator {
             } else{
                 v = 0.125*(mab*cotB + mca*cotC);
             }
-            if( v > 0.5*triangle.area){
+            if( v > triangle.area){
                 v = 0;
             }
             for(int i = 0; i<3; i++){
@@ -152,7 +152,7 @@ public class    CurvatureCalculator {
 
         }
 
-        Vector3DOps.normalize(normal);
+        double m = Vector3DOps.normalize(normal);
 
         return normal;
 

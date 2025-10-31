@@ -119,6 +119,7 @@ public class PropertySaver {
                         break;
                     case "connection-length":
                         control.setMeanConnectionLength(parseDouble(value));
+                        break;
                     default:
                         System.out.println("skipping: " + key);
 

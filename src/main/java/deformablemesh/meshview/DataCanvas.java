@@ -441,12 +441,11 @@ public class DataCanvas extends Canvas3D {
          * @return a graphics configuration on the current display.
          */
         public static GraphicsConfiguration getBestConfigurationOnSameDevice(Window frame){
-            
             GraphicsConfiguration gc = frame.getGraphicsConfiguration();
             GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
             GraphicsDevice[] gs = ge.getScreenDevices();
-            GraphicsConfiguration good = null;
 
+            GraphicsConfiguration good = null;
             GraphicsConfigTemplate3D gct = new GraphicsConfigTemplate3D();
 
             for(GraphicsDevice gd: gs){

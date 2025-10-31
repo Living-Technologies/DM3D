@@ -36,14 +36,9 @@ import deformablemesh.gui.GuiTools;
 import deformablemesh.track.Track;
 import deformablemesh.util.Vector3DOps;
 import ij.ImagePlus;
-import org.jogamp.java3d.AmbientLight;
-import org.jogamp.java3d.BoundingSphere;
-import org.jogamp.java3d.BranchGroup;
-import org.jogamp.java3d.DirectionalLight;
-import org.jogamp.java3d.GeometryArray;
-import org.jogamp.java3d.J3DGraphics2D;
-import org.jogamp.java3d.Transform3D;
-import org.jogamp.java3d.TransformGroup;
+import org.jogamp.java3d.*;
+import org.jogamp.java3d.loaders.Scene;
+import org.jogamp.java3d.loaders.objectfile.ObjectFile;
 import org.jogamp.java3d.utils.picking.PickResult;
 import org.jogamp.vecmath.Color3f;
 import org.jogamp.vecmath.Point3d;
@@ -74,14 +69,10 @@ import java.awt.Window;
 import java.awt.event.KeyListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -794,6 +785,28 @@ public class    MeshFrame3D {
 
         } else{
             observeObject(ringController, null);
+        }
+    }
+    public DataObject addObjectFile(File f){
+        ObjectFile file = new ObjectFile();
+        try {
+            Scene s = file.load(f.getAbsolutePath());
+            BranchGroup bg = s.getSceneGroup();
+            bg.setPickable(false);
+            bg.setCapability(BranchGroup.ALLOW_DETACH);
+            Iterator<Node> children = bg.getAllChildren();
+            while(children.hasNext() ){
+                Node n = children.next();
+                System.out.println("modification! " + n + (n instanceof Shape3D) );
+                n.setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
+                n.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
+            }
+
+            DataObject obj = s::getSceneGroup;
+            addDataObject( s::getSceneGroup );
+            return obj;
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
         }
     }
 

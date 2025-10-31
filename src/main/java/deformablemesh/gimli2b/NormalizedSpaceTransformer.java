@@ -2,13 +2,19 @@ package deformablemesh.gimli2b;
 
 import deformablemesh.MeshImageStack;
 import ij.ImagePlus;
+import ij.measure.Calibration;
 
+import java.util.Arrays;
+
+/**
+ * Takes the coordinates of
+ */
 class NormalizedSpaceTransformer {
     int ox, oy, oz;
-    double scale;
-    double dx, dy, dz;
-    double sx, sy, sz;
-    int w, h, d;
+    final double scale;
+    final double dx, dy, dz;
+    final double sx, sy, sz;
+    final int w, h, d;
 
     public NormalizedSpaceTransformer(MeshImageStack stack) {
         scale = stack.SCALE;
@@ -25,7 +31,20 @@ class NormalizedSpaceTransformer {
     }
 
     public NormalizedSpaceTransformer(ImagePlus plus){
-        this(new MeshImageStack(plus));
+        Calibration cal = plus.getCalibration();
+        dx = cal.pixelWidth;
+        dy = cal.pixelHeight;
+        dz = cal.pixelDepth;
+
+        w = plus.getWidth();
+        h = plus.getHeight();
+        d = plus.getNSlices();
+
+        double[] lengths = {dx*w, dy*h, dz*d};
+        scale = Arrays.stream(lengths).max().getAsDouble();
+        sx = 0.5*lengths[0]/scale;
+        sy = 0.5*lengths[1]/scale;
+        sz = 0.5*lengths[2]/scale;
     }
 
     double getX(double x) {

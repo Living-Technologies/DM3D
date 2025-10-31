@@ -4,6 +4,9 @@ import Jama.EigenvalueDecomposition;
 import Jama.Matrix;
 import deformablemesh.MeshDetector;
 import deformablemesh.MeshImageStack;
+import deformablemesh.externalenergies.BrightRegionEnergy;
+import deformablemesh.externalenergies.GradientEnergy;
+import deformablemesh.externalenergies.PerpendicularGradientEnergy;
 import deformablemesh.geometry.interceptable.InterceptingMesh3D;
 import deformablemesh.gui.GuiTools;
 import deformablemesh.io.LoadZarr;
@@ -53,8 +56,11 @@ public class MeshCroppingTool {
     final double factor;
     final int size;
     private int startFrame = 0;
-    private int chunkSize = 0;
+    private int chunkSize = 1;
     String prefix="";
+    boolean rotate = false;
+    boolean filter = false;
+    int nFrames = -1;
     static class PrincipleAxes{
         double[] e0, e1, e2;
         double[] cm;
@@ -80,8 +86,8 @@ public class MeshCroppingTool {
     public void setStartFrame(int i){
         startFrame = i;
     }
-    public void setChunkSize(){
-
+    public void setChunkSize(int mesh_per_chunk){
+        chunkSize = mesh_per_chunk;
     }
     private PrincipleAxes getPrincipleAxis(Region r, double[] pxSizes){
         double Ixx = 0;
@@ -142,8 +148,18 @@ public class MeshCroppingTool {
         return pa;
 
     }
-
+    public void deform(DeformableMesh3D mesh, MeshImageStack stack){
+        BrightRegionEnergy grad = new BrightRegionEnergy(stack, mesh, 5e-5);
+        mesh.addExternalEnergy(grad);
+        mesh.ALPHA = 1.0;
+        mesh.BETA = 0.2;
+        mesh.GAMMA = 1000;
+        for(int i = 0; i<100; i++){
+            mesh.update();
+        }
+    }
     public CroppedVolume getCroppedMesh(DeformableMesh3D mesh, MeshImageStack stack, int label){
+        deform(mesh, stack);
         BinaryMomentsOfInertia bmi = new BinaryMomentsOfInertia(mesh, stack);
         List<double[]> eigen = bmi.getEigenVectors();
         double[] cm = bmi.getCenterOfMass();
@@ -154,9 +170,11 @@ public class MeshCroppingTool {
         double[] e0 = eigen.get(0);
         double[] e1 = eigen.get(1);
         double[] e2 = eigen.get(2);
+
         PrincipleAxes pa = new PrincipleAxes(cm, e0, e1, e2);
         InterceptingMesh3D im3d = new InterceptingMesh3D(mesh);
         IsMasked isMasked = im3d::contains;
+
         CroppedVolume cropd = crop(pa, isMasked, stack, label);
         return cropd;
     }
@@ -270,9 +288,16 @@ public class MeshCroppingTool {
         ImageStack crop = new ImageStack(size, size);
         ImageStack maskCrop = new ImageStack(size, size);
         double[] cm = pa.cm;
-        double[] e0 = pa.e0;
-        double[] e1 = pa.e1;
-        double[] e2 = pa.e2;
+        double[] e0, e1, e2;
+        if(rotate) {
+            e0 = pa.e0;
+            e1 = pa.e1;
+            e2 = pa.e2;
+        } else{
+            e0 = Vector3DOps.xhat;
+            e1 = Vector3DOps.yhat;
+            e2 = Vector3DOps.zhat;
+        }
 
         double oz = cm[2] - l/2*e0[2] - l/2*e1[2] - l/2*e2[2];
         double oy = cm[1] - l/2*e0[1] - l/2*e1[1] - l/2*e2[1];
@@ -288,11 +313,10 @@ public class MeshCroppingTool {
                     double[] r = {x, y, z};
                     float f = (float)stack.getInterpolatedValue(r);
                     cp.setf(k, j, f);
-                    if(stack.contains(r)) {
-                        if(maskIt.isMask(r)){
-                            mp.set(k, j, 1);
-                        }
-                    } else{
+                    if(maskIt.isMask(r)){
+                        mp.set(k, j, 1);
+                    }
+                    if(filter && ! stack.contains(r)) {
                         return null;
                     }
                 }
@@ -366,17 +390,25 @@ public class MeshCroppingTool {
         processMeshImages(tf, base);
 
     }
-
+    private int[] getChunkShape(ImagePlus data){
+        return new int[]{
+                data.getWidth(),
+                data.getHeight(),
+                data.getNSlices(),
+                data.getNChannels(),
+                chunkSize,
+                };
+    }
     private void saveVolumeData(CroppedVolume cv) throws Exception {
         if (Files.exists(imageZarr)) {
             SaveImageToZarr.appendToZarr(cv.data, imageZarr);
         } else {
-            SaveImageToZarr.saveToZarr(cv.data, imageZarr);
+            SaveImageToZarr.saveToZarr(cv.data, imageZarr, getChunkShape(cv.data));
         }
         if (Files.exists(maskZarr)) {
             SaveImageToZarr.appendToZarr(cv.mask, maskZarr);
         } else {
-            SaveImageToZarr.saveToZarr(cv.mask, maskZarr);
+            SaveImageToZarr.saveToZarr(cv.mask, maskZarr, getChunkShape(cv.mask));
         }
     }
 
@@ -429,8 +461,9 @@ public class MeshCroppingTool {
                 throw new RuntimeException(e);
             }
         }
+        int lastFrame = nFrames < 0 ? stack.getNFrames() : startFrame + nFrames;
 
-        for(int i = 0; i<stack.getNFrames(); i++){
+        for(int i = startFrame; i<lastFrame; i++){
             stack.setFrame(i);
             List<Track> tracks = meshProvider.apply(i);
             CroppedVolume cv = cropMeshImages(tracks, stack);
@@ -640,12 +673,19 @@ public class MeshCroppingTool {
         }
     }
 
+    public void setNFrames(int n){
+        nFrames = n;
+    }
+
     public static void main(String[] args){
-        Path image = Paths.get("D:/working/cropping-dev/jurica-sample.tif");
-        Path labels = Paths.get("D:/working/cropping-dev/meshes");
+        Path image = Paths.get(args[0]);
+        Path labels = Paths.get(args[1]);
         long start = System.currentTimeMillis();
-        MeshCroppingTool tool = new MeshCroppingTool(1.5, 48);
-        tool.setPrefix("f1p_");
+        MeshCroppingTool tool = new MeshCroppingTool(1.0, 128);
+        tool.setPrefix("f1_");
+        //tool.setChunkSize(1000);
+        tool.setStartFrame(0);
+        tool.setNFrames(1);
         tool.processMeshImages(image, labels);
         System.out.println(System.currentTimeMillis()-start);
         //MeshCroppingTool tool2 = new MeshCroppingTool(2, 64);

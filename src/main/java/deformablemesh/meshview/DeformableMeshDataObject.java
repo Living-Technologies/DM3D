@@ -41,6 +41,8 @@ import org.jogamp.java3d.LineAttributes;
 import org.jogamp.java3d.Material;
 import org.jogamp.java3d.Shape3D;
 import org.jogamp.java3d.TransparencyAttributes;
+import org.jogamp.java3d.utils.geometry.GeometryInfo;
+import org.jogamp.java3d.utils.geometry.NormalGenerator;
 import org.jogamp.vecmath.Color3f;
 
 import java.awt.Color;
@@ -65,7 +67,6 @@ public class DeformableMeshDataObject implements DataObject {
     private boolean showSurface = false;
     private Color color;
     int[] triangle_indexes;
-    float[] normals;
     float shininess = 64f;
     public float amb  = 0.9f;
     public float emm = 0;
@@ -83,20 +84,22 @@ public class DeformableMeshDataObject implements DataObject {
         mesh_object = new Shape3D(lines);
         mesh_object.setAppearance(createLineAppearance());
         mesh_object.setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
-        surfaces = new IndexedTriangleArray(nodes.size(), GeometryArray.COORDINATES|GeometryArray.NORMALS, 3*triangles.size());
+        surfaces = new IndexedTriangleArray(nodes.size(), GeometryArray.COORDINATES, 3*triangles.size());
         surfaces.setCoordinates(0,positions);
         surfaces.setCoordinateIndices(0,triangle_index);
-        normals = new float[positions.length];
+
         triangle_indexes = triangle_index;
-        generateNormals(positions);
-        surfaces.setNormals(0, normals);
-        surfaces.setNormalIndices(0, triangle_index);
+
+        NormalGenerator ng = new NormalGenerator();
+        GeometryInfo gi = new GeometryInfo(surfaces);
+        ng.generateNormals(gi);
 
         surfaces.setCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
         surfaces.setCapability(GeometryArray.ALLOW_NORMAL_WRITE);
 
-        surface_object = new Shape3D(surfaces);
+        surface_object = new Shape3D(gi.getGeometryArray());
         surface_object.setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
+        surface_object.setCapability(Shape3D.ALLOW_GEOMETRY_WRITE);
         surface_object.setAppearance(hiddenSurface());
 
 
@@ -151,6 +154,15 @@ public class DeformableMeshDataObject implements DataObject {
                 clamp(c[2] + (v-1))
         };
     }
+    public void setMaterialAmEmDiSpSh( double a, double em, double diff, double specular, double shiny){
+        amb = (float)a;
+        emm = (float)em;
+        dif = (float)diff;
+        spec = (float)specular;
+        shininess = (float) shiny;
+        setSurfaceAppearance(createSurfaceAppearance());
+
+    }
     public void setShininess(float f){
         shininess = f;
         setSurfaceAppearance(createSurfaceAppearance());
@@ -178,81 +190,14 @@ public class DeformableMeshDataObject implements DataObject {
 
     }
 
-    void generateNormals(double[] positions){
-        int t = triangle_indexes.length/3;
-
-        for(int i = 0; i<normals.length; i++){
-            normals[i] = 0;
-        }
-
-        for(int i = 0; i<t; i++){
-            int dex = i*3;
-            int a = triangle_indexes[dex];
-            int b = triangle_indexes[dex+1];
-            int c = triangle_indexes[dex+2];
-
-            double ax = positions[3*a];
-            double ay = positions[3*a + 1];
-            double az = positions[3*a + 2];
-
-            double bx = positions[3*b];
-            double by = positions[3*b + 1];
-            double bz = positions[3*b + 2];
-
-            double cx = positions[3*c];
-            double cy = positions[3*c + 1];
-            double cz = positions[3*c + 2];
-
-            double rbx = bx -ax;
-            double rby = by - ay;
-            double rbz = bz - az;
-            double rcx = cx -ax;
-            double rcy = cy -ay;
-            double rcz = cz - az;
-
-            double nx = rby*rcz - rbz*rcy;
-            double ny = rbz*rcx - rbx*rcz;
-            double nz = rbx*rcy - rby*rcx;
-
-            normals[3*a] += nx;
-            normals[3*a + 1] += ny;
-            normals[3*a + 2] += nz;
-
-            normals[3*b] += nx;
-            normals[3*b + 1] += ny;
-            normals[3*b + 2] += nz;
-
-            normals[3*c] += nx;
-            normals[3*c + 1] += ny;
-            normals[3*c + 2] += nz;
-
-
-
-        }
-
-        for(int i = 0; i<normals.length/3; i++){
-            float nx = normals[i*3];
-            float ny = normals[i*3+1];
-            float nz = normals[i+3+2];
-
-            float mag = (float)Math.sqrt(nx*nx + ny*ny + nz*nz);
-            if(mag==0){
-                continue;
-            }
-            normals[i*3]/=mag;
-            normals[i*3+1] /= mag;
-            normals[i*3 + 2] /= mag;
-
-        }
-
-    }
-
-
     public void  updateGeometry(double[] positions){
         lines.setCoordinates(0, positions);
         surfaces.setCoordinates(0, positions);
-        generateNormals(positions);
-        surfaces.setNormals(0, normals);
+
+        NormalGenerator ng = new NormalGenerator();
+        GeometryInfo gi = new GeometryInfo(surfaces);
+        ng.generateNormals(gi);
+        surface_object.setGeometry(gi.getGeometryArray(), 0);
 
     }
 
