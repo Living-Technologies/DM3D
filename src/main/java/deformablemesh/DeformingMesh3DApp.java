@@ -34,8 +34,7 @@ import ij.ImageJ;
 import ij.ImagePlus;
 import jogamp.nativewindow.jawt.JAWTUtil;
 
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.*;
 import java.awt.EventQueue;
 import java.io.File;
 import java.util.concurrent.Executors;
@@ -93,6 +92,7 @@ public class DeformingMesh3DApp{
         mf3d.showFrame(false);
         mf3d.addLights();
         controlFrame.addMeshFrame3D(mf3d);
+        mf3d.getJFrame().setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         segmentationController.setMeshFrame3D(mf3d);
         PropertySaver.positionFrames(controlFrame, mf3d);
         return segmentationController;

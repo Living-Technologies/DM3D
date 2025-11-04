@@ -874,7 +874,7 @@ public class MeshImageStack {
         ImagePlus iso = resizer.zScale(plus, newZ, ImageProcessor.BILINEAR);
         Calibration c2 = iso.getCalibration();
         c2.zOrigin = c.zOrigin * iso.getNSlices()/plus.getNSlices();
-        String name = original.getTitle().replaceFirst("\\..*$", "");
+        String name = getShortTitle().replaceFirst("\\..*$", "");
 
         iso.setTitle(name + "-iso");
         return iso;

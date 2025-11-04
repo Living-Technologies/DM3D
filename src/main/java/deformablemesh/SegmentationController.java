@@ -1672,7 +1672,7 @@ public class SegmentationController {
         ImagePlus plus = cropNormalizedRegion(region);
         plus.setOpenAsHyperStack(true);
         plus.show();
-        transformToImage(plus);
+        transformToImage(new MeshImageStack(plus));
     }
 
     public ImagePlus cropNormalizedRegion(Box3D region){
@@ -1699,10 +1699,9 @@ public class SegmentationController {
         return alt;
     }
 
-    public void transformToImage(ImagePlus plus){
+    public void transformToImage(MeshImageStack next){
         MeshImageStack current = getMeshImageStack();
-        setOriginalPlus(plus);
-        MeshImageStack next = getMeshImageStack();
+        setMeshImageStack( next );
         List<Track> tracks = getAllTracks();
 
         List<Track> dups = new ArrayList<>();
@@ -1723,7 +1722,7 @@ public class SegmentationController {
         MeshImageStack current = getMeshImageStack();
         ImagePlus plus = GuiTools.selectOpenImage(IJ.getInstance());
         if(plus == null) return;
-        transformToImage(plus);
+        transformToImage(new MeshImageStack(plus));
     }
 
     /**

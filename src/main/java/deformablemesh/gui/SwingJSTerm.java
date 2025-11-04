@@ -339,7 +339,7 @@ public class SwingJSTerm {
             frame.setJMenuBar(buildBar());
         }
         frame.pack();
-        frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
         return content;
     }

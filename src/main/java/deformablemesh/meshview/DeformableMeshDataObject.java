@@ -90,7 +90,7 @@ public class DeformableMeshDataObject implements DataObject {
 
         triangle_indexes = triangle_index;
 
-        NormalGenerator ng = new NormalGenerator();
+        NormalGenerator ng = new NormalGenerator(Math.PI);
         GeometryInfo gi = new GeometryInfo(surfaces);
         ng.generateNormals(gi);
 
@@ -194,7 +194,7 @@ public class DeformableMeshDataObject implements DataObject {
         lines.setCoordinates(0, positions);
         surfaces.setCoordinates(0, positions);
 
-        NormalGenerator ng = new NormalGenerator();
+        NormalGenerator ng = new NormalGenerator(Math.PI);
         GeometryInfo gi = new GeometryInfo(surfaces);
         ng.generateNormals(gi);
         surface_object.setGeometry(gi.getGeometryArray(), 0);

@@ -25,6 +25,8 @@
  */
 package deformablemesh.util;
 
+import java.util.Arrays;
+
 /**
  * Created by msmith on 2/1/16.
  */
@@ -80,5 +82,11 @@ public class GaussianKernels {
 
         }
         return kernel1;
+    }
+    public static void main(String[] out){
+        double[] d2 = secondDerivative1DKernel();
+        double[] d1 = firstDerivative1DKernel();
+        System.out.println(Arrays.toString(d2));
+        System.out.println(Arrays.toString(d1));
     }
 }

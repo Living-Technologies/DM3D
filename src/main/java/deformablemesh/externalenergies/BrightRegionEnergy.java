@@ -6,6 +6,8 @@ import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.interceptable.InterceptingMesh3D;
 import deformablemesh.util.GaussianKernels;
 
+import java.util.Arrays;
+
 public class BrightRegionEnergy implements ExternalEnergy{
     double[] kernel = GaussianKernels.firstDerivative1DKernel();
     double[] kp = GaussianKernels.secondDerivative1DKernel();
@@ -61,7 +63,7 @@ public class BrightRegionEnergy implements ExternalEnergy{
             m1 += v*kp[i];
         }
 
-        return m0 < 0 ? m0*m1 : 0;
+        return m0 < 0 ? -m1 : 0;
     }
 
 
