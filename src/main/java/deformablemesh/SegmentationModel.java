@@ -782,7 +782,7 @@ public class SegmentationModel {
 
     /**
      *
-     * @return an unmodifiable list of all the mesh tracks.
+     * @returns a copied list of all the mesh tracks.
      */
     public List<Track> getAllTracks() {
         return tracker.getAllMeshTracks();

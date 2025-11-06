@@ -2587,11 +2587,13 @@ public class SegmentationController {
 
             actionStack.postAction(new UndoableActions(){
                 final List<Track> old = new ArrayList<>(model.getAllTracks());
+                final List<Track> next = new ArrayList<>(old.size() + imports.size());
                 @Override
                 public void perform() {
                     submit(()->{
-                        imports.addAll(old);
-                        model.setMeshes(imports);
+                        next.addAll(imports);
+                        next.addAll(old);
+                        model.setMeshes(next);
                     });
 
                 }
@@ -2606,7 +2608,7 @@ public class SegmentationController {
                 @Override
                 public void redo() {
                     submit(()->{
-                        model.setMeshes(imports);
+                        model.setMeshes(next);
                     });
                 }
 

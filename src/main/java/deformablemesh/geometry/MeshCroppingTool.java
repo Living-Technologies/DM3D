@@ -149,14 +149,18 @@ public class MeshCroppingTool {
 
     }
     public void deform(DeformableMesh3D mesh, MeshImageStack stack){
-        BrightRegionEnergy grad = new BrightRegionEnergy(stack, mesh, 5e-5);
+        BrightRegionEnergy grad = new BrightRegionEnergy(stack, mesh, 1e-2);
         mesh.addExternalEnergy(grad);
         mesh.ALPHA = 1.0;
         mesh.BETA = 0.2;
         mesh.GAMMA = 1000;
-        for(int i = 0; i<100; i++){
+
+        for(int i = 0; i<1000; i++){
             mesh.update();
         }
+        ConnectionRemesher con = new ConnectionRemesher();
+        double mean = 0.0125;
+        con.setMinAndMaxLengths(mean*1/3, mean*2/3);
     }
     public CroppedVolume getCroppedMesh(DeformableMesh3D mesh, MeshImageStack stack, int label){
         deform(mesh, stack);
@@ -399,6 +403,9 @@ public class MeshCroppingTool {
                 chunkSize,
                 };
     }
+
+
+    private List<ImagePlus> queued = new ArrayList<>();
     private void saveVolumeData(CroppedVolume cv) throws Exception {
         if (Files.exists(imageZarr)) {
             SaveImageToZarr.appendToZarr(cv.data, imageZarr);
@@ -683,9 +690,9 @@ public class MeshCroppingTool {
         long start = System.currentTimeMillis();
         MeshCroppingTool tool = new MeshCroppingTool(1.0, 128);
         tool.setPrefix("f1_");
-        //tool.setChunkSize(1000);
+        tool.setChunkSize(1000);
         tool.setStartFrame(0);
-        tool.setNFrames(1);
+        tool.setNFrames(3);
         tool.processMeshImages(image, labels);
         System.out.println(System.currentTimeMillis()-start);
         //MeshCroppingTool tool2 = new MeshCroppingTool(2, 64);
