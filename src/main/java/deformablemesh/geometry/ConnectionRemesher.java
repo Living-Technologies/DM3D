@@ -696,6 +696,11 @@ public class ConnectionRemesher {
         maxLength = maxConnectionLength;
     }
 
+    public void setMeanLength(double length){
+        minLength = 2*length/3;
+        maxLength = 4*length/3;
+    }
+
 
 
 }

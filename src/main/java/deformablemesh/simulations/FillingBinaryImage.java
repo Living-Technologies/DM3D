@@ -264,6 +264,11 @@ public class FillingBinaryImage {
 
         return mesh;
     }
+    public void setMeanLength( double mean){
+        minL = 2*mean/3;
+        maxL = 4*mean/3;
+
+    }
     public void setMinMaxLengths(double minl, double maxl){
         minL = minl;
         maxL = maxl;
