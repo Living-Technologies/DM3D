@@ -117,9 +117,9 @@ public class RefineMaskToOriginalImage {
         }
         return originalName + "-refined-meshes";
     }
-    public static void main(String[] args) throws IOException {
-        Path img = Paths.get(args[0]);
-        Path lbl = Paths.get(args[1]);
+    public static void refineMeshes(String originalImage, String labels) throws IOException {
+        Path img = Paths.get(originalImage);
+        Path lbl = Paths.get(labels);
         Path parent = img.getParent();
         Path output = parent.resolve(outputName(img.getFileName().toString()) );
         MeshImageStack stack = LoadZarr.loadMeshImageStack2(img);
@@ -127,5 +127,8 @@ public class RefineMaskToOriginalImage {
         RefineMaskToOriginalImage refinary = new RefineMaskToOriginalImage(stack, roughLabels);
         refinary.setOutput(output);
         refinary.run();
+    }
+    public static void main(String[] args) throws IOException {
+        refineMeshes(args[0], args[1]);
     }
 }
