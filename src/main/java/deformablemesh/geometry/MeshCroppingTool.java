@@ -58,9 +58,19 @@ public class MeshCroppingTool {
     private int startFrame = 0;
     private int chunkSize = 1;
     String prefix="";
-    boolean rotate = false;
+    public boolean rotate = false;
     boolean filter = false;
     int nFrames = -1;
+    int channel = 0;
+    //deforming parameters.
+    public double alpha = 1.0;
+    public double beta = 0.2;
+    public double gamma = 1000;
+    public double connection_mean = 0.009;
+    public double energy_weight = 1e-2;
+    public int deform_iterations = 500;
+    public boolean deform_mesh = false;
+
     static class PrincipleAxes{
         double[] e0, e1, e2;
         double[] cm;
@@ -148,22 +158,26 @@ public class MeshCroppingTool {
         return pa;
 
     }
-    public void deform(DeformableMesh3D mesh, MeshImageStack stack){
-        BrightRegionEnergy grad = new BrightRegionEnergy(stack, mesh, 1e-2);
-        mesh.addExternalEnergy(grad);
-        mesh.ALPHA = 1.0;
-        mesh.BETA = 0.2;
-        mesh.GAMMA = 1000;
 
-        for(int i = 0; i<1000; i++){
+    public void deform(DeformableMesh3D mesh, MeshImageStack stack){
+        BrightRegionEnergy grad = new BrightRegionEnergy(stack, mesh, energy_weight);
+        mesh.addExternalEnergy(grad);
+        mesh.ALPHA = alpha;
+        mesh.BETA = beta;
+        mesh.GAMMA = gamma;
+
+        //ConnectionRemesher con = new ConnectionRemesher();
+        //double mean = connection_mean;
+        //con.setMinAndMaxLengths(mean*1/3, mean*2/3);
+
+        for(int i = 0; i<deform_iterations; i++){
             mesh.update();
         }
-        ConnectionRemesher con = new ConnectionRemesher();
-        double mean = 0.0125;
-        con.setMinAndMaxLengths(mean*1/3, mean*2/3);
     }
     public CroppedVolume getCroppedMesh(DeformableMesh3D mesh, MeshImageStack stack, int label){
-        deform(mesh, stack);
+        if(deform_mesh) {
+            deform(mesh, stack);
+        }
         BinaryMomentsOfInertia bmi = new BinaryMomentsOfInertia(mesh, stack);
         List<double[]> eigen = bmi.getEigenVectors();
         double[] cm = bmi.getCenterOfMass();
@@ -328,21 +342,21 @@ public class MeshCroppingTool {
             crop.addSlice(cp);
             maskCrop.addSlice(mp);
         }
-
+        double vxSize = ds*stack.SCALE;
         ImagePlus plus = new ImagePlus();
         Calibration cal = plus.getCalibration();
-        cal.pixelDepth = ds;
-        cal.pixelWidth = ds;
-        cal.pixelHeight = ds;
+        cal.pixelDepth = vxSize;
+        cal.pixelWidth = vxSize;
+        cal.pixelHeight = vxSize;
         plus.setCalibration(cal);
 
         plus.setStack(crop, 1, size, 1);
 
         ImagePlus plus2 = new ImagePlus();
         Calibration cal2 = plus.getCalibration();
-        cal2.pixelDepth = ds;
-        cal2.pixelWidth = ds;
-        cal2.pixelHeight = ds;
+        cal2.pixelDepth = vxSize;
+        cal2.pixelWidth = vxSize;
+        cal2.pixelHeight = vxSize;
         plus2.setCalibration(cal);
         plus2.setStack(maskCrop, 1, size, 1);
         String line = label + "\t" + cm[0] + "\t" + cm[1] + "\t" + cm[2]
@@ -492,7 +506,7 @@ public class MeshCroppingTool {
                     }
                 }
             } catch (IOException e) {
-                System.out.println("Unable to write attirbutes file: " + p);
+                System.out.println("Unable to write attributes file: " + p);
                 throw new RuntimeException(e);
             }
 
@@ -512,6 +526,7 @@ public class MeshCroppingTool {
         if(!Files.exists(attributesFolder)){
             Files.createDirectories(attributesFolder);
         }
+        stack.setChannel(channel);
         for(int i = 0; i<stack.getNFrames(); i++){
             stack.setFrame(i);
             labels.setFrame(i);
@@ -578,7 +593,9 @@ public class MeshCroppingTool {
             pa.cm[2] = pa.cm[2] / lbls.SCALE - lbls.offsets[2];
 
             final int label = floatLabels ? (int)Float.intBitsToFloat(r.getLabel()) : r.getLabel();
+
             IsMasked maskIt = nc->{
+                if( !lbls.contains(nc) ) return false;
                 double[] ic = lbls.getImageCoordinates(nc);
                 int ix = (int) ic[0];
                 int iy = (int) ic[1];
@@ -685,19 +702,29 @@ public class MeshCroppingTool {
     }
 
     public static void main(String[] args){
-        Path image = Paths.get(args[0]);
-        Path labels = Paths.get(args[1]);
+
+        Path image,labels;
+
+        if(args.length >= 2){
+            image = Paths.get(args[0]);
+            labels = Paths.get(args[1]);
+        } else{
+            image = GuiTools.getDirectory(null, "Select original Image zarr folder").toPath();
+            labels = GuiTools.getAFile(null, "Select labels zarr folder or meshes");
+        }
+
+
         long start = System.currentTimeMillis();
-        MeshCroppingTool tool = new MeshCroppingTool(1.0, 128);
-        tool.setPrefix("f1_");
-        tool.setChunkSize(1000);
-        tool.setStartFrame(0);
-        tool.setNFrames(3);
+        MeshCroppingTool tool = new MeshCroppingTool(1.0, 64);
+        tool.setPrefix("test_");
+        tool.setChunkSize(100);
+        tool.rotate = true;
+        //tool.setStartFrame(0);
+        //tool.setNFrames(3);
+        //tool.channel = 3;
+        //tool.processLabelledImages(image, labels);
         tool.processMeshImages(image, labels);
         System.out.println(System.currentTimeMillis()-start);
-        //MeshCroppingTool tool2 = new MeshCroppingTool(2, 64);
-        //tool2.setPrefix("f2_");
-        //tool2.processMeshImages(image, labels);
 
 
     }

@@ -34,6 +34,7 @@ import deformablemesh.track.Track;
 import deformablemesh.util.Vector3DOps;
 import lightgraph.painters.GraphPainter;
 import lightgraph.painters.PanelPainter;
+import lightgraph.painters.SvgPainter;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -50,6 +51,7 @@ import java.awt.geom.Path2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -335,7 +337,22 @@ public class RenderFrame2D {
             }
         }
     }
+    public void renderToSvgFile(File svg){
+        SvgPainter painter = new SvgPainter(1024, 1024, Color.WHITE);
+        Map<DeformableMesh3D, Color> colorMap = new HashMap<>();
+        List<DeformableMesh3D> meshes = tracks.stream().filter(t->t.containsKey(frame)).map(t->{
+            DeformableMesh3D mesh = t.getMesh(frame);
+            colorMap.put(mesh, t.getColor());
+            return mesh;
+        }).collect(Collectors.toList());
 
+        meshes.stream().map(camera::create).sorted().map(DepthObject::get).forEach(mesh->{
+            List<Connection3D> connections = pruneConnections(mesh.getConnections(), mesh.triangles);
+            renderConnections(camera, connections, colorMap.get(mesh));
+            renderTriangles(camera, mesh.triangles, colorMap.get(mesh));
+        });
+        painter.finish(svg);
+    }
     void startRenderLoop(){
         Thread renderLoop = new Thread(()->{
             while(!Thread.currentThread().isInterrupted() && keepRendering){

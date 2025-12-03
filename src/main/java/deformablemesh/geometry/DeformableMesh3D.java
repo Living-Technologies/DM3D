@@ -365,46 +365,25 @@ public class DeformableMesh3D{
         for(ExternalEnergy external: energies) {
             external.updateForces(positions, fx, fy, fz);
         }
-        ExecutorService pool = globalPool;
-
-        Future<double[]> xfuture = pool.submit(() -> {
-            final Matrix FX = new Matrix(fx,nodes.size());
-            Matrix deltax = decomp.solve(FX);
-            return deltax.getRowPackedCopy();
-        });
-
-        Future<double[]> yfuture = pool.submit(() -> {
-            final Matrix FY = new Matrix(fy,nodes.size());
-            Matrix deltay = decomp.solve(FY);
-            return deltay.getRowPackedCopy();
-        });
-
-        Future<double[]> zfuture = pool.submit(() -> {
-            final Matrix FZ = new Matrix(fz,nodes.size());
-            Matrix deltaz = decomp.solve(FZ);
-            return deltaz.getRowPackedCopy();
-        });
 
 
-        try {
-            double[] nx = xfuture.get();
-            double[] ny = yfuture.get();
-            double[] nz = zfuture.get();
-            for(int i = 0; i<nodes.size(); i++){
-                positions[3*i] = nx[i];
-                positions[3*i+1] = ny[i];
-                positions[3*i+2] = nz[i];
+        final Matrix FX = new Matrix(fx,nodes.size());
+        Matrix deltax = decomp.solve(FX);
+        double[] nx = deltax.getRowPackedCopy();
 
-            }
+        final Matrix FY = new Matrix(fy,nodes.size());
+        Matrix deltay = decomp.solve(FY);
+        double[] ny = deltay.getRowPackedCopy();
 
-        } catch (InterruptedException e) {
-            System.err.println("Program was interrupted during calculations!");
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            System.err.println("Exception Occurred During update");
-            e.printStackTrace();
+        final Matrix FZ = new Matrix(fz,nodes.size());
+        Matrix deltaz = decomp.solve(FZ);
+        double[] nz = deltaz.getRowPackedCopy();
+        for(int i = 0; i<nodes.size(); i++){
+            positions[3*i] = nx[i];
+            positions[3*i+1] = ny[i];
+            positions[3*i+2] = nz[i];
+
         }
-
         if(data_object!=null){
             data_object.updateGeometry(positions);
         }

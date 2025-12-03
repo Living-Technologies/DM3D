@@ -3,8 +3,7 @@ package deformablemesh.gimli2b;
 import bdv.viewer.Source;
 import bdv.viewer.SourceAndConverter;
 import bvb.core.BigVolumeBrowser;
-import bvb.shapes.MeshColor;
-import bvb.shapes.MultiMeshColor;
+import bvb.shapes.MultiMeshShape;
 import bvvpg.core.VolumeViewerFrame;
 import bvvpg.core.VolumeViewerPanel;
 import bvvpg.vistools.Bvv;
@@ -141,7 +140,7 @@ public class SourceAndConverterTest {
         }
         MeshImageStack2<?> mist = LoadZarr.loadMeshImageStack2(location.toPath());
 
-        Color[] colors = { Color.MAGENTA, Color.CYAN, null, Color.RED, Color.YELLOW};
+        Color[] colors = { Color.MAGENTA, Color.CYAN, Color.RED, Color.YELLOW};
         for(int i = 0; i<mist.getNChannels(); i++){
             Color c = colors[i];
             if(c == null) continue;
@@ -156,7 +155,7 @@ public class SourceAndConverterTest {
 
         Path mesh = GuiTools.getAFile(IJ.getInstance(), "Select Mesh File");
         if(mesh != null){
-            MultiMeshColor mmc = new MultiMeshColor();
+            MultiMeshShape mmc = new MultiMeshShape();
             if(Files.isDirectory(mesh)){
                 try(DirectoryStream<Path> stream = Files.newDirectoryStream(mesh)){
                     for(Path p : stream){
@@ -166,7 +165,7 @@ public class SourceAndConverterTest {
                             for(Integer frame : t.keySet()){
                                 Mesh m = t.get(frame);
                                 Imglib2Mesh.transformFromNormalizedSpaceToImageSpace(m, mist);
-                                mmc.addMesh(m, frame, new Color(255, 250, 100, 100));
+                                mmc.addMesh(m, null,  frame, new Color(255, 250, 100, 100));
                             }
                         }
                     }
@@ -178,7 +177,7 @@ public class SourceAndConverterTest {
                     for(Integer frame : t.keySet()){
                         Mesh m = t.get(frame);
                         Imglib2Mesh.transformFromNormalizedSpaceToImageSpace(m, mist);
-                        mmc.addMesh(m, frame, Color.BLUE);
+                        mmc.addMesh(m, null, frame, Color.BLUE);
                     }
                 }
             }
