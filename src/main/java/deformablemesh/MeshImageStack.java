@@ -992,6 +992,17 @@ public class MeshImageStack {
         return ub;
     }
 
+    /**
+     * Creates an empty image plus, with the same calibration as the
+     * original image.
+     *
+     * @return empyt imageplus.
+     */
+    public ImagePlus createOriginalPlus(){
+        ImagePlus plus = new ImagePlus();
+        plus.setCalibration(getImageJCalibration());
+        return plus;
+    }
     public ImagePlus getOriginalPlus() {
         return original;
     }

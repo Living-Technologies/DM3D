@@ -33,6 +33,7 @@ import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.coordinateTrans
 import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.coordinateTransformations.ScaleCoordinateTransformation;
 import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.coordinateTransformations.TranslationCoordinateTransformation;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -73,6 +74,31 @@ public class SaveImageToZarr {
         }
         return img;
     }
+
+    public static <T extends NativeType<T> & NumericType<T>> void appendToZarrRa(ImagePlus plus, Path op, int timepoint) throws Exception {
+        boolean newZarr = !Files.exists(op);
+        N5Factory factory = new N5Factory();
+        factory.zarrDimensionSeparator("/");
+
+        try( N5Writer writer = factory.openWriter(op.toString()) ) {
+            RandomAccessibleInterval<T> img = getXYZCTRandomAccessIntervale(plus);
+
+            String datasetPath = "";
+            String arrayDatasetPath = "/s0";
+
+            long[] translation = new long[5];
+            translation[4] = timepoint;
+
+            if( !newZarr ) {
+                N5Utils.saveRegion(Views.translate(img,translation ), writer, datasetPath + arrayDatasetPath);
+            } else{
+                System.out.println("to here!");
+                int[] blocks = {plus.getWidth(), plus.getHeight(), plus.getNSlices(), 1, 1};
+                saveMetadata(plus, writer, img.dimensionsAsLongArray());
+                N5Utils.save(Views.translate(img,translation ), writer,datasetPath + arrayDatasetPath, blocks, new BloscCompression());
+            }
+        }
+    }
     public static <T extends NativeType<T> & NumericType<T>> void appendToZarr(ImagePlus plus, Path op) throws Exception{
         N5Factory factory = new N5Factory();
         factory.zarrDimensionSeparator("/");
@@ -94,6 +120,77 @@ public class SaveImageToZarr {
             N5Utils.saveRegion(Views.translate(img,translation ), writer, datasetPath + arrayDatasetPath);
         }
     }
+
+    public static <T extends NativeType<T> & NumericType<T>> void saveMetadata(ImagePlus plus, N5Writer writer, long[] dimensions) throws Exception {
+            Calibration cb = plus.getCalibration();
+            String datasetPath = "";
+            String arrayDatasetPath = "/s0";
+            double[] scale = new double[dimensions.length];
+            double[] translation = new double[dimensions.length];
+
+            int spatial = 0;
+            Axis[] axes = new Axis[dimensions.length];
+
+            //keep xyczt order
+            scale[spatial] = cb.pixelWidth;
+            translation[spatial] = -cb.xOrigin * cb.pixelWidth;
+            axes[spatial] = new Axis(Axis.SPACE, "x", cb.getXUnit());
+            //y
+            scale[spatial + 1] = cb.pixelHeight;
+            translation[spatial + 1] = -cb.yOrigin * cb.pixelHeight;
+            axes[spatial + 1] = new Axis(Axis.SPACE, "y", cb.getYUnit());
+
+            scale[spatial + 2] = cb.pixelDepth;
+            translation[spatial + 2] = -cb.zOrigin * cb.pixelDepth;
+            axes[spatial + 2] = new Axis(Axis.SPACE, "z", cb.getZUnit());
+
+            //c (if present.)
+            spatial++;
+            scale[3] = 1;
+            translation[3] = 0;
+            axes[3] = new Axis(Axis.CHANNEL, "c", null, true);
+
+            double ds = cb.frameInterval == 0 ? 1 : cb.frameInterval;
+            scale[spatial + 3] = ds;
+            axes[spatial + 3] = new Axis(Axis.TIME, "t", cb.getTimeUnit());
+
+            DataType type = getDataType(plus);
+            int[] blocks = {plus.getWidth(), plus.getHeight(), plus.getNSlices(), 1, 1};
+            DatasetAttributes da = new DatasetAttributes(
+                    dimensions,
+                    blocks, type, new BloscCompression()
+            );
+
+            NgffSingleScaleAxesMetadata metadata = new NgffSingleScaleAxesMetadata(
+                    arrayDatasetPath,
+                    scale,
+                    translation, axes, da
+            );
+
+            final OmeNgffMultiScaleMetadataMutable ms = new OmeNgffMultiScaleMetadataMutable(datasetPath);
+            ms.addChild(metadata);
+            double[] identity = new double[dimensions.length];
+            double[] origin = new double[dimensions.length];
+            for (int i = 0; i < identity.length; i++) {
+                origin[i] = 0.0;
+                identity[i] = 1.0;
+            }
+            CoordinateTransformation<?> id = new ScaleCoordinateTransformation(identity);
+            CoordinateTransformation<?> og = new TranslationCoordinateTransformation(origin);
+            final OmeNgffMultiScaleMetadata meta = new OmeNgffMultiScaleMetadata(metadata.getAxes().length,
+                    datasetPath, datasetPath, "AVERAGE", "0.4",
+                    metadata.getAxes(),
+                    ms.getDatasets(), null,
+                    new CoordinateTransformation[]{id, og},
+                    ms.metadata,
+                    true);
+
+            final OmeNgffMetadata ngffMetadata = new OmeNgffMetadata(datasetPath, new OmeNgffMultiScaleMetadata[]{meta});
+
+            new OmeNgffMetadataParser().writeMetadata(ngffMetadata, writer, datasetPath);
+
+    }
+
     public static <T extends NativeType<T> & NumericType<T>> void saveToZarr(ImagePlus plus, Path op, int[] blocks) throws Exception {
         N5Factory factory = new N5Factory();
         factory.zarrDimensionSeparator("/");

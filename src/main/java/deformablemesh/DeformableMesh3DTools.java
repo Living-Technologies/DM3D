@@ -1459,7 +1459,7 @@ public class DeformableMesh3DTools {
     }
 
     public static ImagePlus asUniqueLabels(MeshImageStack stack, List<Track> allMeshTracks) {
-        ImagePlus plus = stack.getOriginalPlus().createImagePlus();
+        ImagePlus plus = stack.createOriginalPlus();
         Set<Integer> frames = new TreeSet<>();
         for(Integer i = 0; i<stack.FRAMES; i++){
             for(Track t: allMeshTracks){

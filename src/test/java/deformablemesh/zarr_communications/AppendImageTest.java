@@ -15,10 +15,11 @@ import org.junit.Test;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 public class AppendImageTest {
-
 
     public  <T extends NativeType<T> & NumericType<T>> void updateZarrFile() throws ExecutionException, InterruptedException {
         int w = 96;
@@ -45,9 +46,9 @@ public class AppendImageTest {
             //N5Utils.save(img, writer,datasetPath + arrayDatasetPath, blocks, new BloscCompression());
 
             N5Utils.saveRegion(Views.translate(img, translation), writer, datasetPath + arrayDatasetPath);
-
         }
     }
+
     @Test
     public void modifyFolderTest(){
         int w = 96;
@@ -57,6 +58,7 @@ public class AppendImageTest {
         int c = 2;
 
         Path p = Paths.get("modify-test.zarr");
+        IOTest.createdFolders.add(p);
 
         try {
             ImagePlus plus = IOTest.generic(w, h, z, t, c);
@@ -67,6 +69,8 @@ public class AppendImageTest {
             System.out.println(loaded);
         } catch (Exception e) {
             throw new RuntimeException(e);
+        } finally{
+            IOTest.deleteTempZarrFolder(p);
         }
     }
     public static void main(String[] args) throws Exception {
