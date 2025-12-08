@@ -75,16 +75,27 @@ public class MeshVolumeToBinary {
         //verify
         sliceLow = sliceLow < 0 ? 0 : sliceLow;
         sliceHigh = sliceHigh <= slices ? sliceHigh : slices;
+        
+        if(sliceHigh < sliceLow){
+            sliceHigh = sliceLow;
+        }
 
         int jlo = (int) lowI[1];
         int jhi = (int) ( highI[1] + 0.5 );
         jlo = jlo < 0 ? 0 : jlo;
         jhi = jhi <= h ? jhi : h;
+        if(jhi < jlo){
+            jhi = jlo;
+        }
 
         int xlo = (int) lowI[0];
         int xhi = (int) ( highI[0] + 0.5 );
         xlo = xlo < 0 ? 0 : xlo;
         xhi = xhi > w ? w : xhi;
+
+        if(xhi < xlo){
+            xhi = xlo;
+        }
         int n = (xhi - xlo)*(jhi - jlo)*(sliceHigh - sliceLow);
         List<int[]> contained = new ArrayList<>(n);
 
