@@ -107,8 +107,10 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 /**
@@ -128,29 +130,40 @@ public class SegmentationController {
     ExceptionThrowingService main = new ExceptionThrowingService();
     List<Runnable> shutdownActions = new ArrayList<>();
 
-    private ExecutorService globalExecutor;
+    public SegmentationController(SegmentationModel model, boolean headless){
+        this.model = model;
 
+        if(!headless){
+            try {
+                model.setRingController(new FurrowController(this));
+                actionStack.addStateListener(s->{
+                    FurrowController rc = getRingController();
+                    if(rc != null){
+                        submit(()->rc.setFrame(getCurrentFrame()));
+                    }
+                });
+            } catch(java.awt.AWTError err){
+                System.out.println("error initializing awt: " + err.getMessage());
+                System.out.println("This can be due to DISPLAY env being set incorrectly.");
+                err.printStackTrace();
+            }
+        }
+    }
     /**
      * Creates a controller for the supplied model.
      *
      * @param model data that will be controlled.
      */
     public SegmentationController(SegmentationModel model){
-        this.model = model;
-        try {
-            model.setRingController(new FurrowController(this));
-            actionStack.addStateListener(s->{
-                FurrowController rc = getRingController();
-                if(rc != null){
-                    submit(()->rc.setFrame(getCurrentFrame()));
-                }
-            });
-        } catch(java.awt.AWTError err){
-            System.out.println("error initializing awt: " + err.getMessage());
-            System.out.println("This can be due to DISPLAY env being set incorrectly.");
-            err.printStackTrace();
-        }
+        this(model, false);
     }
+
+    static public SegmentationController getHeadlessController(){
+        SegmentationModel model = new SegmentationModel();
+        return new SegmentationController(model, true);
+    }
+
+
 
     /**
      * Deformation parameter, high values limit the rate of deformation.
@@ -449,7 +462,15 @@ public class SegmentationController {
     public void submit(ETExecutable runnable) {
         main.submit(runnable);
     }
-
+    public void waitForQueue(){
+        CountDownLatch latch = new CountDownLatch(1);
+        submit(latch::countDown);
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
     /**
      * Moves to the previous image frame.
      *
@@ -3367,12 +3388,6 @@ public class SegmentationController {
     }
 
 
-    public void setGlobalExecutor(ExecutorService executorService) {
-        this.globalExecutor = executorService;
-        DeformableMesh3D.setGlobalExecutor(executorService);
-
-    }
-
     /**
      * Sets the position and normal of the furrow.
      *
@@ -3565,9 +3580,6 @@ public class SegmentationController {
     }
 
     public void shutdown(){
-        if(globalExecutor != null){
-            main.submit(globalExecutor::shutdown);
-        }
         shutdownActions.forEach(run -> main.submit(run::run));
         main.submit(main::shutdown);
     }

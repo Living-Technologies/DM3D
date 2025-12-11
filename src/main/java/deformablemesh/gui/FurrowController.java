@@ -434,7 +434,9 @@ public class FurrowController implements FrameListener, ListDataListener {
                 }).collect(Collectors.toList());
                 sliceView.addDrawables(projections);
             }
-            histControls.refresh(p);
+            if(histControls != null){
+                histControls.refresh(p);
+            }
             sliceView.setSlice(p.getBufferedImage());
             furrowManager.setThresh(thresh);
             ImageProcessor b = furrowManager.createBinarySlice();

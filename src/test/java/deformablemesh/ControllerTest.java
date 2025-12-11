@@ -41,7 +41,7 @@ public class ControllerTest {
     @Test
     public void testAddingAndRemovingMeshes(){
         SegmentationModel model = new SegmentationModel();
-        SegmentationController controls = new SegmentationController(model);
+        SegmentationController controls = new SegmentationController(model, true);
         DeformableMesh3D sphere = RayCastMesh.fiveTriangleSphere();
         controls.addMesh(sphere);
 
@@ -156,7 +156,7 @@ public class ControllerTest {
     @Test
     public void setValues(){
         SegmentationModel model = new SegmentationModel();
-        SegmentationController controller = new SegmentationController(model);
+        SegmentationController controller = new SegmentationController(model, true);
         double a = -1;
         double b = -1;
         double g = -1;
@@ -174,7 +174,7 @@ public class ControllerTest {
     @Test
     public void remesh(){
         SegmentationModel model = new SegmentationModel();
-        SegmentationController controller = new SegmentationController(model);
+        SegmentationController controller = new SegmentationController(model, true);
         DeformableMesh3D sphere = RayCastMesh.fiveTriangleSphere();
         controller.startNewMeshTrack(0, sphere);
         controller.reMesh();

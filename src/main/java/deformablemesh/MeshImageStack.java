@@ -380,7 +380,7 @@ public class MeshImageStack {
         filters.clear();
     }
     public void gaussianBlur(double sigma){
-        filters.add( imp-> imp.blurGaussian(sigma));
+        filters.add( imp -> imp.blurGaussian(sigma));
     }
     /**
      * Copies the image data from the image stack to the double[][] backing the

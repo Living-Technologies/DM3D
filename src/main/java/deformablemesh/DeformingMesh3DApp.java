@@ -61,17 +61,8 @@ public class DeformingMesh3DApp{
             //UIManager.setLookAndFeel("com.formdev.flatlaf.FlatLightLaf");
             //UIManager.setLookAndFeel("com.formdev.flatlaf.FlatDarkLaf");
         }
-        catch (UnsupportedLookAndFeelException e) {
+        catch (Exception e) {
             //then the look and feel doesn't get set!
-        }
-        catch (ClassNotFoundException e) {
-            // handle exception
-        }
-        catch (InstantiationException e) {
-            // handle exception
-        }
-        catch (IllegalAccessException e) {
-            // handle exception
         }
     }
     public static SegmentationController createDeformingMeshApplication(){
@@ -80,7 +71,6 @@ public class DeformingMesh3DApp{
         MeshFrame3D mf3d = new MeshFrame3D();
         SegmentationModel model = new SegmentationModel();
         SegmentationController segmentationController = new SegmentationController(model);
-        segmentationController.setGlobalExecutor(Executors.newFixedThreadPool(3));
         try{
             PropertySaver.loadProperties(segmentationController);
         } catch(Exception e){

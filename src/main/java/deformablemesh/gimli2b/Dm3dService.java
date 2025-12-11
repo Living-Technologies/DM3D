@@ -44,6 +44,10 @@ public class Dm3dService extends AbstractService implements ImageJService {
         return segmentationController;
     }
 
+    public SegmentationController createHeadlessController(){
+        return new SegmentationController(new SegmentationModel(), true);
+    }
+
     public ControlFrame startUi(SegmentationController segmentationController){
         ControlFrame controlFrame = new ControlFrame(segmentationController);
         MeshFrame3D mf3d = segmentationController.getMeshFrame3D();

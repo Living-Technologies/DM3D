@@ -75,7 +75,6 @@ public class MeshVolumeToBinary {
         //verify
         sliceLow = sliceLow < 0 ? 0 : sliceLow;
         sliceHigh = sliceHigh <= slices ? sliceHigh : slices;
-        
         if(sliceHigh < sliceLow){
             sliceHigh = sliceLow;
         }
