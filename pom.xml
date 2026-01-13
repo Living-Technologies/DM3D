@@ -177,7 +177,7 @@
 		<dependency>
 			<groupId>nl.uu.science.cellbiology</groupId>
 			<artifactId>bigvolumebrowser</artifactId>
-			<version>0.0.4-SNAPSHOT</version>
+			<version>0.0.5</version>
 		</dependency>
 	</dependencies>
 
