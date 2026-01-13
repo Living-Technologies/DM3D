@@ -5,6 +5,7 @@ import deformablemesh.geometry.CurvatureCalculator;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.interceptable.InterceptingMesh3D;
 import deformablemesh.util.GaussianKernels;
+import deformablemesh.util.Vector3DOps;
 
 import java.util.Arrays;
 
@@ -69,6 +70,23 @@ public class BrightRegionEnergy implements ExternalEnergy{
 
     @Override
     public double getEnergy(double[] pos) {
-        return contains(pos) ? 1 : 0;
+        double[] closest = mesh.nodes.get(0).getCoordinates();
+        double md = Vector3DOps.distance(pos, closest);
+        int dex = 0;
+        for(int i = 1; i<mesh.nodes.size(); i++){
+            double[] c = mesh.nodes.get(i).getCoordinates();
+            double d = Vector3DOps.distance(pos, c);
+            if(d < md){
+                md = d;
+                closest = c;
+                dex = i;
+            }
+        }
+
+        double[] norm = calculator.getNormal(dex);
+        double f = getForce(pos[0], pos[1], pos[2], norm);
+        return f;
+
     }
+
 }
