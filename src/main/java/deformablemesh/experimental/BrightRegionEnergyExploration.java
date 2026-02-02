@@ -123,13 +123,13 @@ public class BrightRegionEnergyExploration {
         double ds = mist.getMinPx();
         for(Node3D node: mesh.nodes){
 
-            Arrow a = new Arrow(0.1, 0.006125);
-            a.setColor(new Color(1f, 0.8f, 0.2f));
+            //Arrow a = new Arrow(0.1, 0.006125);
+            //a.setColor(new Color(1f, 0.8f, 0.2f));
             double[] c = node.getCoordinates();
             double[] n = cc.getNormal(node.getIndex());
-            a.moveTo(c[0], c[1], c[2]);
-            a.pointAlong(n);
-            mf3d.addDataObject(a);
+            //a.moveTo(c[0], c[1], c[2]);
+            //a.pointAlong(n);
+            //mf3d.addDataObject(a);
             int steps = 25;
             double offset = -steps/2 * mist.getMinPx();
             double[] x = new double[steps];

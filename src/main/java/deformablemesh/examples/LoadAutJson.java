@@ -36,7 +36,13 @@ public class LoadAutJson {
         public String name;
         public List<MyPoint> positions;
         public List<MyTrack> tracks;
+        public List<ImageOffset> image_offsets;
     }
+    static class ImageOffset{
+        public int _time_point_number;
+        public int x, y, z;
+    }
+
     @JsonIgnoreProperties(ignoreUnknown = true)
     static class MyTrack{
         public int time_point_start;
@@ -51,13 +57,17 @@ public class LoadAutJson {
         ObjectMapper mapper = new ObjectMapper();
         TrackingDataset dataset = mapper.readValue(jsonFile, new TypeReference<TrackingDataset>() {});
         List<Track> results = new ArrayList<>();
+        Map<Integer, ImageOffset> offsets = new HashMap<>();
+        for(ImageOffset off : dataset.image_offsets){
+            offsets.put(off._time_point_number, off);
+        }
+        ImageOffset none = new ImageOffset();
         for(MyTrack track: dataset.tracks){
-
             Track t = new Track("" + (results.size() + 1));
-            int time = track.time_point_start;
+            int time = track.time_point_start - 1;
             for(List<Double> pt : track.coords_xyz_px){
-
-                double[] xyz = new double[]{pt.get(0), pt.get(1), pt.get(2)};
+                ImageOffset offset = offsets.getOrDefault(time + 1, none);
+                double[] xyz = new double[]{pt.get(0) - offset.x, pt.get(1) - offset.y, pt.get(2) - offset.z};
                 double[] npt = geometry.getNormalizedCoordinate(xyz);
                 DeformableMesh3D mesh = RayCastMesh.sphereRayCastMesh(1);
                 mesh.translate(npt);

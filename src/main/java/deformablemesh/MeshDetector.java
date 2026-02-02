@@ -186,7 +186,13 @@ public class MeshDetector {
     private interface BackgroundCheck{
         boolean isBackground(int i);
     }
-
+    public int getLabel(int x, int y, int z){
+        if( x < 0 || x >= mis.getWidthPx() || y < 0 || y >= mis.getHeightPx() || z < 0 || z >= mis.getNSlices()){
+            return 0;
+        }
+        ImageProcessor proc = mis.getProcessor(mis.CURRENT, mis.channel, z);
+        return proc.get(x, y);
+    }
     public List<Region> getRegionsFromLabelledImage(){
         Map<Integer, List<int[]>> pxRegions = new HashMap<>();
         ImagePlus plus = mis.getCurrentFrame();

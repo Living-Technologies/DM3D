@@ -34,6 +34,7 @@ import deformablemesh.meshview.DeformableMeshDataObject;
 import deformablemesh.util.Vector3DOps;
 
 import java.awt.Color;
+import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -60,7 +61,7 @@ public class DeformableMesh3D{
     public double GAMMA;
     public double ALPHA;
     public double BETA;
-    LUDecomposition decomp;
+    SoftReference<LUDecomposition> decompRef = new SoftReference<>(null);
 
     List<ExternalEnergy> energies = new ArrayList<>();
 
@@ -238,8 +239,8 @@ public class DeformableMesh3D{
         }
 
         Matrix M = new Matrix(data);
-
-        decomp = M.lu();
+        LUDecomposition decomp = M.lu();
+        decompRef = new SoftReference<>(decomp);
     }
 
     private void updateBetaMatrix(double[][] data){
@@ -291,10 +292,11 @@ public class DeformableMesh3D{
      * @return
      */
     public Runnable partialUpdate(){
-        if(decomp==null){
+        LUDecomposition decomp = decompRef.get();
+        while(decomp == null){
             reshape();
+            decomp = decompRef.get();
         }
-
         final double[] fx = new double[nodes.size()];
         final double[] fy = new double[nodes.size()];
         final double[] fz = new double[nodes.size()];
@@ -340,8 +342,10 @@ public class DeformableMesh3D{
 
 
     public void update(){
-        if(decomp==null){
-            reshape();
+        LUDecomposition decomp = decompRef.get();
+        while(decomp == null){
+           reshape();
+           decomp = decompRef.get();
         }
 
         final double[] fx = new double[nodes.size()];
@@ -403,6 +407,11 @@ public class DeformableMesh3D{
 
     public double calculateVolume(double[] dir){
         return DeformableMesh3DTools.calculateVolumeLegacy(dir, positions, triangles);
+    }
+
+    public void clearExtras(){
+        decompRef = null;
+        clearEnergies();
     }
 
     /**
