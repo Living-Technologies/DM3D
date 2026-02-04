@@ -26,11 +26,12 @@ public class RefineMaskToOriginalImage {
     final MeshImageStack original;
     final MeshImageStack roughLabels;
     Path output;
-    double meanLength = 0.009;
+    public double meanLength = 0.009;
     public double alpha = 1.0;
-    public double beta = 0.2;
+    public double beta = 0.1;
     public double gamma = 1000;
     public double energyWeight = 1e-2;
+    public int deformSteps = 250;
     boolean overwrite = false;
     public String MESH_TAG="_refined-meshes";
 
@@ -84,7 +85,7 @@ public class RefineMaskToOriginalImage {
             mesh.BETA = beta;
             mesh.GAMMA = gamma;
 
-            for(int j = 0; j<250; j++){
+            for(int j = 0; j<deformSteps; j++){
                 mesh.update();
             }
             mesh.clearEnergies();
@@ -98,7 +99,7 @@ public class RefineMaskToOriginalImage {
             BrightRegionEnergy grad2 = new BrightRegionEnergy(energy, mesh2, energyWeight);
             mesh2.addExternalEnergy(grad2);
 
-            for(int j = 0; j<250; j++){
+            for(int j = 0; j<deformSteps; j++){
                 mesh2.update();
             }
             mesh2.clearEnergies();
