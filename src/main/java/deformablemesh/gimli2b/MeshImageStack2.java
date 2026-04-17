@@ -12,11 +12,13 @@ import ij.ImagePlus;
 import ij.measure.Calibration;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
+import net.imglib2.Cursor;
 import net.imglib2.Interval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.blocks.BlockSupplier;
 import net.imglib2.algorithm.blocks.convert.Convert;
 import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.img.planar.PlanarLocalizingCursor;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.Type;
@@ -42,7 +44,7 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
     List<Source<T>> sources;
     Calibration ijCalibration;
     final int mipmap;
-
+    boolean buffered = false;
     /**
      * Creates an imglib2 interval for the current time/channel point.
      *
@@ -232,6 +234,7 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
         PX = nPx[0] < nPx[1] ?
                 nPx[0] < nPx[2] ? nPx[0] : nPx[2] :
                 nPx[1] < nPx[2] ? nPx[1] : nPx[2];
+
         copyValues();
         setMinMax();
         ijCalibration = new Calibration();
@@ -355,13 +358,14 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
     public Calibration getImageJCalibration(){
         return ijCalibration;
     }
+
     @Override
     public void copyValues(){
         int n = dims[2]*dims[1]*dims[0];
         if(n != data.length) {
             data = new double[n];
         }
-
+        buffered = true;
         RandomAccessibleInterval<T> rai = sources.get(channel).getSource(CURRENT, mipmap);
         extract(rai, data);
 

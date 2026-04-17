@@ -265,10 +265,15 @@ public class SaveImageToZarr {
 
             N5Utils.save(img, writer,datasetPath + arrayDatasetPath, blocks, new BloscCompression());
         }
-
     }
     public static <T extends NativeType<T> & NumericType<T>> void saveToZarr(ImagePlus plus, Path op) throws Exception {
-        int[] blocks = {plus.getWidth(), plus.getHeight(), plus.getNSlices(), 1, 1};
+        int x = plus.getWidth();
+        int y = plus.getHeight();
+        int z = plus.getNSlices();
+        x = x>256 ? 256 : x;
+        y = y>256 ? 256 : y;
+        z = z>256 ? 256 : z;
+        int[] blocks = {x, y, z, 1, 1};
         saveToZarr(plus, op, blocks);
     }
     public static void main(String[] args) throws Exception {

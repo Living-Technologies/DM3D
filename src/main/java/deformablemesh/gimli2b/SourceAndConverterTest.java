@@ -16,6 +16,7 @@ import deformablemesh.gui.GuiTools;
 import deformablemesh.gui.SwingJSTerm;
 import deformablemesh.io.LoadZarr;
 import deformablemesh.io.MeshReader;
+import deformablemesh.io.MultiscaleImageAdapter;
 import deformablemesh.track.Track;
 import ij.IJ;
 import ij.ImageJ;
@@ -25,6 +26,7 @@ import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import net.imglib2.mesh.Mesh;
 import net.imglib2.type.numeric.ARGBType;
+import net.imglib2.type.numeric.NumericType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 
 import javax.swing.JButton;
@@ -139,12 +141,12 @@ public class SourceAndConverterTest {
             return;
         }
         MeshImageStack2<?> mist = LoadZarr.loadMeshImageStack2(location.toPath());
-
+        MultiscaleImageAdapter<?> msia = LoadZarr.load3DZarrFile(location.getAbsolutePath());
         Color[] colors = { Color.MAGENTA, Color.CYAN, Color.RED, Color.YELLOW};
-        for(int i = 0; i<mist.getNChannels(); i++){
+        for(int i = 0; i<msia.getNChannels(); i++){
             Color c = colors[i];
             if(c == null) continue;
-            Source<?> source = mist.sources.get(i);
+            Source<?> source = msia.getAsBdvSource(i);
 
             List<BvvStackSource<?>> bvvSources = bvb.addSource(source).getB();
             System.out.println(bvvSources.size());

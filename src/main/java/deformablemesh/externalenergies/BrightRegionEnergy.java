@@ -41,7 +41,7 @@ public class BrightRegionEnergy implements ExternalEnergy{
             if(Double.isNaN(normal[0] + normal[1] + normal[2])){
                 continue;
             }
-            double f = getForce(r[0], r[1], r[2], normal)*weight;
+            double f = getForce(r[0] - 0.5*ds, r[1] - 0.5*ds, r[2] - 0.5*ds, normal)*weight;
 
             fx[i] += f*normal[0];
             fy[i] += f*normal[1];

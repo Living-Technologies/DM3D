@@ -795,7 +795,7 @@ public class SegmentationController {
         if(plus == null){
             return;
         }
-        MeshImageStack labelMis = new MeshImageStack(plus);
+        MeshImageStack labelMis = MeshImageStack.createMeshImageStack(plus);
         MeshImageStack stack = getMeshImageStack();
 
 
@@ -1693,7 +1693,7 @@ public class SegmentationController {
         ImagePlus plus = cropNormalizedRegion(region);
         plus.setOpenAsHyperStack(true);
         plus.show();
-        transformToImage(new MeshImageStack(plus));
+        transformToImage(MeshImageStack.createMeshImageStack(plus));
     }
 
     public ImagePlus cropNormalizedRegion(Box3D region){
@@ -1743,7 +1743,8 @@ public class SegmentationController {
         MeshImageStack current = getMeshImageStack();
         ImagePlus plus = GuiTools.selectOpenImage(IJ.getInstance());
         if(plus == null) return;
-        transformToImage(new MeshImageStack(plus));
+
+        transformToImage(MeshImageStack.createMeshImageStack(plus));
     }
 
     /**

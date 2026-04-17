@@ -15,6 +15,7 @@ import deformablemesh.io.MeshWriter;
 import deformablemesh.track.Track;
 import lightgraph.Graph;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -50,29 +51,76 @@ public class LoadAutJson {
     }
     @JsonIgnoreProperties(ignoreUnknown = true)
     static class MyPoint{
-        List<Double> values;
+        public int time_point;
+        public List<List<Double>> coords_xyz_px;
+        public PositionMetadata position_meta;
+    }
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    static class PositionMetadata{
+        public List<String> type;
     }
 
+
     public static List<Track> loadMeshes(File jsonFile, MeshImageStack geometry) throws IOException {
+        if(!jsonFile.exists()){
+            throw new IOException("File not found: " + jsonFile.toString());
+        }
         ObjectMapper mapper = new ObjectMapper();
         TrackingDataset dataset = mapper.readValue(jsonFile, new TypeReference<TrackingDataset>() {});
         List<Track> results = new ArrayList<>();
+
+        Map<Integer, MyPoint> tp = new HashMap<>();
+        for(MyPoint pt : dataset.positions){
+            tp.put(pt.time_point, pt);
+        }
+
         Map<Integer, ImageOffset> offsets = new HashMap<>();
         for(ImageOffset off : dataset.image_offsets){
             offsets.put(off._time_point_number, off);
         }
+
+        List<MyTrack> tracks;
+        if(dataset.tracks == null){
+            tracks = new ArrayList<>();
+            System.out.println("no tracks found to update");
+        } else{
+            tracks = dataset.tracks;
+        }
+
         ImageOffset none = new ImageOffset();
-        for(MyTrack track: dataset.tracks){
-            Track t = new Track("" + (results.size() + 1));
-            int time = track.time_point_start - 1;
+        for(MyTrack track: tracks){
+            Track t = new Track("" + (results.size()));
+            String type = null;
+            int time = track.time_point_start;
             for(List<Double> pt : track.coords_xyz_px){
-                ImageOffset offset = offsets.getOrDefault(time + 1, none);
+                if(tp.containsKey(time)){
+                    MyPoint timepoint = tp.get(time);
+                    for(int i = 0; i<timepoint.coords_xyz_px.size(); i++){
+                        List<Double> other = timepoint.coords_xyz_px.get(i);
+                        if(pt.equals(other)){
+                            String nt = timepoint.position_meta.type  != null ? timepoint.position_meta.type.get(i) : null;
+                            if( type == null ){
+                                type = nt;
+                            } else{
+                                if(!type.equals(nt)){
+                                    System.out.println("changed type: " + type + ", " + nt);
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+
+                ImageOffset offset = offsets.getOrDefault(time, none);
                 double[] xyz = new double[]{pt.get(0) - offset.x, pt.get(1) - offset.y, pt.get(2) - offset.z};
                 double[] npt = geometry.getNormalizedCoordinate(xyz);
                 DeformableMesh3D mesh = RayCastMesh.sphereRayCastMesh(1);
                 mesh.translate(npt);
-                mesh.scale(0.01, npt);
+                mesh.scale(0.002, npt);
                 t.addMesh(time++, mesh );
+            }
+            if(type != null){
+                t.setName(t.getName() + "-" + type);
             }
             results.add(t);
         }
@@ -251,7 +299,6 @@ public class LoadAutJson {
                 }
             }
 
-            //
             Map<Integer, Integer> meshToTrack = getLabelMap(tracks, meshes, f);
             for(Integer label : meshToTrack.keySet()){
                 Integer mid = meshToTrack.get(label);
@@ -301,9 +348,70 @@ public class LoadAutJson {
         g.show(false, "5th element");
 
     }
+
     public static void main(String[] args) throws IOException {
+        Path pth = Paths.get("/Users/msmith5/working/maria/jurica/jurica-1.zarr");
+        Path lbls = Paths.get("/Users/msmith5/working/maria/jurica/jurica-1_mesh-labels.zarr");
+        Path aut = Paths.get("/Users/msmith5/working/maria/jurica/Organoid 1 (lactate).aut");
+
+        Path base = pth.getParent();
+        try(        BufferedWriter writer = Files.newBufferedWriter( base.resolve("remesh-aut-tracks.txt") ) ){
+            RemeshTracksFromLabels.setLogger(writer);
+            RemeshTracksFromLabels.processSet(pth, lbls, aut);
+        }
+
+    }
 
 
+    public static void main2(String[] args) throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        File autFile = new File("/Users/msmith5/working/maria/jurica/Organoid 1 (lactate).aut");
+        TrackingDataset dataset = mapper.readValue(autFile, new TypeReference<TrackingDataset>() {});
+        System.out.println(dataset.name);
+        System.out.println(dataset.tracks.size());
+        System.out.println(dataset.positions.size());
 
+        Map<Integer, MyPoint> tp = new HashMap<>();
+        for(MyPoint pt : dataset.positions){
+            tp.put(pt.time_point, pt);
+        }
+        int found = 0;
+        int count = 0;
+
+        for(MyTrack track: dataset.tracks){
+            int dex = track.time_point_start;
+            String type = null;
+            for(List<Double> point : track.coords_xyz_px){
+                count++;
+                if(tp.containsKey(dex)){
+                    MyPoint pt = tp.get(dex);
+                    for(int i = 0; i<pt.coords_xyz_px.size(); i++){
+                        List<Double> other = pt.coords_xyz_px.get(i);
+                        if(point.equals(other)){
+                            found++;
+                            String nt = pt.position_meta.type  != null ? pt.position_meta.type.get(i) : null;
+                            if(type == null){
+                                type = nt;
+                            } else{
+                                if(!type.equals(nt)){
+                                    System.out.println("changed type: " + type + ", " + nt);
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+                dex++;
+            }
+        }
+        System.out.println("found: " + found + "of " + count);
+
+        Path pth = Paths.get("/Users/msmith5/working/maria/jurica/jurica-1.zarr");
+        String tag = pth.getFileName().toString().replace(".zarr", "");
+        MeshImageStack image = LoadZarr.loadMeshImageStack2(pth);
+        List<Track> tracks = LoadAutJson.loadMeshes(autFile, image);
+        Path mout = pth.getParent().resolve("spheres-" + tag + ".bmf");
+
+        MeshWriter.saveMeshes(mout.toFile(), tracks);
     }
 }

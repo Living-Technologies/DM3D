@@ -33,11 +33,15 @@ public class LabelFolderOfMeshes {
         if(Files.exists(p)){
             try {
                 List<Track> meshes = MeshReader.loadMeshes(p.toFile());
+                if(meshes.size() == 0){
+                    return frame;
+                }
                 List<Track> shift = meshes.stream().map(t->{
                     Track next = new Track(t.getName());
                     next.addMesh(0, t.getMesh(frame));
                     return next;
                 }).collect(Collectors.toList());
+                System.out.println("processing mesh for: " + stack.getNFrames() + ", " + stack.getNSlices() + ", " + shift.size());
                 ImagePlus plus = DeformableMesh3DTools.asUniqueLabels(stack, shift);
                 synchronized (zarrOut) {
                     SaveImageToZarr.appendToZarrRa(plus, zarrOut, frame);
@@ -52,10 +56,19 @@ public class LabelFolderOfMeshes {
 
     public static void createLabels(String meshFolder, String image) throws IOException {
         Path imagePath = Paths.get(image);
-        MeshImageStack stack = LoadZarr.loadMeshImageStack2(imagePath);
+        MeshImageStack stack;
+        String ft;
+        if(image.endsWith(".zarr")){
+            stack = LoadZarr.loadMeshImageStack2(imagePath);
+            ft = ".zarr";
+        } else{
+            ft = ".tif";
+            System.out.println("checking: " + imagePath + ", " + Files.exists(imagePath));
+            stack = MeshImageStack.fromVirtualTiff(imagePath.toString());
+        }
         Path meshPath = Paths.get(meshFolder);
 
-        String name = imagePath.getFileName().toString().replace(".zarr", "") + "_mesh-labels.zarr";
+        String name = imagePath.getFileName().toString().replace(ft, "") + "_mesh-labels.zarr";
         Path parent = imagePath.toAbsolutePath().getParent();
         Path zop = parent.resolve(name);
 

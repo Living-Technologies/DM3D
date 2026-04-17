@@ -5,10 +5,12 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import deformablemesh.gimli2b.MeshImageStack2;
+import deformablemesh.gimli2b.MeshImageStack2UB;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.measure.Calibration;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.cache.img.CachedCellImg;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.NumericType;
@@ -116,13 +118,22 @@ public class LoadZarr {
     }
 
     public static <T extends NumericType<T> & NativeType<T> & RealType<T> > MeshImageStack2<T> loadMeshImageStack2(Path location) throws IOException {
+        
         MultiscaleImageAdapter<T> msia = load3DZarrFile(location.toAbsolutePath().toString());
         List<Source<T>> sources = new ArrayList<>();
         for(int i = 0; i<msia.getNChannels(); i++){
             sources.add(msia.getAsBdvSource(i));
         }
+        RandomAccessibleInterval<T> rai = msia.images.data.get(0);
+        long px = rai.dimension(0)*rai.dimension(1)*rai.dimension(2);
+        MeshImageStack2<T> mist;
+        if (px < Integer.MAX_VALUE) {
+            mist = new MeshImageStack2<>(sources);
+        } else{
+            System.out.println("no buffer!");
+            mist = new MeshImageStack2UB<>(sources);
+        }
 
-        MeshImageStack2<T> mist = new MeshImageStack2<>(sources);
         mist.setShortTitle(location.getFileName().toString());
         Calibration ij = mist.getImageJCalibration();
         msia.calibrateUnits(ij);
@@ -135,7 +146,18 @@ public class LoadZarr {
         for(int i = 0; i<msia.getNChannels(); i++){
             sources.add(msia.getAsBdvSource(i));
         }
-        MeshImageStack2<T> mist = new MeshImageStack2<>(sources);
+        RandomAccessibleInterval<T> rai = msia.images.data.get(0);
+        int n = rai.numDimensions();
+        long px = rai.dimension(0)*rai.dimension(1)*rai.dimension(2);
+
+        MeshImageStack2<T> mist;
+        if (px < Integer.MAX_VALUE) {
+            mist = new MeshImageStack2<>(sources);
+        } else{
+            System.out.println("no buffer!");
+            mist = new MeshImageStack2UB<>(sources);
+        }
+
         mist.setShortTitle(uri.getPath());
         Calibration ij = mist.getImageJCalibration();
         msia.calibrateUnits(ij);

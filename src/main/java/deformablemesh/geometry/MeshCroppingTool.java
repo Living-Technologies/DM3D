@@ -174,22 +174,44 @@ public class MeshCroppingTool {
             mesh.update();
         }
     }
-    public CroppedVolume getCroppedMesh(DeformableMesh3D mesh, MeshImageStack stack, int label){
+    public CroppedVolume getCroppedMesh(DeformableMesh3D mesh, MeshImageStack stack, String label){
         if(deform_mesh) {
             deform(mesh, stack);
         }
-        BinaryMomentsOfInertia bmi = new BinaryMomentsOfInertia(mesh, stack);
-        List<double[]> eigen = bmi.getEigenVectors();
-        double[] cm = bmi.getCenterOfMass();
-        cm[0] = cm[0] - stack.offsets[0];
-        cm[1] = cm[1] - stack.offsets[1];
-        cm[2] = cm[2] - stack.offsets[2];
+        PrincipleAxes pa;
+        if(rotate) {
+            BinaryMomentsOfInertia bmi = new BinaryMomentsOfInertia(mesh, stack);
+            List<double[]> eigen = bmi.getEigenVectors();
+            double[] cm = bmi.getCenterOfMass();
 
-        double[] e0 = eigen.get(0);
-        double[] e1 = eigen.get(1);
-        double[] e2 = eigen.get(2);
+            double[] e0 = eigen.get(0);
+            double[] e1 = eigen.get(1);
+            double[] e2 = eigen.get(2);
 
-        PrincipleAxes pa = new PrincipleAxes(cm, e0, e1, e2);
+            if(Double.isNaN(cm[0]) || Double.isNaN(cm[1]) || Double.isNaN(cm[2])){
+                //no blob.
+                cm = mesh.getBoundingBox().getCenter();
+                e0 = Vector3DOps.xhat;
+                e1 = Vector3DOps.yhat;
+                e2 = Vector3DOps.zhat;
+
+            } else{
+                cm[0] = cm[0] - stack.offsets[0];
+                cm[1] = cm[1] - stack.offsets[1];
+                cm[2] = cm[2] - stack.offsets[2];
+
+            }
+
+
+            pa = new PrincipleAxes(cm, e0, e1, e2);
+        } else{
+            double[] cm = mesh.getBoundingBox().getCenter();
+            double[] e0 = Vector3DOps.xhat;
+            double[] e1 = Vector3DOps.yhat;
+            double[] e2 = Vector3DOps.zhat;
+            pa = new PrincipleAxes(cm, e0, e1, e2);
+        }
+
         InterceptingMesh3D im3d = new InterceptingMesh3D(mesh);
         IsMasked isMasked = im3d::contains;
 
@@ -199,15 +221,16 @@ public class MeshCroppingTool {
 
     final int TOO_BIG=1;
     final int OUT_OF_BOUNDS=2;
+    final int TOO_SMALL=3;
     final int SUCCESS = 0;
     class Processor implements Callable<Processor> {
-        int id;
+        String id;
         DeformableMesh3D mesh;
         MeshImageStack stack;
         int result;
         CroppedVolume cv;
 
-        Processor(DeformableMesh3D mesh, int id, MeshImageStack stack){
+        Processor(DeformableMesh3D mesh, String id, MeshImageStack stack){
             this.mesh = mesh;
             this.id = id;
             this.stack=stack;
@@ -219,6 +242,9 @@ public class MeshCroppingTool {
 
             if(box.high[0] - box.low[0] > mxLength || box.high[1] - box.low[1] > mxLength || box.high[2] - box.low[2] > mxLength){
                 result = TOO_BIG;
+                return this;
+            } else if(mesh.calculateVolume() < 1e-7){
+                result = TOO_SMALL;
                 return this;
             }
 
@@ -238,12 +264,12 @@ public class MeshCroppingTool {
         List<Processor> processors = new ArrayList<>();
         for(int i = 0; i<tracks.size(); i++) {
             Track t = tracks.get(i);
-            int label = i + 1;
+            String label = t.getName() + "\t" + (i + 1) + "\t" + t.getFirstFrame() + "\t" + t.getLastFrame() + "\t" + mist.getNFrames();
             if (t.containsKey(key)) {
                 processors.add(new Processor(t.getMesh(key), label, mist));
             }
         }
-
+        System.out.println("checking: " + processors.size() + "meshes");
         int count = 0;
         int checked = processors.size();
         int sizeLimit = 0;
@@ -265,6 +291,9 @@ public class MeshCroppingTool {
                 case OUT_OF_BOUNDS:
                     boundaryLimit++;
                     continue;
+                case TOO_SMALL:
+                    sizeLimit++;
+                    continue;
                 case SUCCESS:
                     count++;
             }
@@ -283,7 +312,7 @@ public class MeshCroppingTool {
         if(accumulated == null){
             return accumulated;
         }
-        System.out.println("checked: " + checked + ", to big: " + sizeLimit + ", out of bounds: " + boundaryLimit +", accepted: " + count);
+        System.out.println("checked: " + checked + ", size limit: " + sizeLimit + ", out of bounds: " + boundaryLimit +", accepted: " + count);
         accumulated.data.setStack(accumulated.data.getStack(), 1, size, count);
         accumulated.mask.setStack(accumulated.mask.getStack(), 1, size, count);
         accumulated.data.setOpenAsHyperStack(true);
@@ -300,7 +329,7 @@ public class MeshCroppingTool {
     interface IsMasked{
         public boolean isMask(double[] imageCoordinate);
     }
-    CroppedVolume crop(PrincipleAxes pa, IsMasked maskIt, MeshImageStack stack, int label){
+    CroppedVolume crop(PrincipleAxes pa, IsMasked maskIt, MeshImageStack stack, String label){
         double ds = stack.getMinPx()*factor;
         double l = ds*size;
         ImageStack crop = new ImageStack(size, size);
@@ -419,7 +448,6 @@ public class MeshCroppingTool {
     }
 
 
-    private List<ImagePlus> queued = new ArrayList<>();
     private void saveVolumeData(CroppedVolume cv) throws Exception {
         if (Files.exists(imageZarr)) {
             SaveImageToZarr.appendToZarr(cv.data, imageZarr);
@@ -433,35 +461,35 @@ public class MeshCroppingTool {
         }
     }
 
-    public void processMeshImages(Path tf, Path base){
-        if(tf == null || base == null) return;
+    public void processMeshImages(Path imagePath, Path meshPath){
+        if(imagePath == null || meshPath == null) return;
 
-        Path target = getCropFolderName(tf, "-mesh-crops");
+        Path target = getCropFolderName(imagePath, "-mesh-crops");
         System.out.println("saving to: " + target);
         imageZarr = target.resolve("images.zarr");
         maskZarr = target.resolve("masks.zarr");
 
-        MeshImageStack stack = getMeshImageStack(tf);
+        MeshImageStack stack = getMeshImageStack(imagePath);
 
         Function<Integer, List<Track>> meshProvider;
 
-        if(Files.isDirectory(base)) {
+        if(Files.isDirectory(meshPath)) {
             meshProvider = (key)->{
-                Path meshFile = base.resolve("frame-" + key + ".bmf");
+                Path meshFile = meshPath.resolve("frame-" + key + ".bmf");
                 try {
                     return MeshReader.loadMeshes(meshFile.toFile());
                 } catch (IOException e) {
-                    System.err.println("Could not open " + base.resolve("frame-" + key + ".bmf"));
+                    System.err.println("Could not open " + meshPath.resolve("frame-" + key + ".bmf"));
                     return new ArrayList<>();
                 }
             };
 
         } else {
             try {
-                List<Track> tracks = MeshReader.loadMeshes(base.toFile());
+                List<Track> tracks = MeshReader.loadMeshes(meshPath.toFile());
                 meshProvider = key->tracks;
             } catch (IOException e) {
-                throw new RuntimeException("Unable to open mesh file: " + base, e);
+                throw new RuntimeException("Unable to open mesh file: " + meshPath, e);
             }
 
         }
@@ -483,7 +511,9 @@ public class MeshCroppingTool {
             }
         }
         int lastFrame = nFrames < 0 ? stack.getNFrames() : startFrame + nFrames;
-
+        if(lastFrame > stack.getNFrames()){
+            lastFrame = stack.getNFrames();
+        }
         for(int i = startFrame; i<lastFrame; i++){
             stack.setFrame(i);
             List<Track> tracks = meshProvider.apply(i);
@@ -604,7 +634,7 @@ public class MeshCroppingTool {
                 return px == label;
             };
 
-            CroppedVolume croppedVolume = crop(pa, maskIt, image, label);
+            CroppedVolume croppedVolume = crop(pa, maskIt, image, "" + label);
             if (croppedVolume == null) {
                 ob++;
                 continue;
@@ -715,18 +745,18 @@ public class MeshCroppingTool {
 
 
         long start = System.currentTimeMillis();
-        MeshCroppingTool tool = new MeshCroppingTool(1.0, 64);
+        MeshCroppingTool tool = new MeshCroppingTool(2.0, 64);
         tool.setPrefix("test_");
-        tool.setChunkSize(100);
-        tool.rotate = true;
+        tool.setChunkSize(10);
+        tool.rotate = false;
+        tool.filter = true;
+        tool.deform_mesh = true;
         //tool.setStartFrame(0);
         //tool.setNFrames(3);
         //tool.channel = 3;
         //tool.processLabelledImages(image, labels);
         tool.processMeshImages(image, labels);
         System.out.println(System.currentTimeMillis()-start);
-
-
     }
 
 }

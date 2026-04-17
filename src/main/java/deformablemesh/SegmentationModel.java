@@ -360,7 +360,7 @@ public class SegmentationModel {
     }
 
     public void setOriginalPlus(ImagePlus plus, int frame, int channel){
-        stack = new MeshImageStack(plus, frame, channel);
+        stack = MeshImageStack.createMeshImageStack(plus, frame, channel);
         notifyFrameListeners();
     }
 

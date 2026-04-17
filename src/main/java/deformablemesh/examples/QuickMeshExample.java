@@ -82,7 +82,7 @@ public class QuickMeshExample implements Command {
 
         mesh.clearEnergies();
         long deformed = System.nanoTime();
-        mesh.addExternalEnergy(new BrightRegionEnergy(stack, mesh, 1.0));
+        mesh.addExternalEnergy(new BrightRegionEnergy(stack, mesh, 50.0));
 
         for (int i = 0; i < 500; i++) {
             mesh.update();

@@ -161,7 +161,7 @@ public class MeshImageStack {
         CURRENT=frame;
         this.channel = channel;
 
-        data = new double[SLICES*py*px];
+        data = null;
 
         max_dex = new int[]{px-1, py-1, SLICES-1};
         dims = new int[]{px, py, SLICES};
@@ -390,6 +390,9 @@ public class MeshImageStack {
     public void copyValues(){
         if(original == null){
             return;
+        }
+        if(data == null){
+            data = new double[SLICES*getHeightPx()*getWidthPx()];
         }
         int slices = original.getNSlices();
         int py = original.getHeight();
@@ -1012,6 +1015,26 @@ public class MeshImageStack {
     }
     public int getNChannels() {
         return CHANNELS;
+    }
+    public static MeshImageStack createMeshImageStack(ImagePlus plus){
+        long tp_pixels = (long) plus.getHeight() * plus.getWidth() * plus.getNSlices();
+        if(tp_pixels > Integer.MAX_VALUE){
+            return new MeshImageStackUB(plus);
+        } else{
+            return new MeshImageStack(plus);
+        }
+    }
+
+    public static MeshImageStack createMeshImageStack(ImagePlus plus, int frame, int channel){
+        long tp_pixels = (long) plus.getHeight() * plus.getWidth() * plus.getNSlices();
+        if(tp_pixels > Integer.MAX_VALUE){
+            MeshImageStack stack = new MeshImageStackUB(plus);
+            stack.setFrame(frame);
+            stack.setChannel(channel);
+            return stack;
+        } else{
+            return new MeshImageStack(plus, frame, channel);
+        }
     }
 }
 
