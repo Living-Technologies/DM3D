@@ -1,6 +1,7 @@
 package deformablemesh.gimli2b;
 
 import bdv.viewer.Source;
+import deformablemesh.MeshImageStackUB;
 import ij.process.ImageProcessor;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.NativeType;
@@ -14,7 +15,9 @@ public class MeshImageStack2UB<T extends NumericType<T> & NativeType<T> & RealTy
     public MeshImageStack2UB(List<Source<T>> sources){
         super(sources, 0, 0);
     }
-
+    public MeshImageStack2UB(List<Source<T>> sources, int frame, int channel, int mipmap){
+        super(sources, frame, channel, mipmap);
+    }
     @Override
     public void copyValues(){
     }

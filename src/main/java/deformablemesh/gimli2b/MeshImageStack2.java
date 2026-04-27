@@ -12,6 +12,7 @@ import ij.ImagePlus;
 import ij.measure.Calibration;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
+import mpicbg.spim.data.sequence.VoxelDimensions;
 import net.imglib2.Cursor;
 import net.imglib2.Interval;
 import net.imglib2.RandomAccessibleInterval;
@@ -37,6 +38,7 @@ import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType<T>> extends MeshImageStack {
@@ -126,9 +128,30 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
         proc.setPixels(pixels);
         return proc;
     }
-
+    public MeshImageStack2<T> getUBMipMap(int level){
+        return new MeshImageStack2UB<>(sources, CURRENT, channel, level);
+    }
     public MeshImageStack2<T> getMipMap(int level){
-        return new MeshImageStack2<>(sources, CURRENT, channel, level);
+
+        Source<T> src = sources.get(0);
+        RandomAccessibleInterval<T> rai = src.getSource(CURRENT, level);
+
+        long[] dims = rai.dimensionsAsLongArray();
+        long px = dims[0]*dims[1]*dims[2];
+        System.out.println(Arrays.toString(dims));
+
+        MeshImageStack2<T> mist;
+        if (px < Integer.MAX_VALUE) {
+            mist = new MeshImageStack2<>(sources, CURRENT, channel, level);
+        } else{
+            System.out.println("no buffer!");
+            mist = new MeshImageStack2UB<>(sources, CURRENT, channel, level);
+        }
+        Calibration cb = mist.getImageJCalibration();
+        Calibration og = getImageJCalibration();
+        cb.setTimeUnit(og.getTimeUnit());
+        cb.frameInterval = og.frameInterval;
+        return mist;
     }
 
     /**
@@ -169,17 +192,9 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
         this.sources = sources;
         this.mipmap = mipmap;
         Source<T> source = sources.get(channel);
-        AffineTransform3D at = new AffineTransform3D();
-        source.getSourceTransform(0, mipmap, at);
 
-        double[] scale = new double[3];
-        double[] op2 = new double[3];
-        at.apply(new double[]{1, 1, 1}, scale);
-        at.apply(new double[]{0, 0, 0}, op2);
+        double[] scale = getScale();
 
-        scale[0] = scale[0] - op2[0];
-        scale[1] = scale[1] - op2[1];
-        scale[2] = scale[2] - op2[2];
         long[] dims = source.getSource(0, mipmap).dimensionsAsLongArray();
 
         SLICES=(int)dims[2];
@@ -305,7 +320,7 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
     }
 
     /**
-     * Extracts the scale from the sources 0th resolution "getSourceTransform"
+     * Extracts the scale from the sources 0th channel, but the mipmap resolution "getSourceTransform"
      *
      * @return {sx, sy, sz}
      */
@@ -341,18 +356,17 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
      * @param c will be modified with values form the source affine transform.
      */
     public void calibrate(Calibration c){
-        AffineTransform3D at = new AffineTransform3D();
-
         double[] scale = getScale();
         double[] translation = getTranslation();
         c.frameInterval = -1;
         c.pixelWidth = scale[0];
         c.pixelHeight = scale[1];
         c.pixelDepth = scale[2];
-        c.xOrigin = translation[0];
-        c.yOrigin = translation[1];
-        c.zOrigin = translation[2];
-
+        c.xOrigin = -translation[0]/scale[0];
+        c.yOrigin = -translation[1]/scale[1];
+        c.zOrigin = -translation[2]/scale[2];
+        VoxelDimensions voxd = sources.get(0).getVoxelDimensions();
+        c.setUnit(voxd.unit());
     }
     @Override
     public Calibration getImageJCalibration(){
@@ -446,5 +460,9 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType
             }
         });
 
+    }
+
+    public int getNMipMaps() {
+        return sources.get(0).getNumMipmapLevels();
     }
 }

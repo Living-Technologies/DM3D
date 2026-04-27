@@ -6,6 +6,7 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.measure.Calibration;
 import mpicbg.spim.data.sequence.DefaultVoxelDimensions;
+import mpicbg.spim.data.sequence.VoxelDimensions;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.display.imagej.ImageJVirtualStackARGB;
 import net.imglib2.img.display.imagej.ImageJVirtualStackFloat;
@@ -61,6 +62,7 @@ public class MultiscaleImageAdapter<T extends NumericType<T> & NativeType<T>> {
             cb.pixelDepth = scale[zDex];
             cb.xOrigin = -offset[xDex]/scale[xDex];
             cb.yOrigin = -offset[yDex]/scale[xDex];
+
             cb.zOrigin = -offset[zDex]/scale[zDex];
             if(tDex >= 0){
                 cb.setTimeUnit(axes.get(tDex).getUnit());
@@ -93,7 +95,8 @@ public class MultiscaleImageAdapter<T extends NumericType<T> & NativeType<T>> {
         }
 
         int raiIndex(int zarrIndex){
-            return axes.size() - zarrIndex - 1;
+            return zarrIndex;
+            //return axes.size() - zarrIndex - 1;
         }
 
         public int getNSlices(int level){
@@ -114,6 +117,14 @@ public class MultiscaleImageAdapter<T extends NumericType<T> & NativeType<T>> {
     public int getNChannels(){
         return images.getNChannels();
     }
+
+    public double getTimeInterval(){
+        return images.offsets.get(0)[images.tDex];
+    }
+    public String getTimeUnit(){
+        return images.axes.get(images.tDex).getUnit();
+    }
+
     public void setTitle(String title){
         this.title = title;
     }
@@ -226,14 +237,35 @@ public class MultiscaleImageAdapter<T extends NumericType<T> & NativeType<T>> {
 
 
             AffineTransform3D a = new AffineTransform3D();
-            a.translate(offset[images.xDex], offset[images.yDex], offset[images.zDex]);
+            a.translate(offset[images.xDex]/scale[images.xDex], offset[images.yDex]/scale[images.yDex], offset[images.zDex]/scale[images.zDex]);
             a.scale(scale[images.xDex], scale[images.yDex], scale[images.zDex]);
             transforms[i] = a;
-            //System.out.println(a);
-            //System.out.println(i + ", " + Arrays.toString(scale));
-            //System.out.println(Arrays.toString(rai.dimensionsAsLongArray()));
         }
-        DefaultVoxelDimensions vd = new DefaultVoxelDimensions(4);
+        final String unit = images.axes.get(images.xDex).getUnit();
+        double[] scale =  images.scales.get(0);
+        final double[] dimensions = {scale[images.xDex], scale[images.yDex], scale[images.zDex]};
+        VoxelDimensions vd = new VoxelDimensions() {
+            @Override
+            public String unit() {
+                return unit;
+            }
+
+            @Override
+            public void dimensions(double[] doubles) {
+                System.arraycopy(dimensions, 0, doubles, 0, dimensions.length);
+            }
+
+            @Override
+            public double dimension(int i) {
+                return dimensions[i];
+            }
+
+            @Override
+            public int numDimensions() {
+                return dimensions.length;
+            }
+        };
+
         RandomAccessibleIntervalMipmapSource4D<T> source = new RandomAccessibleIntervalMipmapSource4D<>(
                 levels,
                 type,
@@ -241,6 +273,7 @@ public class MultiscaleImageAdapter<T extends NumericType<T> & NativeType<T>> {
                 vd,
                 title + "?c=" + channel, false
         );
+
         return source;
     }
 

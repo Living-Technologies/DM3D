@@ -143,10 +143,14 @@
 			<groupId>org.jogamp.java3d</groupId>
 			<artifactId>vecmath</artifactId>
 		</dependency>
+        <dependency>
+            <groupId>org.embl.mobie</groupId>
+            <artifactId>mobie-io</artifactId>
+            <version>4.0.8</version>
+        </dependency>
 		<dependency>
 			<groupId>org.janelia.saalfeldlab</groupId>
 			<artifactId>n5</artifactId>
-			<version>3.5.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.janelia.saalfeldlab</groupId>
@@ -155,7 +159,6 @@
 		<dependency>
 			<groupId>org.janelia.saalfeldlab</groupId>
 			<artifactId>n5-zarr</artifactId>
-			<version>1.5.1</version>
 		</dependency>
 		<dependency>
 			<groupId>net.imglib2</groupId>
@@ -177,7 +180,7 @@
 		<dependency>
 			<groupId>nl.uu.science.cellbiology</groupId>
 			<artifactId>bigvolumebrowser</artifactId>
-			<version>0.0.5</version>
+			<version>0.1.0</version>
 		</dependency>
 	</dependencies>
 
