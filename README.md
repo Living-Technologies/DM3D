@@ -1,12 +1,11 @@
-[![Build Status](https://github.com/PaluchLabUCL/DeformingMesh3D/actions/workflows/build.yml/badge.svg)](https://github.com/PaluchLabUCL/DeformingMesh3D/actions/workflows/build.yml)
-
 # DM3D
 
 ##
 
-ThreeD image segmentation for roundish cells.
+ThreeD interactive GUI based segmentation for smooth representations.
+Especially useful for nuclei and roundish cells.
 
-The latest documentation can be found at:
+Documentation can be found at:
 
 [DM3D Github pages](https://franciscrickinstitute.github.io/dm3d-pages/)
 
@@ -24,9 +23,11 @@ which can be found in "plugins"->"PL_Mesh3D"->"Deforming Mesh 3D", and JFilament
 
 ## Documentation
 
-[DM3D Github pages](https://franciscrickinstitute.github.io/dm3d-pages/)
+The original and most extensive source of documentation can 
+be found here. [DM3D Github pages](https://franciscrickinstitute.github.io/dm3d-pages/). This includes guides for using the plugin, and javadoc for using the 
+plugin via scripting.
 
-This includes guides for using the plugin, and javadoc for using the plugin via scripting.
+The program has evolved, some examples are in [examples](examples)
 
 ### imglib2 style scripting.
 

@@ -2478,8 +2478,10 @@ public class SegmentationController {
         submit(
                 ()->{
                     model.setOriginalPlus(plus, channel);
+                    FurrowController fc = getRingController();
 
-                    Furrow3D f = getRingController().getFurrow();
+                    if(fc == null) return; //headless.
+                    Furrow3D f = fc.getFurrow();
                     if(f == null){
                         setFurrowForCurrentFrame(new double[]{0,0,0}, new double[]{0, 0, 1});
                     }
@@ -2829,9 +2831,7 @@ public class SegmentationController {
     }
 
     public void setMeshImageStack(MeshImageStack image){
-
         model.setMeshImageStack(image);
-
     }
 
 

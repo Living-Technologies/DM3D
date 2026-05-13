@@ -852,14 +852,12 @@ public class ControlFrame implements ReadyObserver, FrameListener {
                 if (id.endsWith(".tif") ) {
                     ImagePlus plus = FileInfoVirtualStack.openVirtual(id);
                     plus.show();
-
                     segmentationController.setOriginalPlus(plus);
                 } else{
                     ImporterOptions options = new ImporterOptions();
                     options.setVirtual(true);
                     options.setOpenAllSeries(true);
 
-                    if(id == null) return;
                     options.setId(id);
                     ImagePlus[] pluses = BF.openImagePlus(options);
                     int w = -1;
@@ -875,24 +873,6 @@ public class ControlFrame implements ReadyObserver, FrameListener {
 
                         plus.show();
                     }
-                    /*for (ImagePlus plus : pluses) {
-                        int nz = plus.getNSlices();
-                        int ny = plus.getHeight();
-                        int nx = plus.getWidth();
-                        Calibration cal = plus.getCalibration();
-                        if(cal.scaled()){
-                            System.out.println(nz + ", " + z + "//" + ny + ", " + h + "//" + nx + ", " + w);
-                            if(nz < z){
-                                cal.pixelDepth = cal.pixelDepth*z / nz;
-                            }
-                            if(ny < h){
-                                cal.pixelHeight = cal.pixelHeight*h / ny;
-                            }
-                            if(nx < w){
-                                cal.pixelWidth = cal.pixelWidth*w / nx;
-                            }
-                        }
-                    }*/
                     System.out.println("loading: " + pluses[0].getShortTitle());
                     segmentationController.setOriginalPlus(pluses[0]);
                 }
