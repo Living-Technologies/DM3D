@@ -10,7 +10,7 @@ import net.imglib2.type.numeric.RealType;
 
 import java.util.List;
 
-public class MeshImageStack2UB<T extends NumericType<T> & NativeType<T> & RealType<T>> extends MeshImageStack2<T> {
+public class MeshImageStack2UB<T extends NumericType<T> & NativeType<T>> extends MeshImageStack2<T> {
     RandomAccessibleInterval<T> rai;
     public MeshImageStack2UB(List<Source<T>> sources){
         super(sources, 0, 0);

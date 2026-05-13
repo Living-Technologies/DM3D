@@ -57,6 +57,17 @@ public class LoadZarr {
                 scales.add(ax.getScale());
                 offsets.add(ax.getTranslation());
             }
+        }else if(rootMetadata instanceof org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v05.OmeNgffV05Metadata){
+            org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v05.OmeNgffV05Metadata meta = (org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v05.OmeNgffV05Metadata)rootMetadata;
+            org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.NgffSingleScaleAxesMetadata[] o = meta.getChildrenMetadata();
+            Axis[] ngff_axis = o[0].getAxes();
+            for(Axis a : ngff_axis){
+                axes.add(a);
+            }
+            for(org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.NgffSingleScaleAxesMetadata ax : o){
+                scales.add(ax.getScale());
+                offsets.add(ax.getTranslation());
+            }
         }
         MultiscaleImageAdapter<T> adapter = new MultiscaleImageAdapter<>(axes);
         String[] sets = reader.deepListDatasets("/");
@@ -74,7 +85,7 @@ public class LoadZarr {
     }
 
 
-    public static <T extends NumericType<T> & NativeType<T> & RealType<T> > MeshImageStack2<T> mobieLoad(String location){
+    public static <T extends NumericType<T> & NativeType<T>> MeshImageStack2<T> mobieLoad(String location){
         N5ImageData<T> data = new N5ImageData<>(location);
         data.getSourcesAndConverters();
 
@@ -103,7 +114,7 @@ public class LoadZarr {
         return mist;
     }
 
-    public static <T extends NumericType<T> & NativeType<T> & RealType<T> > MeshImageStack2<T> loadMeshImageStack2dep(Path location) throws IOException {
+    public static <T extends NumericType<T> & NativeType<T>> MeshImageStack2<T> loadMeshImageStack2dep(Path location) throws IOException {
         MeshImageStack2<T> mist;
         try{
             mist = mobieLoad(location.toString());
@@ -114,32 +125,13 @@ public class LoadZarr {
     }
 
     public static <T extends NumericType<T> & NativeType<T> & RealType<T> > MeshImageStack2<T> loadMeshImageStack2(Path location) throws IOException {
-
         MultiscaleImageAdapter<T> msia = load3DZarrFile(location.toAbsolutePath().toString());
-        List<Source<T>> sources = new ArrayList<>();
-        for(int i = 0; i<msia.getNChannels(); i++){
-            sources.add(msia.getAsBdvSource(i));
-        }
-        RandomAccessibleInterval<T> rai = msia.images.data.get(0);
-        long px = rai.dimension(0)*rai.dimension(1)*rai.dimension(2);
-        MeshImageStack2<T> mist;
-        if (px < Integer.MAX_VALUE) {
-            mist = new MeshImageStack2<>(sources);
-            Calibration cb = mist.getImageJCalibration();
-            cb.setTimeUnit(msia.getTimeUnit());
-            cb.frameInterval = msia.getTimeInterval();
-        } else{
-            System.out.println("no buffer!");
-            mist = new MeshImageStack2UB<>(sources);
-        }
-
+        MeshImageStack2<T> mist = msia.getMeshImageStack(0);
         mist.setShortTitle(location.getFileName().toString());
-        Calibration ij = mist.getImageJCalibration();
-        msia.calibrateUnits(ij);
         return mist;
     }
 
-    public static <T extends NumericType<T> & NativeType<T> & RealType<T>> MeshImageStack2<T> loadMeshImageStack2(URI uri) throws IOException {
+    public static <T extends NumericType<T> & NativeType<T>> MeshImageStack2<T> loadMeshImageStack2(URI uri) throws IOException {
         MultiscaleImageAdapter<T> msia = load3DZarrFile(uri.toString());
         List<Source<T>> sources = new ArrayList<>();
         for(int i = 0; i<msia.getNChannels(); i++){
@@ -194,6 +186,7 @@ public class LoadZarr {
 
     public static void main(String[] args) throws IOException {
         //MultiscaleImageAdapter<?> adapter = load3DZarrFile("../../../working/zeiss-trip-2026-4-15/LLS7/p04-2026-04-16_07-49-01.zarr");
-        MeshImageStack2<?> stack = loadMeshImageStack2(Paths.get("../../../working/zeiss-trip-2026-4-15/LLS7/p04-2026-04-16_07-49-01.zarr"));
+        MeshImageStack2<?> stack = mobieLoad(Paths.get("/Users/msmith5/working/nefeli-3d-2d/second/20260421_A1-1_63X.zarr").toString());
+
     }
 }

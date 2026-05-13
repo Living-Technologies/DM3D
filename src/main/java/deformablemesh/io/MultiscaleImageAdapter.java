@@ -2,6 +2,8 @@ package deformablemesh.io;
 
 import bdv.util.RandomAccessibleIntervalMipmapSource4D;
 import bdv.viewer.Source;
+import deformablemesh.gimli2b.MeshImageStack2;
+import deformablemesh.gimli2b.MeshImageStack2UB;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.measure.Calibration;
@@ -16,6 +18,7 @@ import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.NumericType;
+import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
@@ -156,6 +159,7 @@ public class MultiscaleImageAdapter<T extends NumericType<T> & NativeType<T>> {
     public int getNextLevel(){
         return images.data.size();
     }
+
     static public long getSize(RandomAccessibleInterval<?> rai){
         long size = 1;
         for(int i = 0; i<rai.numDimensions(); i++){
@@ -221,6 +225,29 @@ public class MultiscaleImageAdapter<T extends NumericType<T> & NativeType<T>> {
         images.calibrate(cb, level);
         plus.setOpenAsHyperStack(true);
         return plus;
+    }
+
+    public MeshImageStack2<T> getMeshImageStack(int level){
+        List<Source<T>> sources = new ArrayList<>();
+        for(int i = 0; i<getNChannels(); i++){
+            sources.add(getAsBdvSource(i));
+        }
+        RandomAccessibleInterval<T> rai = images.data.get(0);
+        long px = rai.dimension(0)*rai.dimension(1)*rai.dimension(2);
+        MeshImageStack2<T> mist;
+        if (px < Integer.MAX_VALUE) {
+            mist = new MeshImageStack2<>(sources);
+            Calibration cb = mist.getImageJCalibration();
+            cb.setTimeUnit(getTimeUnit());
+            cb.frameInterval = getTimeInterval();
+        } else{
+            System.out.println("no buffer!");
+            mist = new MeshImageStack2UB<>(sources);
+        }
+
+        Calibration ij = mist.getImageJCalibration();
+        calibrateUnits(ij);
+        return mist;
     }
 
     public Source<T> getAsBdvSource(int channel){

@@ -32,7 +32,6 @@ public class RemoteZarrAccess {
 
 
         N5Factory factory = new N5Factory(){
-            @Override
             public KeyValueAccess getKeyValueAccess(final URI uri){
                 return kva;
             }

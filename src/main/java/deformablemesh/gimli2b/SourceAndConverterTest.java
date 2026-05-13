@@ -132,16 +132,12 @@ public class SourceAndConverterTest {
         bvb.startBVB("DM3D visualization");
         bvb.settingsDialogBVV();
 
-
-
-
-
         File location = GuiTools.getDirectory(IJ.getInstance(), "Select Zarr Folder");
         if(location == null){
             return;
         }
-        MeshImageStack2<?> mist = LoadZarr.loadMeshImageStack2(location.toPath());
         MultiscaleImageAdapter<?> msia = LoadZarr.load3DZarrFile(location.getAbsolutePath());
+
         Color[] colors = { Color.MAGENTA, Color.CYAN, Color.RED, Color.YELLOW};
         for(int i = 0; i<msia.getNChannels(); i++){
             Color c = colors[i];
@@ -154,7 +150,7 @@ public class SourceAndConverterTest {
             //bvvSource.setColor(new ARGBType(getValue(colors[i])));
             //bvvSource.setDisplayRange(0, 4000);
         }
-
+        MeshImageStack2<?> mist = msia.getMeshImageStack(0);
         Path mesh = GuiTools.getAFile(IJ.getInstance(), "Select Mesh File");
         if(mesh != null){
             MultiMeshShape mmc = new MultiMeshShape();

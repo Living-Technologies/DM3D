@@ -41,7 +41,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class MeshImageStack2<T extends NumericType<T> & NativeType<T> & RealType<T>> extends MeshImageStack {
+public class MeshImageStack2<T extends NumericType<T> & NativeType<T>> extends MeshImageStack {
     //Each channel is a source
     List<Source<T>> sources;
     Calibration ijCalibration;

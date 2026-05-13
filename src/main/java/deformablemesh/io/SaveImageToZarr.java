@@ -88,14 +88,19 @@ public class SaveImageToZarr {
 
             long[] translation = new long[5];
             translation[4] = timepoint;
-
             if( !newZarr ) {
                 N5Utils.saveRegion(Views.translate(img,translation ), writer, datasetPath + arrayDatasetPath);
             } else{
                 System.out.println("to here!");
                 int[] blocks = {plus.getWidth(), plus.getHeight(), plus.getNSlices(), 1, 1};
                 saveMetadata(plus, writer, img.dimensionsAsLongArray());
-                N5Utils.save(Views.translate(img,translation ), writer,datasetPath + arrayDatasetPath, blocks, new BloscCompression());
+                N5Utils.save(
+                        Views.translate(img,translation ),
+                        writer,
+                        datasetPath + arrayDatasetPath,
+                        blocks,
+                        new BloscCompression()
+                );
             }
         }
     }
