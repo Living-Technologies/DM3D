@@ -214,7 +214,7 @@ public class RegionGrowing{
                     if(x<0 || x>=width){
                         continue;
                     }
-                    int l = getLabel(x, y, z);
+                    int l = getLabel(x, y, z) & 0xffff;
                     if( l!= label){
                         return true;
                     }

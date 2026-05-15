@@ -12,6 +12,7 @@ Essentially load a 3D time series into fiji. **Often programs that generate mask
 will not produce the correct metadata** It is important that the pixel dimensions are correct.
 
 Starting dm3d, selecting the image. Use manage volumes and 
+
 ![example of labelled volume](images/labelled_volume.png)
 
 If the labels look like they have the wrong scale, check the image properties, then select the
