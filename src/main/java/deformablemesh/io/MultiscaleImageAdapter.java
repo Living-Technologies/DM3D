@@ -45,6 +45,10 @@ public class MultiscaleImageAdapter<T extends NumericType<T> & NativeType<T>> {
         images.calibrate(ij, 0);
     }
 
+    public RandomAccessibleInterval<T> getRai() {
+        return images.data.get(0);
+    }
+
     static class MultiscaleImage<V>{
         List<double[]> scales = new ArrayList<>();
         List<double[]> offsets = new ArrayList<>();
@@ -243,6 +247,9 @@ public class MultiscaleImageAdapter<T extends NumericType<T> & NativeType<T>> {
         } else{
             System.out.println("no buffer!");
             mist = new MeshImageStack2UB<>(sources);
+            Calibration cb = mist.getImageJCalibration();
+            cb.setTimeUnit(getTimeUnit());
+            cb.frameInterval = getTimeInterval();
         }
 
         Calibration ij = mist.getImageJCalibration();

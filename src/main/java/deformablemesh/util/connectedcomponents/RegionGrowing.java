@@ -82,7 +82,7 @@ public class RegionGrowing{
             x = xyz[0];
             y = xyz[1];
             z = xyz[2];
-            this.xyz = xyz;
+                this.xyz = xyz;
         }
 
         @Override

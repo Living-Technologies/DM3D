@@ -24,14 +24,10 @@ import org.janelia.saalfeldlab.n5.blosc.BloscCompression;
 import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
 import org.janelia.saalfeldlab.n5.universe.N5Factory;
 import org.janelia.saalfeldlab.n5.universe.metadata.axes.Axis;
-import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.NgffSingleScaleAxesMetadata;
-import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadata;
-import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadataParser;
-import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMultiScaleMetadata;
-import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMultiScaleMetadataMutable;
-import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.coordinateTransformations.CoordinateTransformation;
-import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.coordinateTransformations.ScaleCoordinateTransformation;
-import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.coordinateTransformations.TranslationCoordinateTransformation;
+import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.*;
+import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.coordinateTransformations.CoordinateTransformation;
+import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.coordinateTransformations.ScaleCoordinateTransformation;
+import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.coordinateTransformations.TranslationCoordinateTransformation;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -55,7 +51,6 @@ public class SaveImageToZarr {
     }
 
     public static <T extends NativeType<T> & NumericType<T>> RandomAccessibleInterval<T>  getXYZCTRandomAccessIntervale(ImagePlus plus){
-        //RandomAccessibleInterval<T> img = ImageJFunctions.wrap(plus);
         RandomAccessibleInterval<T> img = (RandomAccessibleInterval<T>)VirtualStackAdapter.wrap(plus);
         if(plus.getNChannels() > 1){
             //switches channesl with z.
@@ -78,7 +73,6 @@ public class SaveImageToZarr {
     public static <T extends NativeType<T> & NumericType<T>> void appendToZarrRa(ImagePlus plus, Path op, int timepoint) throws Exception {
         boolean newZarr = !Files.exists(op);
         N5Factory factory = new N5Factory();
-        factory.zarrDimensionSeparator("/");
 
         try( N5Writer writer = factory.openWriter(op.toString()) ) {
             RandomAccessibleInterval<T> img = getXYZCTRandomAccessIntervale(plus);
@@ -93,7 +87,6 @@ public class SaveImageToZarr {
             } else{
                 System.out.println("to here!");
                 int[] blocks = {plus.getWidth(), plus.getHeight(), plus.getNSlices(), 1, 1};
-                saveMetadata(plus, writer, img.dimensionsAsLongArray());
                 N5Utils.save(
                         Views.translate(img,translation ),
                         writer,
@@ -101,6 +94,7 @@ public class SaveImageToZarr {
                         blocks,
                         new BloscCompression()
                 );
+                saveMetadata(plus, writer, img.dimensionsAsLongArray());
             }
         }
     }
@@ -182,16 +176,16 @@ public class SaveImageToZarr {
             }
             CoordinateTransformation<?> id = new ScaleCoordinateTransformation(identity);
             CoordinateTransformation<?> og = new TranslationCoordinateTransformation(origin);
-            final OmeNgffMultiScaleMetadata meta = new OmeNgffMultiScaleMetadata(metadata.getAxes().length,
-                    datasetPath, datasetPath, "AVERAGE", "0.4",
-                    metadata.getAxes(),
-                    ms.getDatasets(), null,
-                    new CoordinateTransformation[]{id, og},
-                    ms.metadata,
-                    true);
 
+            final OmeNgffMultiScaleMetadata meta = new OmeNgffMultiScaleMetadata(
+                    metadata.getAxes().length, datasetPath, datasetPath,
+                    "AVERAGE", "0.5", metadata.getAxes(),
+                    ms.getDatasets(),
+                    new CoordinateTransformation<?>[]{id, og},
+                    new DatasetAttributes[]{da},
+                    null
+            );
             final OmeNgffMetadata ngffMetadata = new OmeNgffMetadata(datasetPath, new OmeNgffMultiScaleMetadata[]{meta});
-
             new OmeNgffMetadataParser().writeMetadata(ngffMetadata, writer, datasetPath);
 
     }
@@ -239,7 +233,6 @@ public class SaveImageToZarr {
                     dimensions,
                     blocks, type, new BloscCompression()
             );
-
             NgffSingleScaleAxesMetadata metadata = new NgffSingleScaleAxesMetadata(
                     arrayDatasetPath,
                     scale,
@@ -254,21 +247,23 @@ public class SaveImageToZarr {
                 origin[i] = 0.0;
                 identity[i] = 1.0;
             }
+
             CoordinateTransformation<?> id = new ScaleCoordinateTransformation(identity);
             CoordinateTransformation<?> og = new TranslationCoordinateTransformation(origin);
-            final OmeNgffMultiScaleMetadata meta = new OmeNgffMultiScaleMetadata(metadata.getAxes().length,
-                    datasetPath, datasetPath, "AVERAGE", "0.4",
-                    metadata.getAxes(),
-                    ms.getDatasets(), null,
-                    new CoordinateTransformation[]{id, og},
-                    ms.metadata,
-                    true);
-
+            final OmeNgffMultiScaleMetadata meta = new OmeNgffMultiScaleMetadata(
+                        metadata.getAxes().length, datasetPath, datasetPath,
+                    "AVERAGE", "0.5", metadata.getAxes(),
+                    ms.getDatasets(),
+                    new CoordinateTransformation<?>[]{id, og},
+                    new DatasetAttributes[]{da},
+                    null
+                    );
             final OmeNgffMetadata ngffMetadata = new OmeNgffMetadata(datasetPath, new OmeNgffMultiScaleMetadata[]{meta});
 
-            new OmeNgffMetadataParser().writeMetadata(ngffMetadata, writer, datasetPath);
 
             N5Utils.save(img, writer,datasetPath + arrayDatasetPath, blocks, new BloscCompression());
+            new OmeNgffMetadataParser().writeMetadata(ngffMetadata, writer, datasetPath);
+
         }
     }
     public static <T extends NativeType<T> & NumericType<T>> void saveToZarr(ImagePlus plus, Path op) throws Exception {

@@ -18,7 +18,7 @@ import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.NumericType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.util.Pair;
-import org.embl.mobie.io.imagedata.N5ImageData;
+//import org.embl.mobie.io.imagedata.N5ImageData;
 import org.janelia.saalfeldlab.n5.N5Reader;
 import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
 import org.janelia.saalfeldlab.n5.universe.N5Factory;
@@ -27,6 +27,8 @@ import org.janelia.saalfeldlab.n5.universe.metadata.N5Metadata;
 import org.janelia.saalfeldlab.n5.universe.metadata.SpatialMultiscaleMetadata;
 import org.janelia.saalfeldlab.n5.universe.metadata.axes.Axis;
 import org.janelia.saalfeldlab.n5.universe.metadata.axes.AxisMetadata;
+import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.NgffSingleScaleAxesMetadata;
+import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.OmeNgffMetadata;
 
 import java.io.IOException;
 import java.net.URI;
@@ -45,26 +47,15 @@ public class LoadZarr {
         List<double[]> scales = new ArrayList<>();
         List<double[]> offsets = new ArrayList<>();
 
-        if(rootMetadata instanceof org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadata){
-            org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadata meta = (org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadata) rootMetadata;
-            org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.NgffSingleScaleAxesMetadata[] o = meta.getChildrenMetadata();
-            org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.NgffSingleScaleAxesMetadata axis = o[0];
+        if(rootMetadata instanceof OmeNgffMetadata){
+            OmeNgffMetadata meta = (OmeNgffMetadata) rootMetadata;
+            NgffSingleScaleAxesMetadata[] o = meta.getChildrenMetadata();
+            NgffSingleScaleAxesMetadata axis = o[0];
             Axis[] ngff_axis = axis.getAxes();
             for(Axis a : ngff_axis){
                 axes.add(a);
             }
-            for(org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.NgffSingleScaleAxesMetadata ax : o){
-                scales.add(ax.getScale());
-                offsets.add(ax.getTranslation());
-            }
-        }else if(rootMetadata instanceof org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v05.OmeNgffV05Metadata){
-            org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v05.OmeNgffV05Metadata meta = (org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v05.OmeNgffV05Metadata)rootMetadata;
-            org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.NgffSingleScaleAxesMetadata[] o = meta.getChildrenMetadata();
-            Axis[] ngff_axis = o[0].getAxes();
-            for(Axis a : ngff_axis){
-                axes.add(a);
-            }
-            for(org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.NgffSingleScaleAxesMetadata ax : o){
+            for(NgffSingleScaleAxesMetadata ax : o){
                 scales.add(ax.getScale());
                 offsets.add(ax.getTranslation());
             }
@@ -84,7 +75,7 @@ public class LoadZarr {
         return adapter;
     }
 
-
+    /*
     public static <T extends NumericType<T> & NativeType<T>> MeshImageStack2<T> mobieLoad(String location){
         N5ImageData<T> data = new N5ImageData<>(location);
         data.getSourcesAndConverters();
@@ -113,7 +104,6 @@ public class LoadZarr {
         }
         return mist;
     }
-
     public static <T extends NumericType<T> & NativeType<T>> MeshImageStack2<T> loadMeshImageStack2dep(Path location) throws IOException {
         MeshImageStack2<T> mist;
         try{
@@ -123,6 +113,7 @@ public class LoadZarr {
         }
         return mist;
     }
+    */
 
     public static <T extends NumericType<T> & NativeType<T> & RealType<T> > MeshImageStack2<T> loadMeshImageStack2(Path location) throws IOException {
         MultiscaleImageAdapter<T> msia = load3DZarrFile(location.toAbsolutePath().toString());
@@ -185,8 +176,8 @@ public class LoadZarr {
     }
 
     public static void main(String[] args) throws IOException {
-        //MultiscaleImageAdapter<?> adapter = load3DZarrFile("../../../working/zeiss-trip-2026-4-15/LLS7/p04-2026-04-16_07-49-01.zarr");
-        MeshImageStack2<?> stack = mobieLoad(Paths.get("/Users/msmith5/working/nefeli-3d-2d/second/20260421_A1-1_63X.zarr").toString());
+        MultiscaleImageAdapter<?> adapter = load3DZarrFile("/Users/msmith5/working/zeiss-trip-2026-4-15/LLS7/p05-2026-04-16_07-49-01.zarr");
+        //MeshImageStack2<?> stack = mobieLoad(Paths.get("/Users/msmith5/working/nefeli-3d-2d/second/20260421_A1-1_63X.zarr").toString());
 
     }
 }

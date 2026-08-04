@@ -54,10 +54,10 @@ public class TexturedPlaneDataObject extends DeformableMeshDataObject {
     public TexturedPlaneDataObject(DeformableMesh3D mesh, MeshImageStack stack){
         super(mesh.nodes, mesh.connections, mesh.triangles, mesh.positions, mesh.connection_index, mesh.triangle_index);
         offsets = new double[]{ stack.offsets[0], stack.offsets[1], stack.offsets[2]};
+        this.stack = stack;
         texturedAppearance = createTexturedSurface();
         surface_object.setAppearance(texturedAppearance);
 
-        this.stack = stack;
         int[] dims = {stack.getWidthPx(), stack.getHeightPx(), stack.getNSlices()};
 
         volume = new MultiChannelVolumeTexture(dims);

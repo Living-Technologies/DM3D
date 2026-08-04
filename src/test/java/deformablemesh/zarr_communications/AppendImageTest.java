@@ -8,9 +8,14 @@ import net.imglib2.img.VirtualStackAdapter;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.NumericType;
 import net.imglib2.view.Views;
+import org.janelia.saalfeldlab.n5.DatasetAttributes;
+import org.janelia.saalfeldlab.n5.N5Reader;
 import org.janelia.saalfeldlab.n5.N5Writer;
 import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
 import org.janelia.saalfeldlab.n5.universe.N5Factory;
+import org.janelia.saalfeldlab.n5.universe.N5MetadataUtils;
+import org.janelia.saalfeldlab.n5.universe.metadata.N5Metadata;
+import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.OmeNgffMetadata;
 import org.junit.Test;
 
 import java.nio.file.Path;
@@ -29,16 +34,18 @@ public class AppendImageTest {
         int c = 2;
         ImagePlus plus = IOTest.generic(w, h, z, t, c);
         N5Factory factory = new N5Factory();
-        factory.zarrDimensionSeparator("/");
         Path op = Paths.get("modify-test.zarr");
+
+        N5Reader reader = factory.openReader(op.toString());
+        OmeNgffMetadata rootMetadata = (OmeNgffMetadata)N5MetadataUtils.parseMetadata(reader, "/");
+        DatasetAttributes da = rootMetadata.getChildrenMetadata()[0].getAttributes();
+        long[] shape = da.getDimensions();
         try (N5Writer writer = factory.openWriter(op.toString())) {
             RandomAccessibleInterval<T> img = SaveImageToZarr.getXYZCTRandomAccessIntervale(plus);
 
             String datasetPath = "";
             String arrayDatasetPath = "/s0";
 
-            String shapeKey = "shape";
-            long[] shape = writer.getAttribute(datasetPath + arrayDatasetPath, shapeKey, long[].class);
             int n = shape.length - 1;
 
             long[] translation = new long[shape.length];

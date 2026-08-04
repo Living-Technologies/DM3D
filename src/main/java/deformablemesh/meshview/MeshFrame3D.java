@@ -83,7 +83,7 @@ import java.util.stream.IntStream;
  * Date: 7/2/13
  * Time: 8:45 AM
  */
-public class    MeshFrame3D {
+public class MeshFrame3D {
     DataCanvas canvas;
     JFrame frame;
     Axis3D axis;

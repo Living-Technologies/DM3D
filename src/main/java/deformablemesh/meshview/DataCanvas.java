@@ -25,6 +25,8 @@
  */
 package deformablemesh.meshview;
 
+import Jama.EigenvalueDecomposition;
+import Jama.Matrix;
 import deformablemesh.util.Vector3DOps;
 import org.jogamp.java3d.Background;
 import org.jogamp.java3d.BoundingSphere;
@@ -62,6 +64,7 @@ import java.awt.image.BufferedImage;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -603,10 +606,9 @@ public class DataCanvas extends Canvas3D {
      * @param normal
      */
     public void lookTowards(double[] normal, double[] up){
-        TransformGroup ctg = universe.getViewingPlatform().getViewPlatformTransform();
-        //ctg.getTransform(transform);
 
         Vector3d n = new Vector3d(normal);
+        n.normalize();
         Vector3d vup = new Vector3d(up);
         vup.normalize();
 
@@ -621,16 +623,46 @@ public class DataCanvas extends Canvas3D {
         v.normalize();
         Vector3d u = new Vector3d();
         u.cross(v, n);
-
+        u.normalize();
         Matrix3d matrix = new Matrix3d();
+
         matrix.setColumn(0, u);
         matrix.setColumn(1, v);
         matrix.setColumn(2, n);
 
 
         //we want to rotate our view such that the normal is back towards us.
+
         camera.aa = new AxisAngle4d();
         camera.aa.set(matrix);
+
+        double trace = matrix.m00 + matrix.m11 + matrix.m22;
+        if(trace != 0 && camera.aa.angle == 0){
+            Matrix m = new Matrix(
+                    new double[][]{
+                            {matrix.m00, matrix.m01, matrix.m02},
+                            {matrix.m10, matrix.m11, matrix.m12},
+                            {matrix.m20, matrix.m21, matrix.m22}
+                    }
+            );
+            EigenvalueDecomposition eig = m.eig();
+            double[] ev = eig.getRealEigenvalues();
+            int dex = -1;
+            System.out.println(Arrays.toString(ev));
+            for(int i = 0; i<ev.length; i++){
+                double delta = Math.abs(ev[i] - 1);
+                if(delta < 1e-8){
+                    dex = i;
+                }
+            }
+            if(dex >= 0 ) {
+                double[][] arr = eig.getV().getArray();
+                camera.aa = new AxisAngle4d(arr[0][dex], arr[1][dex], arr[2][dex], Math.acos((trace - 1) / 2));
+            }
+
+        }
+
+
 
         updateView();
 

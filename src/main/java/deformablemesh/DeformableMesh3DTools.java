@@ -30,6 +30,7 @@ import deformablemesh.geometry.Connection3D;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Node3D;
 import deformablemesh.geometry.Triangle3D;
+import deformablemesh.geometry.interceptable.InterceptingMesh3D;
 import deformablemesh.io.MeshReader;
 import deformablemesh.track.Track;
 import deformablemesh.util.MeshVolumeToBinary;
@@ -991,7 +992,25 @@ public class DeformableMesh3DTools {
 
         return mesh;
     }
+    public static double jaccardIndex(DeformableMesh3D mesh, DeformableMesh3D other, MeshImageStack space){
+        Box3D overlap = mesh.getBoundingBox().getIntersectingBox(other.getBoundingBox());
+        if(overlap.getVolume() > 0){
+            List<int[]> px = DeformableMesh3DTools.getContainedPixels(space, mesh);
+            double sum = 0;
+            InterceptingMesh3D check = new InterceptingMesh3D(other);
+            for(int[] pt : px){
+                double[] r = {pt[0], pt[1], pt[2]};
+                if(check.contains(space.getNormalizedCoordinate(r))){
+                    sum +=  1;
+                };
+            }
+            return space.getNormalizedVolume(sum)*2/(mesh.calculateVolume() + other.calculateVolume());
+        } else{
+            return 0;
+        }
 
+
+    }
     public static DeformableMesh3D createRhombicDodecahedron(double l){
         List<double[]> points = new ArrayList<>(14);
         List<int[]> connections = new ArrayList<>(36); // 24 connections + 1 new connection per face

@@ -6,11 +6,8 @@ import bvb.core.BigVolumeBrowser;
 import bvb.shapes.MultiMeshShape;
 import bvvpg.core.VolumeViewerFrame;
 import bvvpg.core.VolumeViewerPanel;
-import bvvpg.vistools.Bvv;
-import bvvpg.vistools.BvvFunctions;
-import bvvpg.vistools.BvvHandleFrame;
-import bvvpg.vistools.BvvOptions;
-import bvvpg.vistools.BvvStackSource;
+import bvvpg.vistools.*;
+import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.gui.GuiTools;
 import deformablemesh.gui.SwingJSTerm;
@@ -18,6 +15,7 @@ import deformablemesh.io.LoadZarr;
 import deformablemesh.io.MeshReader;
 import deformablemesh.io.MultiscaleImageAdapter;
 import deformablemesh.track.Track;
+import deformablemesh.util.ColorSuggestions;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
@@ -40,6 +38,7 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -48,109 +47,30 @@ import java.util.Map;
  * "SourceAndConverter"
  */
 public class SourceAndConverterTest {
-    static SourceAndConverter<UnsignedShortType> build(ImagePlus plus, int channel){
-        return null;
-    }
+    MeshImageStack mist;
+    BigVolumeBrowser bvb;
+    public void addImage() throws IOException {
 
-
-    static public void buildController(Bvv bvv){
-        BvvHandleFrame handle = (BvvHandleFrame)bvv.getBvvHandle();
-        SwingJSTerm terminal = new SwingJSTerm();
-        terminal.addToScriptEngine("bvv", bvv);
-        terminal.showTerminal();
-        VolumeViewerPanel viewer = handle.getBigVolumeViewer().getViewer();
-        VolumeViewerFrame frame = handle.getBigVolumeViewer().getViewerFrame();
-        JDialog log = new JDialog(frame, "browse volumes", false);
-
-        JPanel panel = new JPanel();
-        JButton play = new JButton("play");
-        play.addActionListener(evt->{
-            play.setEnabled(false);
-            new Thread(){
-                @Override
-                public void run(){
-                    ImageStack stack = new ImageStack(viewer.getWidth(), viewer.getHeight());
-                    for( int i = 0; i < 360; i++){
-                        viewer.setTimepoint(i);
-                        try{
-                            Thread.sleep(100);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                            break;
-                        }
-                        BufferedImage img = new BufferedImage(viewer.getWidth(), viewer.getHeight(), BufferedImage.TYPE_INT_ARGB);
-                        Graphics g = img.getGraphics();
-                        viewer.getDisplay().getComponent().paintAll(g);
-                        g.dispose();
-                        ImageProcessor proc = new ColorProcessor(img);
-                        stack.addSlice(proc);
-
-                    }
-                    new ImagePlus("snap shots", stack).show();
-                    play.setEnabled(true);
-                }
-            }.start();
-        });
-        panel.add(play);
-        log.setContentPane(panel);
-        log.pack();
-        log.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-        log.setVisible(true);
-    }
-
-    static Bvv buildBvv(){
-        double dCam = 2000.;
-        double dClipNear = 1000.;
-        double dClipFar = 15000.;
-
-        // parameters that require bvv restart,
-        // see https://github.com/ekatrukha/BigTrace/wiki/Volume-Render-Settings
-        int renderWidth = 800;
-        int renderHeight = 600;
-        int numDitherSamples = 3;
-        int cacheBlockSize = 32;
-        int maxCacheSizeInMB = 500;
-        int ditherWidth = 3;
-
-        Bvv bvv = BvvFunctions.show( Bvv.options().frameTitle( "DM3D Big Volume Viewer" ).
-                dCam(dCam).
-                dClipNear(dClipNear).
-                dClipFar(dClipFar).
-                renderWidth(renderWidth).
-                renderHeight(renderHeight).
-                numDitherSamples(numDitherSamples ).
-                cacheBlockSize(cacheBlockSize ).
-                maxCacheSizeInMB(maxCacheSizeInMB ).
-                ditherWidth(ditherWidth)
-        );
-        return bvv;
-    }
-
-    public static void main(String[] args) throws IOException {
-        new ImageJ();
-        BigVolumeBrowser bvb = new BigVolumeBrowser();
-        bvb.startBVB("DM3D visualization");
-        bvb.settingsDialogBVV();
-
-        File location = GuiTools.getDirectory(IJ.getInstance(), "Select Zarr Folder");
+        Path location = GuiTools.getAFile(IJ.getInstance(), "Select Image File or Folder");
         if(location == null){
             return;
         }
-        MultiscaleImageAdapter<?> msia = LoadZarr.load3DZarrFile(location.getAbsolutePath());
-
-        Color[] colors = { Color.MAGENTA, Color.CYAN, Color.RED, Color.YELLOW};
-        for(int i = 0; i<msia.getNChannels(); i++){
-            Color c = colors[i];
-            if(c == null) continue;
-            Source<?> source = msia.getAsBdvSource(i);
-
-            List<BvvStackSource<?>> bvvSources = bvb.addSource(source).getB();
-            System.out.println(bvvSources.size());
-            //BvvStackSource< ? > bvvSource = BvvFunctions.show(source, mist.getNFrames(), new BvvOptions().addTo(bvb.bvv));
-            //bvvSource.setColor(new ARGBType(getValue(colors[i])));
-            //bvvSource.setDisplayRange(0, 4000);
+        if(Files.isDirectory(location)){
+            if(location.getFileName().toString().endsWith(".zarr")){
+                MultiscaleImageAdapter<?> msia = LoadZarr.load3DZarrFile(location.toAbsolutePath().toString());
+                for(int i = 0; i<msia.getNChannels(); i++){
+                    Source<?> source = msia.getAsBdvSource(i);
+                    List<BvvStackSource<?>> bvvSources = bvb.addSource(source).getB();
+                }
+                mist = msia.getMeshImageStack(0);
+            }
+        } else{
+            mist = new MeshImageStack(location);
+            bvb.addImagePlus(mist.getOriginalPlus());
         }
-        MeshImageStack2<?> mist = msia.getMeshImageStack(0);
+
+    }
+    public void loadMeshes() throws IOException {
         Path mesh = GuiTools.getAFile(IJ.getInstance(), "Select Mesh File");
         if(mesh != null){
             MultiMeshShape mmc = new MultiMeshShape();
@@ -172,10 +92,11 @@ public class SourceAndConverterTest {
                 List<Map<Integer, Mesh>> tracks = Imglib2MeshReader.loadMeshes(mesh.toFile());
                 while(tracks.size() > 0){
                     Map<Integer, Mesh> t = tracks.remove(tracks.size() - 1);
+                    Color c = ColorSuggestions.getSuggestion();
                     for(Integer frame : t.keySet()){
                         Mesh m = t.get(frame);
                         Imglib2Mesh.transformFromNormalizedSpaceToImageSpace(m, mist);
-                        mmc.addMesh(m, null, frame, Color.BLUE);
+                        mmc.addMesh(m, null, frame, c);
                     }
                 }
             }
@@ -183,8 +104,56 @@ public class SourceAndConverterTest {
 
 
         }
+    }
 
-        buildController(bvb.bvv);
+    static public void buildController(BigVolumeBrowser bvb){
+        SourceAndConverterTest test = new SourceAndConverterTest();
+        test.bvb = bvb;
+        Bvv bvv = bvb.bvv;
+        BvvHandleFrame handle = (BvvHandleFrame)bvv.getBvvHandle();
+        SwingJSTerm terminal = new SwingJSTerm();
+        terminal.addToScriptEngine("bvv", bvv);
+        terminal.addToScriptEngine("bvb", bvb);
+        terminal.showTerminal();
+        VolumeViewerPanel viewer = handle.getBigVolumeViewer().getViewer();
+        VolumeViewerFrame frame = handle.getBigVolumeViewer().getViewerFrame();
+        JDialog log = new JDialog(frame, "browse volumes", false);
+
+        JPanel panel = new JPanel();
+        JButton importMeshes = new JButton("Import Meshfiles");
+        importMeshes.addActionListener(evt->{
+            try {
+                test.loadMeshes();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        panel.add(importMeshes);
+
+        JButton loadImage = new JButton("Add Image");
+        loadImage.addActionListener(evt->{
+            try {
+                test.addImage();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        panel.add(loadImage);
+        log.setContentPane(panel);
+        log.pack();
+        log.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        log.setVisible(true);
+    }
+
+
+    public static void main(String[] args) throws IOException {
+        new ImageJ();
+        BigVolumeBrowser bvb = new BigVolumeBrowser();
+        bvb.startBVB("DM3D visualization");
+        bvb.settingsDialogBVV();
+
+
+        buildController(bvb);
     }
     static int getValue(Color c){
         return (c.getRed()<<16) + (c.getGreen()<<8) + c.getBlue();
