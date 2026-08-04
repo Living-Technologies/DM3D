@@ -1,8 +1,6 @@
-package deformablemesh;
+package deformablemesh.geometry.meshgeneration;
 
 import deformablemesh.geometry.DeformableMesh3D;
-import deformablemesh.geometry.meshgeneration.RegionGenerator;
-import deformablemesh.geometry.meshgeneration.RegionMesher;
 import deformablemesh.util.connectedcomponents.Region;
 
 import java.util.List;
