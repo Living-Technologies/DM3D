@@ -425,13 +425,16 @@ public class DataCanvas extends Canvas3D {
         if(viewers.size()>0){
             pickCanvas.setShapeLocation(evt);
 
-
-            PickResult[] results = pickCanvas.pickAllSorted();
-            if(results == null){
-                results = new PickResult[0];
-            }
-            for(CanvasView viewer: viewers){
-                viewer.updateMoved(results, evt);
+            try {
+                PickResult[] results = pickCanvas.pickAllSorted();
+                if (results == null) {
+                    results = new PickResult[0];
+                }
+                for (CanvasView viewer : viewers) {
+                    viewer.updateMoved(results, evt);
+                }
+            } catch(Exception e){
+                System.out.println("picking error: " + e.getMessage());
             }
         }
     }
