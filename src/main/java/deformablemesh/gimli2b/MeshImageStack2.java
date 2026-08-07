@@ -273,8 +273,9 @@ public class MeshImageStack2<T extends NumericType<T> & NativeType<T>> extends M
      */
     @Override
     public MeshImageStack duplicate(){
-
-        return new MeshImageStack2<T>(sources, CURRENT, channel, mipmap);
+        MeshImageStack2<T> duplicate = new MeshImageStack2<T>(sources, CURRENT, channel, mipmap);
+        duplicate.setShortTitle(getShortTitle());
+        return duplicate;
     }
 
     /**

@@ -26,6 +26,12 @@ import java.util.List;
 public class ChannelVolumeManagement {
     SegmentationController controller;
     ControlFrame controlFrame;
+    List<JComponent> displayedChannels = new ArrayList<>();
+    JPanel available;
+    GridBagConstraints gbc;
+    JDialog channelManager;
+    private int DISPLAYED_Y = -1;
+
     public ChannelVolumeManagement(SegmentationController sc){
         controller = sc;
     }
@@ -53,18 +59,17 @@ public class ChannelVolumeManagement {
         if(mf3d == null){
             return;
         }
-        JDialog channelManager = new JDialog(parent, true);
+        channelManager = new JDialog(parent, true);
 
         JPanel content = new JPanel(new BorderLayout());
 
 
         MeshImageStack stack = controller.getMeshImageStack();
-        JPanel available = new JPanel();
-        available.setLayout(new BoxLayout( available, BoxLayout.PAGE_AXIS) );
+        available = new JPanel();
+        //available.setLayout(new BoxLayout( available, BoxLayout.PAGE_AXIS) );
         List<List<JComponent>> ac = availableChannels(stack);
-        List<List<JComponent>> existing = showingChannels(controller.getMeshFrame3D());
         GridBagLayout layout = new GridBagLayout();
-        GridBagConstraints gbc = new GridBagConstraints();
+        gbc = new GridBagConstraints();
         available.setLayout(layout);
 
         List<JComponent> header = new ArrayList<>();
@@ -87,10 +92,8 @@ public class ChannelVolumeManagement {
         gbc.gridx = 2;
         available.add(new JLabel("volumes showing"), gbc);
         gbc.gridwidth = 1;
-        for(List<JComponent> row : existing){
-            gbc.gridy += 1;
-            addRow(available, gbc, row);
-        }
+        DISPLAYED_Y = gbc.gridy;
+        displayShowing();
 
         available.setLayout(layout);
         content.add( available, BorderLayout.CENTER );
@@ -135,8 +138,20 @@ public class ChannelVolumeManagement {
         System.out.println("set visible");
     }
 
-    private void removeRow(JComponent comp){
-
+    private void displayShowing(){
+        for(JComponent displayed : displayedChannels){
+            available.remove(displayed);
+        }
+        displayedChannels.clear();
+        gbc.gridy = DISPLAYED_Y;
+        List<List<JComponent>> existing = showingChannels(controller.getMeshFrame3D());
+        for(List<JComponent> row : existing){
+            gbc.gridy += 1;
+            addRow(available, gbc, row);
+            displayedChannels.addAll(row);
+        }
+        available.invalidate();
+        channelManager.pack();
     }
 
     List<JComponent> getRow(ChannelVolume cv, MeshFrame3D mf3d){
@@ -156,6 +171,7 @@ public class ChannelVolumeManagement {
         remove.addActionListener(evt->{
             controller.submit( ()->{
                 mf3d.removeChannelVolume( cv );
+                displayShowing();
             });
         });
         List<JComponent> row = new ArrayList<>();
@@ -210,6 +226,7 @@ public class ChannelVolumeManagement {
                             Double.parseDouble(min.getText()),
                             Double.parseDouble(max.getText()) );
                 }
+                displayShowing();
             });
 
 
