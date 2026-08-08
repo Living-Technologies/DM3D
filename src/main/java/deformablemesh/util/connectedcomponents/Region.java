@@ -34,7 +34,7 @@ import deformablemesh.util.ColorSuggestions;
 import ij.ImageStack;
 import ij.process.ShortProcessor;
 
-import java.awt.Color;
+import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;

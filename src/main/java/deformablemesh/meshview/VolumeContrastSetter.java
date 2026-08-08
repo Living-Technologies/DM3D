@@ -27,14 +27,8 @@ package deformablemesh.meshview;
 
 import deformablemesh.gui.IntensityRanges;
 
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JDialog;
-import javax.swing.JPanel;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Frame;
+import javax.swing.*;
+import java.awt.*;
 
 public class VolumeContrastSetter{
     IntensityRanges range;

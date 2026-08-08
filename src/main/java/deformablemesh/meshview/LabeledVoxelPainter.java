@@ -2,7 +2,7 @@ package deformablemesh.meshview;
 
 import org.jogamp.vecmath.Vector4f;
 
-import java.awt.Color;
+import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 

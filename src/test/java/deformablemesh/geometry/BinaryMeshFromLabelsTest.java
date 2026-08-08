@@ -14,7 +14,7 @@ import ij.process.ImageProcessor;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.awt.Color;
+import java.awt.*;
 import java.util.List;
 import java.util.stream.Collectors;
 

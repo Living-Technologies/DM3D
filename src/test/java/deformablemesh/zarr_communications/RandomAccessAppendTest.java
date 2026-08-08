@@ -4,7 +4,6 @@ import deformablemesh.io.LoadZarr;
 import deformablemesh.io.SaveImageToZarr;
 import ij.ImagePlus;
 import org.junit.Assert;
-import org.junit.Test;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;

@@ -7,8 +7,6 @@ import deformablemesh.geometry.interceptable.InterceptingMesh3D;
 import deformablemesh.util.GaussianKernels;
 import deformablemesh.util.Vector3DOps;
 
-import java.util.Arrays;
-
 public class BrightRegionEnergy implements ExternalEnergy{
     double[] kernel = GaussianKernels.firstDerivative1DKernel();
     double[] kp = GaussianKernels.secondDerivative1DKernel();

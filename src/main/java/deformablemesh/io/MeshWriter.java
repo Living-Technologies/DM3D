@@ -31,16 +31,8 @@ import deformablemesh.geometry.WireframeMesh;
 import deformablemesh.track.MeshTracker;
 import deformablemesh.track.Track;
 
-import java.awt.Color;
-import java.io.BufferedOutputStream;
-import java.io.BufferedWriter;
-import java.io.DataOutput;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.awt.*;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;

@@ -29,8 +29,7 @@ import deformablemesh.geometry.FurrowTransformer;
 import deformablemesh.gui.Drawable;
 import deformablemesh.util.Vector3DOps;
 
-import java.awt.Color;
-import java.awt.Shape;
+import java.awt.*;
 import java.awt.geom.Path2D;
 import java.util.ArrayList;
 import java.util.List;

@@ -26,11 +26,7 @@
 package deformablemesh.util;
 
 import deformablemesh.MeshImageStack;
-import deformablemesh.geometry.Connection3D;
-import deformablemesh.geometry.CurvatureCalculator;
-import deformablemesh.geometry.DeformableMesh3D;
-import deformablemesh.geometry.Node3D;
-import deformablemesh.geometry.Triangle3D;
+import deformablemesh.geometry.*;
 import deformablemesh.io.MeshReader;
 import deformablemesh.track.Track;
 import ij.ImagePlus;

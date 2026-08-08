@@ -1,10 +1,8 @@
 package deformablemesh.io;
 
 import deformablemesh.MeshImageStack;
-import deformablemesh.geometry.meshgeneration.RegionGenerator;
 import deformablemesh.util.ImageLabeller;
 import ij.ImagePlus;
-import org.janelia.saalfeldlab.n5.N5Writer;
 
 import java.nio.file.Files;
 import java.nio.file.Path;

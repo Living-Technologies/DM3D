@@ -33,11 +33,7 @@ import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Connect components for 2D. Connectivity is assumed to be 4 fold, eg connected pixes are neighbors

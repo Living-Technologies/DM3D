@@ -4,13 +4,8 @@ import deformablemesh.MeshImageStack;
 import deformablemesh.SegmentationController;
 import deformablemesh.gimli2b.Dm3dService;
 import lightgraph.Graph;
-import ome.formats.importer.ImportConfig;
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
-
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintStream;
 
 public class VolumeCommand implements Command {
     @Parameter

@@ -4,15 +4,12 @@ import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.MeshCroppingTool;
 import deformablemesh.gui.GuiTools;
 import deformablemesh.io.LoadZarr;
-import deformablemesh.io.MeshReader;
-import deformablemesh.track.Track;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class CropTheSet {
     static String stem(String filename ){

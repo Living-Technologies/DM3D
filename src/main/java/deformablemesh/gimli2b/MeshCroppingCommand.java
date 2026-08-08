@@ -1,17 +1,10 @@
 package deformablemesh.gimli2b;
 
 import deformablemesh.geometry.MeshCroppingTool;
-import deformablemesh.gui.GuiTools;
-import ij.IJ;
-import ij.ImagePlus;
-import ij.gui.GenericDialog;
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
-import javax.swing.JOptionPane;
-import java.io.File;
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 @Plugin(type = Command.class, name="Crop Volumes", menuPath="Plugins > DM3D> tools > Crop Volumes ")

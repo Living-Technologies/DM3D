@@ -29,15 +29,8 @@ import deformablemesh.meshview.TextureProducer;
 import ij.ImageStack;
 import ij.process.ImageProcessor;
 
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Point;
-import java.awt.RadialGradientPaint;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Ellipse2D;

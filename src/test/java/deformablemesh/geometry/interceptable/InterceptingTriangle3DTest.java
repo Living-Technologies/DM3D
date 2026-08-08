@@ -25,18 +25,10 @@
  */
 package deformablemesh.geometry.interceptable;
 
-import deformablemesh.DeformableMesh3DTools;
-import deformablemesh.MeshImageStack;
-import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Intersection;
-import deformablemesh.io.MeshReader;
-import deformablemesh.track.Track;
 import deformablemesh.util.Vector3DOps;
-import ij.plugin.FileInfoVirtualStack;
 import lightgraph.Graph;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 

@@ -10,7 +10,7 @@ import deformablemesh.geometry.Sphere;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.util.ColorSuggestions;
 
-import java.awt.Color;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 

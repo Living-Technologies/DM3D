@@ -28,7 +28,7 @@ package deformablemesh.gui;
 import deformablemesh.SegmentationController;
 import deformablemesh.meshview.MeshFrame3D;
 
-import javax.swing.JFrame;
+import javax.swing.*;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;

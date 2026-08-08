@@ -34,7 +34,7 @@ import org.jogamp.java3d.utils.picking.PickIntersection;
 import org.jogamp.java3d.utils.picking.PickResult;
 import org.jogamp.vecmath.Point3d;
 
-import java.awt.EventQueue;
+import java.awt.*;
 import java.awt.event.MouseEvent;
 
 public class FurrowOrientationListener implements CanvasView{

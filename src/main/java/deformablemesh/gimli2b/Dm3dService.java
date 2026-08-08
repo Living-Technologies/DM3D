@@ -5,7 +5,6 @@ import deformablemesh.SegmentationModel;
 import deformablemesh.gui.ControlFrame;
 import deformablemesh.gui.PropertySaver;
 import deformablemesh.meshview.MeshFrame3D;
-import deformablemesh.plugins.Deforming3DMesh_Plugin;
 import net.imagej.ImageJService;
 import org.scijava.plugin.Plugin;
 import org.scijava.service.AbstractService;

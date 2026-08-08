@@ -6,8 +6,6 @@ import ij.ImageStack;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 
-import java.awt.image.BufferedImage;
-
 public class SnapShotRecorder {
     ImageStack stack;
     SegmentationController controller;

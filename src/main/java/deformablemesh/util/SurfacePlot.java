@@ -33,12 +33,8 @@ import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.meshview.PlotSurface;
 import ij.io.OpenDialog;
 
-import javax.swing.JFrame;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import java.awt.Color;
-import java.awt.FileDialog;
+import javax.swing.*;
+import java.awt.*;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;

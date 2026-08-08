@@ -6,7 +6,6 @@ import deformablemesh.geometry.CurvatureCalculator;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Node3D;
 import deformablemesh.io.MeshReader;
-import deformablemesh.meshview.Arrow;
 import deformablemesh.meshview.ChannelVolume;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.track.Track;

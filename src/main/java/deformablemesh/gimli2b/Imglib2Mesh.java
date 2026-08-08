@@ -23,7 +23,6 @@ import ij.ImageStack;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
-
 import net.imglib2.RandomAccess;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
@@ -36,7 +35,7 @@ import net.imglib2.mesh.alg.MeshConnectedComponents;
 import net.imglib2.mesh.impl.nio.BufferMesh;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 
-import java.awt.Color;
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;

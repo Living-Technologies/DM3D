@@ -23,6 +23,7 @@ package deformablemesh.plugins;/*-
  * THE SOFTWARE.
  * #L%
  */
+
 import deformablemesh.SegmentationController;
 import deformablemesh.SegmentationModel;
 import deformablemesh.gui.ControlFrame;
@@ -31,7 +32,7 @@ import ij.ImageJ;
 import ij.ImagePlus;
 import ij.plugin.PlugIn;
 
-import java.awt.EventQueue;
+import java.awt.*;
 import java.io.File;
 
 public class DeformingMeshSans3D implements PlugIn {

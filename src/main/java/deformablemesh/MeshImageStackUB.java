@@ -1,7 +1,6 @@
 package deformablemesh;
 
 import ij.ImagePlus;
-import ij.process.ImageProcessor;
 
 public class MeshImageStackUB extends MeshImageStack {
     public MeshImageStackUB(ImagePlus plus){

@@ -42,7 +42,7 @@ import ij.ImageStack;
 import ij.process.ByteProcessor;
 import org.jogamp.java3d.utils.picking.PickResult;
 
-import java.awt.Color;
+import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.nio.file.Paths;

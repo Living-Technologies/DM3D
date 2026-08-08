@@ -5,7 +5,7 @@ import deformablemesh.geometry.Furrow3D;
 import deformablemesh.geometry.FurrowTransformer;
 import deformablemesh.util.Vector3DOps;
 
-import java.awt.Shape;
+import java.awt.*;
 import java.awt.geom.Path2D;
 import java.util.ArrayList;
 import java.util.Comparator;

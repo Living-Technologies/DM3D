@@ -28,7 +28,7 @@ package deformablemesh.meshview;
 import deformablemesh.MeshImageStack;
 import deformablemesh.gui.FrameListener;
 
-import java.awt.Color;
+import java.awt.*;
 
 /**
  * For following the single channel of the 3D mesh image stack.

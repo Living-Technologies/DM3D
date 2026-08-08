@@ -1,10 +1,7 @@
 package deformablemesh.gimli2b;
 
-import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.DeformableMesh3D;
-import deformablemesh.geometry.Triangle3D;
-import deformablemesh.gimli2b.Imglib2Mesh;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.util.ColorSuggestions;
 import ij.ImagePlus;
@@ -17,12 +14,10 @@ import net.imglib2.mesh.alg.MeshConnectedComponents;
 import net.imglib2.mesh.alg.RemoveDuplicateVertices;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 
-import java.awt.Color;
+import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * This class contains remnants of code I am not ready to throw away. It includes

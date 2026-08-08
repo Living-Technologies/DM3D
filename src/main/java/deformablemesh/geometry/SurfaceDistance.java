@@ -2,6 +2,7 @@ package deformablemesh.geometry;
 
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.util.Vector3DOps;
+
 import java.util.ArrayList;
 import java.util.List;
 

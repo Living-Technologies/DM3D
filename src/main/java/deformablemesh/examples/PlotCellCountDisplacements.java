@@ -5,16 +5,12 @@ import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.io.MeshReader;
 import deformablemesh.track.Track;
-import deformablemesh.util.ColorSuggestions;
 import deformablemesh.util.Vector3DOps;
 import lightgraph.DataSet;
 import lightgraph.Graph;
 import lightgraph.GraphPoints;
-import lightgraph.painters.GraphPainter;
 
-import java.awt.Color;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.Point2D;
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;

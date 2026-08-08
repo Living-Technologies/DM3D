@@ -31,7 +31,6 @@ import deformablemesh.geometry.PixelBlob;
 import deformablemesh.util.Vector3DOps;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**

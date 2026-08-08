@@ -23,10 +23,9 @@ package deformablemesh;/*-
  * THE SOFTWARE.
  * #L%
  */
+
 import com.formdev.flatlaf.FlatDarculaLaf;
 import com.formdev.flatlaf.FlatDarkLaf;
-import deformablemesh.SegmentationController;
-import deformablemesh.SegmentationModel;
 import deformablemesh.gui.ControlFrame;
 import deformablemesh.gui.PropertySaver;
 import deformablemesh.meshview.MeshFrame3D;
@@ -35,9 +34,8 @@ import ij.ImagePlus;
 import jogamp.nativewindow.jawt.JAWTUtil;
 
 import javax.swing.*;
-import java.awt.EventQueue;
+import java.awt.*;
 import java.io.File;
-import java.util.concurrent.Executors;
 
 /**
  *

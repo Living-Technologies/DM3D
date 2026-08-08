@@ -37,12 +37,8 @@ import org.jogamp.java3d.utils.picking.PickIntersection;
 import org.jogamp.java3d.utils.picking.PickResult;
 import org.jogamp.vecmath.Point3d;
 
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import java.awt.Color;
-import java.awt.EventQueue;
-import java.awt.FileDialog;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;

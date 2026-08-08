@@ -30,7 +30,6 @@ import deformablemesh.util.Vector3DOps;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
-import ij.process.ShortProcessor;
 
 import java.util.Iterator;
 import java.util.Map;

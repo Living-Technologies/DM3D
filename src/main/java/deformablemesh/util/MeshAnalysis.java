@@ -40,7 +40,7 @@ import lightgraph.DataSet;
 import lightgraph.Graph;
 import lightgraph.GraphPoints;
 
-import java.awt.EventQueue;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;

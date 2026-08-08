@@ -1,14 +1,11 @@
 package deformablemesh.examples;
 
 import deformablemesh.MeshImageStack;
-import deformablemesh.gimli2b.MeshImageStack2;
 import deformablemesh.io.LoadZarr;
-import deformablemesh.io.MultiscaleImageAdapter;
 import deformablemesh.io.SaveImageToZarr;
 import ij.ImagePlus;
 import ij.ImageStack;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 

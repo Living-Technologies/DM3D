@@ -3,12 +3,10 @@ package deformablemesh.util;
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.DeformableMesh3D;
-import deformablemesh.track.Track;
 import deformablemesh.util.connectedcomponents.ConnectedComponents3D;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ColorProcessor;
-import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 
 import java.util.List;

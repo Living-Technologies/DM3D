@@ -12,10 +12,8 @@ import deformablemesh.util.connectedcomponents.Region;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
-import org.jogamp.java3d.Screen3D;
 
-import java.awt.Color;
-import java.awt.Dimension;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;

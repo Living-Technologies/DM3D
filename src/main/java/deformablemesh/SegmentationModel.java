@@ -25,21 +25,8 @@
  */
 package deformablemesh;
 
-import deformablemesh.externalenergies.BrightRegionEnergy;
-import deformablemesh.externalenergies.ExternalEnergy;
-import deformablemesh.externalenergies.ImageEnergyType;
-import deformablemesh.externalenergies.PerpendicularGradientEnergy;
-import deformablemesh.externalenergies.PerpendicularIntensityEnergy;
-import deformablemesh.externalenergies.PressureForce;
-import deformablemesh.externalenergies.SofterStericMesh;
-import deformablemesh.externalenergies.StericMesh;
-import deformablemesh.externalenergies.TriangleAreaDistributor;
-import deformablemesh.geometry.BinaryMomentsOfInertia;
-import deformablemesh.geometry.Box3D;
-import deformablemesh.geometry.CurvatureCalculator;
-import deformablemesh.geometry.DeformableMesh3D;
-import deformablemesh.geometry.Furrow3D;
-import deformablemesh.geometry.Triangle3D;
+import deformablemesh.externalenergies.*;
+import deformablemesh.geometry.*;
 import deformablemesh.gui.FrameListener;
 import deformablemesh.gui.FurrowController;
 import deformablemesh.gui.GuiTools;
@@ -55,16 +42,11 @@ import ij.ImagePlus;
 import lightgraph.DataSet;
 import lightgraph.Graph;
 
-import java.awt.Color;
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 

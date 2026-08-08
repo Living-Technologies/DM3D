@@ -30,7 +30,7 @@ import deformablemesh.geometry.projectable.Projectable;
 import deformablemesh.meshview.SphereDataObject;
 import deformablemesh.util.Vector3DOps;
 
-import java.awt.Shape;
+import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.util.ArrayList;
 import java.util.List;

@@ -28,7 +28,7 @@ package deformablemesh.geometry;
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.meshview.MeshFrame3D;
 
-import java.awt.Color;
+import java.awt.*;
 import java.util.Arrays;
 
 /**

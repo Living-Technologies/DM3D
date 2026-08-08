@@ -25,7 +25,7 @@
  */
 package deformablemesh.gui;
 
-import java.awt.Graphics2D;
+import java.awt.*;
 
 /**
  * Created by msmith on 2/8/16.

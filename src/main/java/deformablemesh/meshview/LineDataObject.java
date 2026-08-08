@@ -26,17 +26,7 @@
 package deformablemesh.meshview;
 
 import deformablemesh.geometry.Node3D;
-
-import org.jogamp.java3d.Appearance;
-import org.jogamp.java3d.BranchGroup;
-import org.jogamp.java3d.ColoringAttributes;
-import org.jogamp.java3d.GeometryArray;
-import org.jogamp.java3d.IndexedLineArray;
-import org.jogamp.java3d.LineAttributes;
-import org.jogamp.java3d.Node;
-import org.jogamp.java3d.Shape3D;
-import org.jogamp.java3d.Transform3D;
-import org.jogamp.java3d.TransformGroup;
+import org.jogamp.java3d.*;
 import org.jogamp.vecmath.Color3f;
 import org.jogamp.vecmath.Vector3d;
 

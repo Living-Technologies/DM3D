@@ -1,6 +1,5 @@
 package deformablemesh.examples;
 
-import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshDetector;
 import deformablemesh.MeshImageStack;
 import deformablemesh.externalenergies.BrightRegionEnergy;
@@ -12,13 +11,15 @@ import deformablemesh.io.MeshWriter;
 import deformablemesh.simulations.FillingBinaryImage;
 import deformablemesh.track.Track;
 import deformablemesh.util.connectedcomponents.Region;
-import ij.ImagePlus;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.List;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 

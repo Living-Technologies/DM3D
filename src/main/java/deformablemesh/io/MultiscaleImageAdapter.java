@@ -7,7 +7,6 @@ import deformablemesh.gimli2b.MeshImageStack2UB;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.measure.Calibration;
-import mpicbg.spim.data.sequence.DefaultVoxelDimensions;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.display.imagej.ImageJVirtualStackARGB;
@@ -18,7 +17,6 @@ import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.NumericType;
-import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
@@ -26,8 +24,6 @@ import net.imglib2.view.Views;
 import org.janelia.saalfeldlab.n5.universe.metadata.axes.Axis;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 

@@ -2,18 +2,13 @@ package deformablemesh.experimental;
 
 import deformablemesh.MeshImageStack;
 import deformablemesh.SegmentationController;
-import deformablemesh.gui.GuiTools;
-import deformablemesh.io.LoadZarr;
+import deformablemesh.gimli2b.Dm3dService;
 import deformablemesh.track.Track;
-import ij.IJ;
 import lightgraph.Graph;
 import org.scijava.command.Command;
-import org.scijava.log.AbstractLogService;
 import org.scijava.object.ObjectService;
 import org.scijava.plugin.Parameter;
-import deformablemesh.gimli2b.Dm3dService;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;

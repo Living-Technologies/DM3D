@@ -25,33 +25,16 @@
  */
 package deformablemesh.externalenergies;
 
-import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshDetector;
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.CurvatureCalculator;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.RayCastMesh;
-import deformablemesh.geometry.Sphere;
-import deformablemesh.geometry.Triangle3D;
 import deformablemesh.geometry.interceptable.BinaryInterceptible;
-import deformablemesh.geometry.interceptable.CompositeInterceptables;
 import deformablemesh.geometry.interceptable.Interceptable;
-import deformablemesh.gui.render2d.RenderFrame2D;
-import deformablemesh.meshview.MeshFrame3D;
-import deformablemesh.track.Track;
-import deformablemesh.util.Vector3DOps;
 import deformablemesh.util.connectedcomponents.Region;
-import lightgraph.Graph;
 
-import javax.imageio.ImageIO;
-import javax.swing.JFrame;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 
 /**

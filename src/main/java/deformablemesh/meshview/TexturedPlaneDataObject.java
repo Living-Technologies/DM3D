@@ -27,15 +27,10 @@ package deformablemesh.meshview;
 
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.DeformableMesh3D;
-import org.jogamp.java3d.Appearance;
-import org.jogamp.java3d.Material;
-import org.jogamp.java3d.PolygonAttributes;
-import org.jogamp.java3d.Shape3D;
-import org.jogamp.java3d.TexCoordGeneration;
-import org.jogamp.java3d.TransparencyAttributes;
+import org.jogamp.java3d.*;
 import org.jogamp.vecmath.Vector4f;
 
-import java.awt.Color;
+import java.awt.*;
 
 /**
  * A volume

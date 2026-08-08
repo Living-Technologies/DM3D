@@ -31,7 +31,7 @@ import deformablemesh.externalenergies.ExternalEnergy;
 import deformablemesh.meshview.DataObject;
 import deformablemesh.meshview.LineDataObject;
 
-import java.awt.Color;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;

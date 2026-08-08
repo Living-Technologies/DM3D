@@ -13,8 +13,7 @@ import ij.ImageStack;
 import ij.plugin.FileInfoVirtualStack;
 import ij.process.ImageProcessor;
 
-import java.awt.FileDialog;
-import java.awt.Frame;
+import java.awt.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;

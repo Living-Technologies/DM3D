@@ -2,17 +2,13 @@ package deformablemesh.examples;
 
 import deformablemesh.MeshDetector;
 import deformablemesh.MeshImageStack;
-import deformablemesh.SegmentationController;
 import deformablemesh.externalenergies.BallooningEnergy;
 import deformablemesh.externalenergies.BrightRegionEnergy;
-import deformablemesh.geometry.ConnectionRemesher;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.RayCastMesh;
 import deformablemesh.geometry.interceptable.BinaryInterceptible;
-import deformablemesh.gimli2b.Dm3dService;
 import deformablemesh.gui.GuiTools;
 import deformablemesh.io.LoadZarr;
-import deformablemesh.track.Track;
 import deformablemesh.util.connectedcomponents.Region;
 import ij.IJ;
 import org.scijava.command.Command;
@@ -26,12 +22,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.*;
-import java.util.stream.IntStream;
 
 public class QuickMeshExample implements Command {
     MeshImageStack original;

@@ -30,7 +30,7 @@ import ij.ImagePlus;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 
-import java.awt.Color;
+import java.awt.*;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;

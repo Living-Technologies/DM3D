@@ -25,25 +25,13 @@
  */
 package deformablemesh.geometry.projectable;
 
-import deformablemesh.geometry.Connection3D;
-import deformablemesh.geometry.DeformableMesh3D;
-import deformablemesh.geometry.Furrow3D;
-import deformablemesh.geometry.FurrowTransformer;
-import deformablemesh.geometry.Node3D;
-import deformablemesh.geometry.Triangle3D;
+import deformablemesh.geometry.*;
 import deformablemesh.util.Vector3DOps;
 
-import java.awt.Color;
-import java.awt.Shape;
+import java.awt.*;
 import java.awt.geom.Path2D;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Created by msmith on 6/23/16.

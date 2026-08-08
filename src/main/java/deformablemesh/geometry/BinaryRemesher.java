@@ -6,10 +6,8 @@ import deformablemesh.util.connectedcomponents.Region;
 import deformablemesh.util.connectedcomponents.RegionGrowing;
 import ij.ImagePlus;
 import ij.ImageStack;
-import ij.process.ByteProcessor;
 import ij.process.ShortProcessor;
 
-import java.awt.Image;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;

@@ -2,27 +2,16 @@ package deformablemesh.examples;
 
 import deformablemesh.gui.GuiTools;
 import deformablemesh.io.LoadZarr;
-import deformablemesh.io.MultiscaleImageAdapter;
 import ij.ImageJ;
 import ij.ImagePlus;
 import loci.formats.FormatException;
 import loci.plugins.BF;
 import loci.plugins.in.ImporterOptions;
 import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.NumericType;
-import org.janelia.saalfeldlab.n5.N5Reader;
-import org.janelia.saalfeldlab.n5.ij.N5IJUtils;
-import org.janelia.saalfeldlab.n5.ij.N5Importer;
-import org.janelia.saalfeldlab.n5.ij.N5ScalePyramidExporter;
-import org.janelia.saalfeldlab.n5.universe.N5Factory;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
-
-import static org.janelia.saalfeldlab.n5.ij.N5ScalePyramidExporter.BLOSC_COMPRESSION;
 
 public class ExportToZarr {
 

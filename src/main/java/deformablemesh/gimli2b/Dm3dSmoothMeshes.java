@@ -2,7 +2,6 @@ package deformablemesh.gimli2b;
 
 import deformablemesh.MeshImageStack;
 import deformablemesh.SegmentationController;
-import ij.ImagePlus;
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 

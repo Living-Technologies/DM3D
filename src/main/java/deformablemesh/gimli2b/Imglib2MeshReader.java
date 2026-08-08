@@ -1,7 +1,5 @@
 package deformablemesh.gimli2b;
 
-import deformablemesh.geometry.Node3D;
-import deformablemesh.geometry.Triangle3D;
 import net.imglib2.mesh.Mesh;
 import net.imglib2.mesh.impl.nio.BufferMesh;
 
@@ -9,7 +7,6 @@ import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;

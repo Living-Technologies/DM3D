@@ -1,9 +1,7 @@
 package deformablemesh.experimental;
 
-import deformablemesh.MeshImageStack;
 import deformablemesh.io.SaveImageToZarr;
 import ij.ImagePlus;
-import ij.ImageStack;
 import ij.plugin.FileInfoVirtualStack;
 
 import java.nio.file.DirectoryStream;

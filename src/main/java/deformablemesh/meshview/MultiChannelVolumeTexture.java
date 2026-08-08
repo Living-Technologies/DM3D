@@ -25,23 +25,18 @@
  */
 package deformablemesh.meshview;
 
-import java.awt.Color;
-import java.awt.Transparency;
-import java.awt.color.ColorSpace;
-import java.awt.image.BufferedImage;
-import java.awt.image.ComponentColorModel;
-import java.awt.image.DataBuffer;
-import java.awt.image.DataBufferByte;
-import java.awt.image.WritableRaster;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.jogamp.java3d.ImageComponent;
 import org.jogamp.java3d.ImageComponent3D;
 import org.jogamp.java3d.Texture;
 import org.jogamp.java3d.Texture3D;
 import org.jogamp.vecmath.Color3f;
 import org.jogamp.vecmath.Vector4f;
+
+import java.awt.*;
+import java.awt.color.ColorSpace;
+import java.awt.image.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MultiChannelVolumeTexture extends Texture3D {
     private List<TextureProducer> textures = new ArrayList<>();

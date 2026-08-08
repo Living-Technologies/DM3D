@@ -27,7 +27,7 @@ package deformablemesh.geometry.projectable;
 
 import deformablemesh.geometry.FurrowTransformer;
 
-import java.awt.Shape;
+import java.awt.*;
 
 /**
  * Created by msmith on 2/8/16.

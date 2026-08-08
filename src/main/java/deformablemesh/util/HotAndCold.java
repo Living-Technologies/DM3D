@@ -25,7 +25,7 @@
  */
 package deformablemesh.util;
 
-import java.awt.Color;
+import java.awt.*;
 
 public class HotAndCold implements ColorInterpolator {
     float[] hot, cold;

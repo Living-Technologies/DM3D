@@ -3,11 +3,7 @@ package deformablemesh;
 import deformablemesh.gui.GuiTools;
 
 import java.util.Queue;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.*;
 
 /**
  * Historical class, that should be replaced, developed because of confusion regarding the way ExecutorServices

@@ -1,7 +1,6 @@
 package deformablemesh.examples;
 
 import deformablemesh.io.LoadZarr;
-import deformablemesh.io.SaveImageToZarr;
 import ij.ImagePlus;
 
 import java.nio.file.Files;

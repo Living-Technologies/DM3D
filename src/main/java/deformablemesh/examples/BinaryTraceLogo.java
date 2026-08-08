@@ -10,11 +10,8 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ByteProcessor;
 
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JSlider;
-import java.awt.Color;
+import javax.swing.*;
+import java.awt.*;
 
 public class BinaryTraceLogo {
 

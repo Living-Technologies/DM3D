@@ -27,11 +27,7 @@ package deformablemesh;
 
 import Jama.EigenvalueDecomposition;
 import Jama.Matrix;
-import deformablemesh.geometry.Box3D;
-import deformablemesh.geometry.ConnectionRemesher;
-import deformablemesh.geometry.DeformableMesh3D;
-import deformablemesh.geometry.Node3D;
-import deformablemesh.geometry.RayCastMesh;
+import deformablemesh.geometry.*;
 import deformablemesh.simulations.FillingBinaryImage;
 import deformablemesh.util.connectedcomponents.ConnectedComponents3D;
 import deformablemesh.util.connectedcomponents.Region;

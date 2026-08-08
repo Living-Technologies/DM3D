@@ -1,12 +1,9 @@
 package deformablemesh.gimli2b;
 
 import bdv.viewer.Source;
-import deformablemesh.MeshImageStackUB;
-import ij.process.ImageProcessor;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.NumericType;
-import net.imglib2.type.numeric.RealType;
 
 import java.util.List;
 

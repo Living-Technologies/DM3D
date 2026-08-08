@@ -1,12 +1,10 @@
 package deformablemesh.examples;
 
 import deformablemesh.MeshImageStack;
-import deformablemesh.externalenergies.BrightRegionEnergy;
 import deformablemesh.geometry.ConnectionRemesher;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.io.LoadZarr;
 import deformablemesh.io.MeshReader;
-import deformablemesh.io.MeshWriter;
 import deformablemesh.track.Track;
 
 import java.io.File;
@@ -14,7 +12,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.FileAttribute;
 import java.util.Comparator;
 import java.util.List;
 

@@ -5,7 +5,7 @@ import deformablemesh.geometry.interceptable.InterceptingMesh3D;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.util.Vector3DOps;
 
-import java.awt.Color;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;

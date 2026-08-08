@@ -14,14 +14,12 @@ import deformablemesh.track.Track;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.measure.Calibration;
-import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 
-import java.io.IOException;
-import java.nio.file.Paths;
 import java.nio.file.Path;
-import java.util.List;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.List;
 
 public class CropAlongMeshTrack {
     MeshImageStack stack;

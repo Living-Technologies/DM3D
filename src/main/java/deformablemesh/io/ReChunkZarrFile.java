@@ -3,7 +3,6 @@ package deformablemesh.io;
 import deformablemesh.gui.GuiTools;
 import ij.ImagePlus;
 
-import java.io.IOException;
 import java.nio.file.Path;
 
 public class ReChunkZarrFile {
