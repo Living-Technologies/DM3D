@@ -43,14 +43,47 @@ controls = service.getApplicationController();
 ```
 That provide access to the same controls found in the javascript console.
 
+### Zarr and large image loading.
+
+There is now the possiblity to "load" very large images, to large to work with.
+Zarr images can be loaded with the mip maps available. So an extremely large image
+can be loaded, it will recognize it is too large, then no buffer the data.
+
+Essentially just the geometry will be loaded. Selecting a mipmap is avalable through
+the scripting interface.
+
+```javascript
+mist = controls.getMeshImageStack();
+controls.setMeshImageStack( mist.getMipMaps(2) );
+```
+That will load the lower resolution value as the selected volume. It can be used 
+for visualization, then selecting a region by creating a new mesh.
+
+```javascript
+controls.setMeshImageStack( mist ); //uses unbuffered version.
+//uses imglib2 tools to create a crop from the high resolution original data.
+controls.cropToSelectedMeshRegion();
+```
+
 # Changes
+1.6.2
+- BUG FIXES: erode error, headless execution error
+- Managing displaying volumes is easier
+- New external energy that manages bright regions/nuclei better
+- Connection length is determined by a single number
+- Scripting and pipeline tools
+- Unbuffered MeshImageStack(s)
+- Zarr tooling updates.
+- Removed hidden  executor service. Not as fast now, but simpler.
+
 1.4
 - Improving javascript interface with some tools and snippets
 - BUG FIX: multi-channel multiresolution volumes display.
-- 
+
 1.3
 - Generative mesh algorithms are improved.
 - imglib2 scripting interface
+
 1.2.0
 - Creating meshes from labelled images
 - Displaying labelled images in the 3D viewer
