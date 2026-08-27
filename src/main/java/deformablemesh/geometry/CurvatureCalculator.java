@@ -148,7 +148,11 @@ public class    CurvatureCalculator {
         }
 
         double m = Vector3DOps.normalize(normal);
-
+        if(m == 0){
+            normal[0] = 0;
+            normal[1] = 0;
+            normal[2] = 0;
+        }
         return normal;
 
     }

@@ -139,7 +139,7 @@ public class SegmentationModel {
         }
         stop = false;
         deformations = 0;
-        Map<DeformableMesh3D, List<StericMesh>> stericEnergies = new HashMap<>();
+        Map<DeformableMesh3D, List<SofterStericMesh>> stericEnergies = new HashMap<>();
 
         if(stericNeighborWeight != 0){
             for(DeformableMesh3D mesh: meshes){
@@ -190,13 +190,7 @@ public class SegmentationModel {
             if(deformations >= steps){
                 break;
             }
-            if(stericNeighborWeight!=0) {
-                for (DeformableMesh3D mesh : meshes) {
-                    for (StericMesh sm : stericEnergies.get(mesh)) {
-                        sm.update();
-                    }
-                }
-            }
+
         }
 
     }
@@ -595,7 +589,7 @@ public class SegmentationModel {
         }
 
         if(stericNeighborWeight!=0){
-            List<StericMesh> segs = generateStericEnergies(selectedMesh);
+            List<SofterStericMesh> segs = generateStericEnergies(selectedMesh);
             for(ExternalEnergy eg: segs){
                 selectedMesh.addExternalEnergy(eg);
             }
@@ -619,7 +613,7 @@ public class SegmentationModel {
             energies.add(new TriangleAreaDistributor(stack, selectedMesh, normalize));
         }
         if(stericNeighborWeight!=0){
-            List<StericMesh> segs = generateStericEnergies(selectedMesh);
+            List<SofterStericMesh> segs = generateStericEnergies(selectedMesh);
             energies.addAll(segs);
         }
 
@@ -649,16 +643,16 @@ public class SegmentationModel {
         }
 
         if(stericNeighborWeight!=0){
-            List<StericMesh> segs = generateStericEnergies(selectedMesh);
+            List<SofterStericMesh> segs = generateStericEnergies(selectedMesh);
             energies.addAll(segs);
         }
 
         return energies;
     }
 
-    private List<StericMesh> generateStericEnergies(DeformableMesh3D mesh) {
+    private List<SofterStericMesh> generateStericEnergies(DeformableMesh3D mesh) {
         List<Track> tracks = tracker.getAllMeshTracks();
-        List<StericMesh> es = new ArrayList<>(tracks.size());
+        List<SofterStericMesh> es = new ArrayList<>(tracks.size());
         for(Track track: tracks){
             if(!track.containsMesh(mesh) && track.containsKey(stack.CURRENT) ){
 

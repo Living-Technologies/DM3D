@@ -60,7 +60,7 @@ public class ManyDrops {
     List<DeformableMesh3D> meshes = new ArrayList<>();
     List<VectorField> forces = new ArrayList<>();
     List<MeanFieldStericEnergy> quasiStericMeshes = new ArrayList<>();
-    List<StericMesh> stericMeshes = new ArrayList<>();
+    List<SofterStericMesh> stericMeshes = new ArrayList<>();
     HeightMapSurface surface;
     MeshFrame3D frame;
 
@@ -186,7 +186,7 @@ public class ManyDrops {
             if(b==mesh){
                 continue;
             }
-            StericMesh sm = new SofterStericMesh(b, mesh, steric);
+            SofterStericMesh sm = new SofterStericMesh(b, mesh, steric);
             b.addExternalEnergy(sm);
 
             stericMeshes.add(sm);
@@ -216,7 +216,6 @@ public class ManyDrops {
 
 
 
-        stericMeshes.forEach(sm -> sm.update());
         quasiStericMeshes.forEach(MeanFieldStericEnergy::update);
     }
 

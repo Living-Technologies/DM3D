@@ -4,6 +4,7 @@ import deformablemesh.gui.GuiTools;
 
 import java.util.Queue;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Historical class, that should be replaced, developed because of confusion regarding the way ExecutorServices
@@ -17,7 +18,9 @@ public class ExceptionThrowingService implements ETExecutor{
     ExecutorService main, monitor;
     Thread main_thread;
     Queue<Exception> exceptions = new LinkedBlockingDeque<>();
+    AtomicBoolean shutdown = new AtomicBoolean();
     ExceptionThrowingService(){
+        shutdown.set(false);
         main = Executors.newSingleThreadExecutor();
         monitor = Executors.newSingleThreadExecutor();
         main.submit(() -> {
@@ -36,25 +39,37 @@ public class ExceptionThrowingService implements ETExecutor{
 
     @Override
     public void submit(ETExecutable r){
-
+        if(shutdown.get()){
+            System.out.println("Attempting to execute on shutdown service!");
+            return;
+        }
         if(Thread.currentThread()==main_thread){
             execute(r);
             return;
         }
 
         final Future<?> f = main.submit(()->execute(r));
-
-        monitor.submit(() -> {
-            try {
-                f.get();
-            } catch (InterruptedException | ExecutionException e) {
-                GuiTools.errorMessage(e.toString() + ": " + e.getMessage());
-                e.printStackTrace();
-            }
-        });
+        try {
+            monitor.submit(() -> {
+                try {
+                    f.get();
+                } catch (InterruptedException | ExecutionException e) {
+                    GuiTools.errorMessage(e.toString() + ": " + e.getMessage());
+                    e.printStackTrace();
+                }
+            });
+        }catch(RejectedExecutionException ree){
+            //race condition.
+        }
     }
+
     public void shutdown(){
-        main.shutdown();
-        monitor.shutdown();
+        System.out.println("shutdown warning!\n\n\nshutingdown intentionally!!!");
+        try {
+            main.shutdown();
+            monitor.shutdown();
+        } finally {
+            shutdown.set(true);
+        }
     }
 }

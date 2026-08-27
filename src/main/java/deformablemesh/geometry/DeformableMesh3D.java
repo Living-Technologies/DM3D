@@ -53,7 +53,7 @@ public class DeformableMesh3D{
     public double ALPHA;
     public double BETA;
     SoftReference<LUDecomposition> decompRef = new SoftReference<>(null);
-
+    SoftReference<CurvatureCalculator> calculator = new SoftReference<>(null);
     List<ExternalEnergy> energies = new ArrayList<>();
 
     public List<Node3D> nodes;
@@ -232,6 +232,7 @@ public class DeformableMesh3D{
         Matrix M = new Matrix(data);
         LUDecomposition decomp = M.lu();
         decompRef = new SoftReference<>(decomp);
+        calculator = new SoftReference<>(null);
     }
 
     private void updateBetaMatrix(double[][] data){
@@ -400,8 +401,19 @@ public class DeformableMesh3D{
         return DeformableMesh3DTools.calculateVolumeLegacy(dir, positions, triangles);
     }
 
+    public CurvatureCalculator getCurvatureCalculator(){
+        CurvatureCalculator calc = calculator.get();
+        if(calc == null){
+            CurvatureCalculator upd = new CurvatureCalculator(this);
+            calculator = new SoftReference<>(upd);
+            return upd;
+        }
+        return calc;
+    }
+
     public void clearExtras(){
-        decompRef = null;
+        decompRef = new SoftReference<>(null);
+        calculator = new SoftReference<>(null);
         clearEnergies();
     }
 
@@ -509,98 +521,8 @@ public class DeformableMesh3D{
     }
 
     public List<double[]> calculateCurvature(){
-        Map<Node3D, List<Triangle3D>> node_to_triangle = new HashMap<>();
-        List<double[]> values = new ArrayList<>();
-        for(Triangle3D tri: triangles){
-            tri.update();
-            addNode(tri.A, tri, node_to_triangle);
-            addNode(tri.B, tri, node_to_triangle);
-            addNode(tri.C, tri, node_to_triangle);
-
-
-        }
-
-        float[] colors = new float[nodes.size()*3];
-        float pmax = -Float.MAX_VALUE;
-        float nmax = -Float.MAX_VALUE;
-        for(Node3D node: nodes){
-            List<Triangle3D> t_angles = node_to_triangle.get(node);
-            float positive = 0.0f;
-            float negative = 0.0f;
-            int count = t_angles.size();
-            while(t_angles.size()>0){
-                Triangle3D triangle = t_angles.get(0);
-
-                t_angles.remove(0);
-                for(Triangle3D other: t_angles){
-                    double curvature = calculateCurvature(node, triangle, other);
-
-
-                    if(curvature>0){
-                        positive += curvature;
-
-                    }else{
-                        negative += -curvature;
-
-                    }
-
-
-
-                }
-
-            }
-            positive = positive/count;
-            negative = negative/count;
-            
-            colors[3*node.index] = positive;
-            colors[3*node.index+1] = 0;
-            colors[3*node.index + 2] = negative;
-            if(positive>pmax){
-                pmax = positive;
-            }
-            if(negative>nmax){
-                nmax = negative;
-            }
-
-        }
-
-
-
-        pmax = pmax*1.0f;
-        nmax = nmax*1.0f;
-        for(int i = 0; i<nodes.size(); i++){
-
-            colors[3*i] = colors[3*i]/pmax;
-            colors[3*i] = colors[3*i]>1?1f:colors[3*i];
-
-
-            colors[3*i+2] = colors[3*i+2]/nmax;
-            colors[3*i+2] = colors[3*i+2]>1?1f:colors[3*i+2];
-
-        }
-
-        return values;
-    }
-
-    static double calculateCurvature(Node3D p, Triangle3D A, Triangle3D B){
-        Node3D op = sharesConnection(p, A, B);
-        if(op==null){
-            return 0;
-        }
-
-        double[] dt = Vector3DOps.difference(A.center, B.center);
-        double[] dnormal = Vector3DOps.difference(A.normal, B.normal);
-
-        double dot = Vector3DOps.dot(dt,dnormal);
-
-        double[] cross = Vector3DOps.cross(A.normal, B.normal);
-
-        double mag = Math.sqrt(cross[0]*cross[0] + cross[1]*cross[1] + cross[2]*cross[2]);
-        mag = mag<1e-16?0:mag;
-        //double ds = Math.sqrt(dot(dt,dt))
-
-        return dot<0?-mag:mag;
-
+        CurvatureCalculator cal = getCurvatureCalculator();
+        return cal.calculateCurvature();
     }
 
     public void scale(double v, double[] center){
@@ -649,45 +571,6 @@ public class DeformableMesh3D{
         }
 
     }
-
-    /**
-     * Checks if triangles a and b share a connection via node n. It is assumed that both triangles contain
-     * n so just the second node is being looked for.
-     *
-     * @param n the node shared by both triangles.
-     * @param a one triangle
-     * @param b one triangle
-     * @return the other node both triangles share.
-     */
-    static private Node3D sharesConnection(Node3D n, Triangle3D a, Triangle3D b){
-        Node3D[] as = new Node3D[]{a.A,a.B,a.C};
-        Node3D[] bs = new Node3D[]{b.A,b.B,b.C};
-        for(int i = 0; i<3; i++){
-            if(as[i]==n){
-                continue;
-            }
-            for(int j = 0; j<3; j++){
-                if(bs[j]==n){
-                    continue;
-                }
-                if(as[i]==bs[j]){
-                    return as[i];
-                }
-            }
-
-        }
-        return null;
-    }
-
-
-    private void addNode(Node3D n, Triangle3D t, Map<Node3D, List<Triangle3D>> map){
-        if(!map.containsKey(n)){
-            map.put(n,new ArrayList<>());
-        }
-        map.get(n).add(t);
-    }
-
-
 
     /**
      * Moves all of the nodes in this mesh by the displacement value.

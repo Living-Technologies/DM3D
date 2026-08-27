@@ -28,24 +28,30 @@ package deformablemesh.externalenergies;
 import deformablemesh.geometry.CurvatureCalculator;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Intersection;
+import deformablemesh.geometry.Triangle3D;
 import deformablemesh.geometry.interceptable.InterceptingMesh3D;
 import deformablemesh.util.Vector3DOps;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class SofterStericMesh extends StericMesh {
+public class SofterStericMesh implements ExternalEnergy{
     CurvatureCalculator curve;
+    DeformableMesh3D deformableMesh, id;
+    double weight;
 
+    boolean staticShape = false;
+    InterceptingMesh3D mesh;
     public SofterStericMesh(DeformableMesh3D id, DeformableMesh3D neighbor, double weight) {
-        super(id, neighbor, weight);
-        curve = new CurvatureCalculator(id);
+        deformableMesh = neighbor;
+        this.id = id;
+        this.weight=weight;
+        curve = id.getCurvatureCalculator();
     }
 
     public double[] getNormal(Integer i) {
-        double[] n = curve.getNormal(i);
-
-        return n;
+        return curve.getNormal(i);
     }
 
     static class RotatedIntersection {
@@ -71,6 +77,11 @@ public class SofterStericMesh extends StericMesh {
 
     @Override
     public void updateForces(double[] positions, double[] fx, double[] fy, double[] fz) {
+
+        if(!id.getBoundingBox().intersects(deformableMesh.getBoundingBox())){
+            return;
+        }
+
         if (!staticShape || mesh == null) {
             mesh = new InterceptingMesh3D(deformableMesh);
         }

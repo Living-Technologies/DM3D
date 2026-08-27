@@ -15,20 +15,18 @@ public class BrightRegionEnergy implements ExternalEnergy{
     DeformableMesh3D mesh;
     double limit;
     double weight = 1.0;
-    InterceptingMesh3D start;
-    double ds;
+    double dx, dy, dz, ds;
 
     public BrightRegionEnergy(MeshImageStack stack, DeformableMesh3D mesh, double weight){
         this.stack = stack;
-        calculator = new CurvatureCalculator(mesh);
+        calculator = mesh.getCurvatureCalculator();
         this.weight = weight;
         this.mesh = mesh;
-        start = new InterceptingMesh3D(mesh);
+        double[] nPx = stack.scaleToNormalizedLength(new double[]{1,1,1});
+        dx = nPx[0];
+        dy = nPx[1];
+        dz = nPx[2];
         ds = stack.getMinPx();
-
-    }
-    boolean contains(double[] pt){
-        return start.contains(pt);
     }
 
     @Override
@@ -39,7 +37,7 @@ public class BrightRegionEnergy implements ExternalEnergy{
             if(Double.isNaN(normal[0] + normal[1] + normal[2])){
                 continue;
             }
-            double f = getForce(r[0] - 0.5*ds, r[1] - 0.5*ds, r[2] - 0.5*ds, normal)*weight;
+            double f = getForce(r[0] - 0.5*dx, r[1] - 0.5*dy, r[2] - 0.5*dz, normal)*weight;
 
             fx[i] += f*normal[0];
             fy[i] += f*normal[1];

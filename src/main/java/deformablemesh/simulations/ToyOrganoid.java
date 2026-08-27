@@ -65,7 +65,6 @@ public class ToyOrganoid {
         List<SofterStericMesh> se = new ArrayList<>();
 
         while(true){
-            se.stream().parallel().forEach(SofterStericMesh::update);
             cells.stream().parallel().forEach(cell ->{
                 cell.update();
             });

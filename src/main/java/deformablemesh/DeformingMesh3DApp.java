@@ -65,7 +65,7 @@ public class DeformingMesh3DApp{
     }
     public static SegmentationController createDeformingMeshApplication(){
         setFlatLAF();
-        JAWTUtil.getJAWT(true);
+        //JAWTUtil.getJAWT(true);
         MeshFrame3D mf3d = new MeshFrame3D();
         SegmentationModel model = new SegmentationModel();
         SegmentationController segmentationController = new SegmentationController(model);
@@ -83,6 +83,8 @@ public class DeformingMesh3DApp{
         mf3d.getJFrame().setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         segmentationController.setMeshFrame3D(mf3d);
         PropertySaver.positionFrames(controlFrame, mf3d);
+        controlFrame.shutdownControllerOnClose();
+
         return segmentationController;
     }
 

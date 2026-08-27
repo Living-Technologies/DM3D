@@ -279,8 +279,9 @@ public class SwingJSTerm {
         eval.addActionListener((event) -> {
             if((event.getModifiers() & ActionEvent.CTRL_MASK) != 0){
                 shortCircuit();
+            } else {
+                submit();
             }
-            submit();
         });
 
         JPanel buttons = new JPanel();

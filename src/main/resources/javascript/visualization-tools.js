@@ -2,7 +2,7 @@ importer("deformablemesh.meshview.MultiChannelVolumeTexture");
 IntArray = Java.type("int[]");
 importer("deformablemesh.meshview.VolumeDataObject");
 
-createShinyMeshes(o){
+function shinyObject(o){
         o.shininess = 1;
         o.amb  = 1;
         o.emm = 0;
@@ -15,27 +15,23 @@ createShinyMeshes(o){
 
 
 
-    function prepareDisplay(){
-        mf3d = controls.getMeshFrame3D();
-        mf3d.setBackgroundColor(Color.BLACK);
-        tracks = controls.getAllTracks();
-        mf3d.setDirectionalBrightness(0.6);
-        mf3d.setAmbientBrightness(0.25);
-        for(k in tracks){
-            trk = tracks[k];
-            f = controls.getCurrentFrame();
-            dobj = trk.getMesh( f ).data_object;
-            stylizeMeshSurface(dobj);
-        }
+function createShinyMeshes(){
+    mf3d = controls.getMeshFrame3D();
+    mf3d.setBackgroundColor(Color.BLACK);
+    tracks = controls.getAllTracks();
+    mf3d.setDirectionalBrightness(0.6);
+    mf3d.setAmbientBrightness(0.25);
+    for(k in tracks){
+        trk = tracks[k];
+        f = controls.getCurrentFrame();
+        dobj = trk.getMesh( f ).data_object;
+        shinyObject(dobj);
     }
+}
 
-
-    };
-
-prepareDisplay();
 
 //very shiny
-function stylizeMeshSurface(o){
+function veryShiny(o){
     o.shininess = 128;
     o.amb  = 1;
     o.emm = 0.1;
@@ -46,7 +42,7 @@ function stylizeMeshSurface(o){
     o.setShowSurface(true);
 }
 
-function prepareDisplay(){
+function veryShinyMeshes(){
     mf3d = controls.getMeshFrame3D();
     mf3d.setBackgroundColor(Color.BLACK);
     tracks = controls.getAllTracks();
@@ -56,11 +52,9 @@ function prepareDisplay(){
         trk = tracks[k];
         f = controls.getCurrentFrame();
         dobj = trk.getMesh( f ).data_object;
-        stylizeMeshSurface(dobj);
+        veryShiny(dobj);
     }
 }
-
-prepareDisplay();
 
 function turnOffWires(){
     tracks = controls.getAllTracks();

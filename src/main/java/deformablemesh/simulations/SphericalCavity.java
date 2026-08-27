@@ -492,9 +492,7 @@ public class SphericalCavity {
             e.printStackTrace();
         }
         List<Future<?>> futures = new ArrayList<>();
-        for(SofterStericMesh s: stericMeshes){
-            futures.add( service.submit(s::update) );
-        }
+
         futures.forEach( f ->{
             try{
                 f.get();
@@ -509,9 +507,6 @@ public class SphericalCavity {
 
         for(DeformableMesh3D mesh: drops){
             mesh.update();
-        }
-        for(SofterStericMesh s: stericMeshes){
-            s.update();
         }
         fields.forEach(VectorField::update);
 
