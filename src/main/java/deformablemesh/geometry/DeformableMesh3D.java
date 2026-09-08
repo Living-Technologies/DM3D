@@ -416,6 +416,32 @@ public class DeformableMesh3D{
         calculator = new SoftReference<>(null);
         clearEnergies();
     }
+    /**
+     * Volume centroid of this mesh using divergence theorem.
+     * Triangle forms a tetrahedron with the origin; the centroid is the
+     * volume-weighted average of each tetrahedron's centroid (p0+p1+p2)/4,
+     * divided by total volume. 
+     */
+    public double[] centerOfMass() {
+        double volume = 0.0;
+        double cx = 0.0, cy = 0.0, cz = 0.0;
+
+        for (Triangle3D tri : triangles) {
+            double[] p0 = tri.A.getCoordinates();
+            double[] p1 = tri.B.getCoordinates();
+            double[] p2 = tri.C.getCoordinates();
+
+            double[] cross = Vector3DOps.cross(p1, p2);
+            double tetVolume = Vector3DOps.dot(p0, cross) / 6.0;
+
+            volume += tetVolume;
+            cx += tetVolume * (p0[0] + p1[0] + p2[0]) / 4.0;
+            cy += tetVolume * (p0[1] + p1[1] + p2[1]) / 4.0;
+            cz += tetVolume * (p0[2] + p1[2] + p2[2]) / 4.0;
+        }
+
+        return new double[] { cx / volume, cy / volume, cz / volume };
+    }
 
     /**
      * Thickness is in um. The number of steps in will be approximately the number of x pixels in thickness.

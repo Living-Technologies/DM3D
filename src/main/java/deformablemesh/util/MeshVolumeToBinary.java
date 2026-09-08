@@ -214,7 +214,7 @@ public class MeshVolumeToBinary {
                     }
                 }
                 if (finishesOutsideImage && !inside) {
-                    System.out.println("topography warning: bounds outside image, but not inside the shape at end");
+                    //System.out.println("topography warning: bounds outside image, but not inside the shape at end");
                 }
 
                 if (!finishesOutsideImage && inside) {

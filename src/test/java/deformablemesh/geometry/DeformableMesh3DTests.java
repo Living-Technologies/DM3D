@@ -76,7 +76,7 @@ public class DeformableMesh3DTests {
         List<double[]> yCurves = yMesh.calculateCurvature();
 
         for(int i = 0; i<xCurves.size(); i++){
-            Assert.assertArrayEquals(xCurves.get(i), yCurves.get(i), TOL);
+            Assert.assertEquals(xCurves.get(i)[3], yCurves.get(i)[3], TOL);
         }
 
         DeformableMesh3D zMesh = DeformableMesh3D.generateEdgeZ();

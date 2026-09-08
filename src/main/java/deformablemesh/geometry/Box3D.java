@@ -123,6 +123,16 @@ public class Box3D{
         return new Box3D(xl[0], yl[0], zl[0], xl[1], yl[1], zl[1]);
     }
 
+    public Box3D getUnionBox(Box3D other){
+        return new Box3D(Math.min(low[0], other.low[0]),
+                Math.min(low[1], other.low[1]),
+                Math.min(low[2], other.low[2]),
+                Math.max(high[0], other.high[0]),
+                Math.max(high[1], other.high[1]),
+                Math.max(high[2], other.high[2])
+                );
+    }
+
     public boolean contains(Box3D boundingBox) {
         for(int i = 0; i<3; i++){
             if(boundingBox.low[i]<low[i] || boundingBox.high[i]>high[i]){

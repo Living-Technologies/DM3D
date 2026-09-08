@@ -4,6 +4,8 @@ import deformablemesh.io.LoadZarr;
 import deformablemesh.io.SaveImageToZarr;
 import ij.ImagePlus;
 import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -15,7 +17,8 @@ public class RandomAccessAppendTest {
      *
      * TODO fix
      */
-    //@Test
+    @Test
+    @Ignore
     public void createAndModifyTest(){
         int w = 96;
         int h = 64;
