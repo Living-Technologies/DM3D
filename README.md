@@ -66,6 +66,12 @@ controls.cropToSelectedMeshRegion();
 ```
 
 # Changes
+1.7.0
+- BUG FIXES: javascript short circuit
+- Made the curvature calculator a member of the mesh.
+- Steric interactions are much more efficient.
+- Bright region energy doesn't create an unnecessary field.
+- Build for java 8.
 1.6.2
 - BUG FIXES: erode error, headless execution error
 - Managing displaying volumes is easier
